@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>March Nails — Reports</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="css/core.css">
+<link rel="stylesheet" href="css/components.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+.report-tabs { display: flex; gap: .3rem; background: var(--s1); border-radius: 50px; padding: .2rem; margin-bottom: 1rem; }
+.report-tab  { padding: .35rem .9rem; border-radius: 50px; font-size: .75rem; font-weight: 500; cursor: pointer; color: var(--text2); border: none; background: transparent; font-family: var(--font); transition: all .15s; }
+.report-tab.active { background: var(--white); color: var(--pink); font-weight: 600; box-shadow: var(--sh-sm); }
+.report-section { display: none; }
+.report-section.active { display: block; }
+.chart-lg { height: 280px; }
+.chart-md { height: 220px; }
+.metric-row { display: flex; justify-content: space-between; align-items: center; padding: .55rem 0; border-bottom: 1px solid var(--s1); font-size: .82rem; }
+.metric-row:last-child { border-bottom: none; }
+.metric-label { color: var(--text2); }
+.metric-value { font-weight: 600; }
+.comp-table-wrap { overflow-x: auto; }
+.comp-row { display: grid; grid-template-columns: 160px 1fr 1fr 1fr; gap: .5rem; padding: .55rem 0; border-bottom: 1px solid var(--s1); align-items: center; }
+.comp-head { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text3); }
+.comp-row:last-child { border-bottom: none; }
+.bar-mini { height: 6px; background: var(--s1); border-radius: 3px; overflow: hidden; flex: 1; }
+.bar-mini-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--pink), var(--violet)); }
+</style>
+</head>
+<body>
+
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand"><div class="brand-name">March <span>Nails</span></div><div class="brand-sub">Business Intelligence</div></div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Analytics</div>
+      <a class="nav-item" href="dashboard.html"><i class="fa-solid fa-gauge-high"></i>Dashboard</a>
+      <a class="nav-item active" href="reports.html"><i class="fa-solid fa-chart-column"></i>Reports</a>
+      <div class="nav-section">Operations</div>
+      <a class="nav-item" href="appointments.html"><i class="fa-solid fa-calendar-check"></i>Appointments</a>
+      <a class="nav-item" href="clients.html"><i class="fa-solid fa-users"></i>Clients</a>
+      <a class="nav-item" href="staff.html"><i class="fa-solid fa-id-badge"></i>Staff</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar">A</div>
+        <div><div class="user-name">Admin</div><div class="user-role">Salon Owner</div></div>
+        <button class="btn btn-ghost btn-icon" onclick="logout()" style="margin-left:auto"><i class="fa-solid fa-right-from-bracket" style="font-size:.8rem;color:var(--text3)"></i></button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-area">
+    <div class="topbar">
+      <button class="btn btn-ghost btn-icon" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="fa-solid fa-bars"></i></button>
+      <div class="topbar-title">Reports & Analytics</div>
+      <div class="topbar-date" id="tb-date"></div>
+      <div class="topbar-right">
+        <div class="export-group">
+          <button class="export-btn excel" onclick="exportAll('excel')"><i class="fa-solid fa-file-excel"></i>Excel</button>
+          <button class="export-btn pdf"   onclick="exportAll('pdf')"><i class="fa-solid fa-file-pdf"></i>PDF</button>
+          <button class="export-btn csv"   onclick="exportAll('csv')"><i class="fa-solid fa-file-csv"></i>CSV</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-content">
+      <!-- FILTER BAR -->
+      <div class="filter-bar">
+        <span class="filter-bar-label"><i class="fa-solid fa-filter" style="color:var(--pink)"></i></span>
+        <div class="filter-group" id="period-pills">
+          <button class="period-pill" data-period="today">Today</button>
+          <button class="period-pill" data-period="7d">7 Days</button>
+          <button class="period-pill active" data-period="this_month">This Month</button>
+          <button class="period-pill" data-period="last_month">Last Month</button>
+          <button class="period-pill" data-period="this_year">This Year</button>
+          <button class="period-pill" data-period="custom">Custom</button>
+        </div>
+        <div class="date-range-wrap" id="custom-range" style="display:none">
+          <input type="date" class="date-input" id="f-start">
+          <span class="date-range-sep">→</span>
+          <input type="date" class="date-input" id="f-end">
+          <button class="btn btn-primary btn-sm" onclick="applyCustom()">Apply</button>
+        </div>
+        <div class="filter-sep"></div>
+        <select class="filter-select" id="f-staff"><option value="all">All Staff</option><option>Happy</option><option>Flower</option><option>Daisy</option><option>Hannah</option></select>
+        <select class="filter-select" id="f-service"><option value="all">All Services</option><option>Acrylic Full Set</option><option>Acrylic Refill</option><option>Gel-X Extensions</option><option>Pedicure Shellac</option><option>Manicure Shellac</option></select>
+      </div>
+
+      <!-- REPORT TABS -->
+      <div class="report-tabs">
+        <button class="report-tab active" onclick="showTab('revenue',this)"><i class="fa-solid fa-money-bill-wave"></i> Revenue</button>
+        <button class="report-tab" onclick="showTab('staff',this)"><i class="fa-solid fa-id-badge"></i> Staff</button>
+        <button class="report-tab" onclick="showTab('services',this)"><i class="fa-solid fa-scissors"></i> Services</button>
+        <button class="report-tab" onclick="showTab('clients',this)"><i class="fa-solid fa-users"></i> Clients</button>
+        <button class="report-tab" onclick="showTab('compare',this)"><i class="fa-solid fa-code-compare"></i> Compare</button>
+        <button class="report-tab" onclick="showTab('intensity',this)"><i class="fa-solid fa-fire"></i> Intensity</button>
+      </div>
+
+      <!-- REVENUE TAB -->
+      <div class="report-section active" id="tab-revenue">
+        <div class="grid grid-4 mb-1" id="rev-kpis"></div>
+        <div class="grid grid-2 mb-1">
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">Revenue Over Time</div></div>
+              <select class="filter-select" id="rev-group" onchange="renderRevenue()" style="min-width:90px">
+                <option value="day">Daily</option><option value="week">Weekly</option><option value="month">Monthly</option>
+              </select>
+            </div>
+            <div class="chart-lg"><canvas id="c-rev-time"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Revenue by Payment Method</div></div>
+            <div class="chart-lg"><canvas id="c-rev-method"></canvas></div>
+          </div>
+        </div>
+        <div class="card mb-1">
+          <div class="card-header">
+            <div class="card-title">Daily Revenue Detail</div>
+            <div class="export-group">
+              <button class="export-btn excel" onclick="Export.exportPayments(FP,'revenue')"><i class="fa-solid fa-file-excel"></i>Excel</button>
+              <button class="export-btn csv" onclick="Export.exportPayments(FP,'revenue-csv')"><i class="fa-solid fa-file-csv"></i>CSV</button>
+            </div>
+          </div>
+          <div class="table-controls">
+            <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="rev-search" placeholder="Search payments…"></div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table" id="rev-table">
+              <thead><tr><th>Date</th><th>Client</th><th>Staff</th><th>Service</th><th>Amount</th><th>Method</th><th>Commission</th><th>Net Revenue</th></tr></thead>
+              <tbody id="rev-tbody"></tbody>
+            </table>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:.75rem;flex-wrap:wrap;gap:.5rem">
+            <div class="table-info" id="rev-info"></div>
+            <div class="pagination" id="rev-pagination"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STAFF TAB -->
+      <div class="report-section" id="tab-staff">
+        <div class="grid grid-2 mb-1">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Staff Revenue Comparison</div></div>
+            <div class="chart-lg"><canvas id="c-staff-rev"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Staff Bookings vs Commission</div></div>
+            <div class="chart-lg"><canvas id="c-staff-bk"></canvas></div>
+          </div>
+        </div>
+        <div class="card mb-1">
+          <div class="card-header"><div class="card-title">Staff Performance Detail</div></div>
+          <div class="table-wrap">
+            <table class="data-table" id="staff-table">
+              <thead><tr><th>Staff</th><th>Bookings</th><th>Completed</th><th>No-shows</th><th>Revenue</th><th>Commission (25%)</th><th>Net</th><th>Avg Ticket</th><th>Rating</th></tr></thead>
+              <tbody id="staff-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SERVICES TAB -->
+      <div class="report-section" id="tab-services">
+        <div class="grid grid-2 mb-1">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Revenue by Service</div></div>
+            <div class="chart-lg"><canvas id="c-svc-rev"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Booking Count by Service</div></div>
+            <div class="chart-lg"><canvas id="c-svc-bk"></canvas></div>
+          </div>
+        </div>
+        <div class="card mb-1">
+          <div class="card-header"><div class="card-title">Service Performance</div></div>
+          <div class="table-wrap">
+            <table class="data-table" id="svc-table">
+              <thead><tr><th>Service</th><th>Bookings</th><th>Revenue</th><th>Avg Price</th><th>Revenue Share</th></tr></thead>
+              <tbody id="svc-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLIENTS TAB -->
+      <div class="report-section" id="tab-clients">
+        <div class="grid grid-4 mb-1" id="client-kpis"></div>
+        <div class="grid grid-2 mb-1">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Client Segments</div></div>
+            <div class="chart-md"><canvas id="c-client-seg"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">New vs Returning Clients</div></div>
+            <div class="chart-md"><canvas id="c-client-type"></canvas></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Top Clients by Revenue</div>
+            <button class="export-btn excel" onclick="Export.exportClients(SB.CACHE.clients)"><i class="fa-solid fa-file-excel"></i>Export Clients</button>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table" id="client-table">
+              <thead><tr><th>Client</th><th>Tier</th><th>Visits</th><th>LTV</th><th>Avg Ticket</th><th>Last Visit</th><th>Birthday</th><th>Points</th></tr></thead>
+              <tbody id="client-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMPARE TAB -->
+      <div class="report-section" id="tab-compare">
+        <div class="card mb-1">
+          <div class="card-header">
+            <div><div class="card-title">Period Comparison</div><div class="card-subtitle">Current period vs previous period</div></div>
+          </div>
+          <div class="grid grid-4 mb-1" id="compare-kpis"></div>
+          <div class="chart-lg mb-1"><canvas id="c-compare-rev"></canvas></div>
+        </div>
+        <div class="grid grid-2 mb-1">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Staff Comparison</div><div class="card-subtitle">Current vs previous</div></div>
+            <div id="staff-compare-list"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Service Comparison</div></div>
+            <div id="service-compare-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INTENSITY TAB -->
+      <div class="report-section" id="tab-intensity">
+        <div class="grid grid-4 mb-1" id="intensity-kpis"></div>
+        <div class="card mb-1">
+          <div class="card-header"><div><div class="card-title">Booking Heatmap — Day × Hour</div><div class="card-subtitle">Darker = more bookings</div></div></div>
+          <div id="heatmap-big"></div>
+        </div>
+        <div class="grid grid-2 mb-1">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Bookings by Day of Week</div></div>
+            <div class="chart-md"><canvas id="c-by-day"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Bookings by Hour</div></div>
+            <div class="chart-md"><canvas id="c-by-hour"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page-content -->
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="js/supabase.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/export.js"></script>
+<script>
+'use strict';
+
+if (!sessionStorage.getItem('mn_auth')) { window.location.href = 'index.html'; }
+function logout() { sessionStorage.removeItem('mn_auth'); window.location.href = 'index.html'; }
+
+var STATE = { period: 'this_month', customStart: null, customEnd: null, staff: 'all', service: 'all' };
+var FP = [], FB = [], CP = [], CB = [];
+
+Utils.startClock(null, document.getElementById('tb-date'));
+
+window.addEventListener('DOMContentLoaded', function() {
+  setupFilters();
+  SB.testConnection().then(function() { SB.loadAll().then(render).catch(renderFallback); });
+});
+
+function setupFilters() {
+  document.getElementById('period-pills').addEventListener('click', function(e) {
+    var pill = e.target.closest('.period-pill');
+    if (!pill) return;
+    document.querySelectorAll('.period-pill').forEach(function(p) { p.classList.remove('active'); });
+    pill.classList.add('active');
+    STATE.period = pill.dataset.period;
+    document.getElementById('custom-range').style.display = STATE.period === 'custom' ? 'flex' : 'none';
+    if (STATE.period !== 'custom') render();
+  });
+  document.getElementById('f-staff').addEventListener('change', function() { STATE.staff = this.value; render(); });
+  document.getElementById('f-service').addEventListener('change', function() { STATE.service = this.value; render(); });
+}
+
+function applyCustom() {
+  STATE.customStart = document.getElementById('f-start').value;
+  STATE.customEnd   = document.getElementById('f-end').value;
+  if (STATE.customStart && STATE.customEnd) render();
+}
+
+function showTab(id, btn) {
+  document.querySelectorAll('.report-section').forEach(function(s) { s.classList.remove('active'); });
+  document.querySelectorAll('.report-tab').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  renderActiveTab(id);
+}
+
+function render() {
+  var range = Utils.getRange(STATE.period, STATE.customStart, STATE.customEnd);
+  var cmpRange = Utils.getCompareRange(STATE.period, range);
+
+  FB = Utils.filterBookings(SB.CACHE.bookings, { range: range, staff: STATE.staff, service: STATE.service });
+  FP = SB.CACHE.payments.filter(function(p) {
+    if (!Utils.inRange(p.paid_at, range)) return false;
+    if (STATE.staff   !== 'all' && p.staff_name   !== STATE.staff)   return false;
+    if (STATE.service !== 'all' && p.service_name !== STATE.service) return false;
+    return true;
+  });
+  CB = Utils.filterBookings(SB.CACHE.bookings, { range: cmpRange });
+  CP = SB.CACHE.payments.filter(function(p) { return Utils.inRange(p.paid_at, cmpRange); });
+
+  var activeTab = document.querySelector('.report-section.active');
+  if (activeTab) renderActiveTab(activeTab.id.replace('tab-',''));
+}
+
+function renderActiveTab(id) {
+  if (id === 'revenue')   renderRevenue();
+  if (id === 'staff')     renderStaff();
+  if (id === 'services')  renderServices();
+  if (id === 'clients')   renderClients();
+  if (id === 'compare')   renderCompare();
+  if (id === 'intensity') renderIntensity();
+}
+
+// ── REVENUE ──
+function renderRevenue() {
+  var kpis = Utils.calcKPIs(FB, FP, SB.CACHE.clients);
+  var kpiDefs = [
+    { l:'Total Revenue',   v: Utils.fCurrency(kpis.revenue),    c:'#E91E8C' },
+    { l:'Bookings',        v: kpis.bookings,                    c:'#7C3AED' },
+    { l:'Avg Ticket',      v: Utils.fCurrency(kpis.avgTicket),  c:'#0891B2' },
+    { l:'Net Revenue',     v: Utils.fCurrency(kpis.netRevenue), c:'#059669' }
+  ];
+  document.getElementById('rev-kpis').innerHTML = kpiDefs.map(function(k) {
+    return '<div class="kpi-card" style="--kpi-color:'+k.c+'"><div class="kpi-value">'+k.v+'</div><div class="kpi-label">'+k.l+'</div></div>';
+  }).join('');
+
+  var grp = document.getElementById('rev-group').value;
+  var grouped = Utils.groupByDate(FP, 'paid_at', grp);
+  var labels = Object.keys(grouped).sort();
+  var data   = labels.map(function(k) { return Utils.sumRevenue(grouped[k]); });
+  var fmtLabels = labels.map(function(l) {
+    if (grp === 'day') return Utils.fDate(l, {month:'short',day:'numeric'});
+    if (grp === 'month') { var p=l.split('-'); return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(p[1])-1]+' '+p[0]; }
+    return l;
+  });
+  Charts.revenueBar('c-rev-time', fmtLabels, data, null, null);
+
+  var mg = Utils.groupBy(FP, 'method');
+  var mKeys = Object.keys(mg);
+  var mLabels = mKeys.map(function(k) { return k.replace('_',' ').replace(/\b\w/g,function(c){return c.toUpperCase();}); });
+  Charts.doughnut('c-rev-method', mLabels, mKeys.map(function(k){return Utils.sumRevenue(mg[k]);}), ['#10B981','#3B82F6','#8B5CF6','#F59E0B']);
+
+  // Payment detail table
+  var html = FP.slice(0,200).map(function(p) {
+    return '<tr><td class="td-muted">'+Utils.fDateTime(p.paid_at)+'</td><td class="tds">'+(p.client_name||'—')+'</td><td class="td-muted">'+(p.staff_name||'—')+'</td><td class="td-muted">'+(p.service_name||'—')+'</td><td class="td-pos">'+Utils.fCurrency(p.amount)+'</td><td class="td-muted">'+(p.method||'—').replace('_',' ')+'</td><td style="color:var(--pink);font-weight:600">'+Utils.fCurrency(p.commission)+'</td><td class="td-pos">'+Utils.fCurrency(p.net_revenue)+'</td></tr>';
+  }).join('') || '<tr><td colspan="8" style="text-align:center;padding:1.5rem;color:var(--text3)">No payments in this period</td></tr>';
+  document.getElementById('rev-tbody').innerHTML = html;
+  document.getElementById('rev-info').textContent = FP.length + ' payments · Total: ' + Utils.fCurrency(Utils.sumRevenue(FP));
+  Utils.makeSortable(document.getElementById('rev-table'));
+  Utils.makeSearchable(document.getElementById('rev-search'), document.getElementById('rev-table'));
+}
+
+// ── STAFF ──
+function renderStaff() {
+  var staffNames = ['Happy','Flower','Daisy','Hannah'];
+  var colors = ['#E91E8C','#7C3AED','#0891B2','#D97706'];
+  var stgP = Utils.groupBy(FP, 'staff_name');
+  var stgB = Utils.groupBy(FB, 'staff_name');
+
+  Charts.revenueBar('c-staff-rev', staffNames, staffNames.map(function(s){return Utils.sumRevenue(stgP[s]||[]);}), null, null);
+
+  var bkData = staffNames.map(function(s){return (stgB[s]||[]).length;});
+  var commData = staffNames.map(function(s){return Utils.sumCommission(stgP[s]||[]);});
+  Charts.staffComparison('c-staff-bk', staffNames, [
+    {label:'Bookings', data:bkData},
+    {label:'Commission (CA$)', data:commData}
+  ]);
+
+  var ratings = {Happy:'4.9',Flower:'5.0',Daisy:'4.8',Hannah:'4.9'};
+  var html = staffNames.map(function(s, i) {
+    var p = stgP[s] || [];
+    var b = stgB[s] || [];
+    var rev = Utils.sumRevenue(p);
+    var comm = Utils.sumCommission(p);
+    var completed = b.filter(function(x){return x.status==='completed';}).length;
+    var noshow    = b.filter(function(x){return x.status==='no-show';}).length;
+    var avg = p.length ? rev/p.length : 0;
+    return '<tr><td><div style="display:flex;align-items:center;gap:6px"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,'+colors[i]+','+colors[(i+1)%4]+')">'+s[0]+'</div>'+s+'</div></td><td>'+b.length+'</td><td class="td-pos">'+completed+'</td><td '+(noshow>0?'class="td-neg"':'')+'>'+noshow+'</td><td class="td-pos">'+Utils.fCurrency(rev)+'</td><td style="color:var(--pink);font-weight:600">'+Utils.fCurrency(comm)+'</td><td class="td-pos">'+Utils.fCurrency(rev-comm)+'</td><td>'+Utils.fCurrency(avg)+'</td><td style="color:var(--amber)">'+ratings[s]+' ⭐</td></tr>';
+  }).join('');
+  document.getElementById('staff-tbody').innerHTML = html || '<tr><td colspan="9" style="text-align:center;padding:1.5rem;color:var(--text3)">No data</td></tr>';
+  Utils.makeSortable(document.getElementById('staff-table'));
+}
+
+// ── SERVICES ──
+function renderServices() {
+  var sg = Utils.groupBy(FP, 'service_name');
+  var keys = Object.keys(sg).sort(function(a,b){return Utils.sumRevenue(sg[b])-Utils.sumRevenue(sg[a]);});
+  var revData = keys.map(function(k){return Utils.sumRevenue(sg[k]);});
+  var bkData  = keys.map(function(k){return sg[k].length;});
+  var total   = Utils.sumRevenue(FP);
+
+  Charts.hBar('c-svc-rev', keys, revData, '#E91E8C');
+  Charts.hBar('c-svc-bk',  keys, bkData,  '#7C3AED');
+
+  var maxRev = revData[0] || 1;
+  var html = keys.map(function(k) {
+    var rev = Utils.sumRevenue(sg[k]);
+    var cnt = sg[k].length;
+    var avg = cnt > 0 ? rev/cnt : 0;
+    var share = total > 0 ? (rev/total*100) : 0;
+    return '<tr><td class="tds">'+k+'</td><td>'+cnt+'</td><td class="td-pos">'+Utils.fCurrency(rev)+'</td><td>'+Utils.fCurrency(avg)+'</td><td><div style="display:flex;align-items:center;gap:.5rem"><div class="bar-mini"><div class="bar-mini-fill" style="width:'+Math.round(rev/maxRev*100)+'%"></div></div><span style="font-size:.72rem;color:var(--text2);white-space:nowrap">'+share.toFixed(1)+'%</span></div></td></tr>';
+  }).join('') || '<tr><td colspan="5" style="text-align:center;padding:1.5rem;color:var(--text3)">No data</td></tr>';
+  document.getElementById('svc-tbody').innerHTML = html;
+  Utils.makeSortable(document.getElementById('svc-table'));
+}
+
+// ── CLIENTS ──
+function renderClients() {
+  var clients = SB.CACHE.clients;
+  var kpis = [
+    {l:'Total Clients', v:clients.length, c:'#E91E8C'},
+    {l:'VIP (Gold+)',   v:clients.filter(function(c){return c.tier==='gold'||c.tier==='platinum';}).length, c:'#D97706'},
+    {l:'Silver',        v:clients.filter(function(c){return c.tier==='silver';}).length, c:'#7C3AED'},
+    {l:'Avg Loyalty Pts',v:clients.length>0?Math.round(clients.reduce(function(s,c){return s+(c.loyalty_points||0);},0)/clients.length):0, c:'#059669'}
+  ];
+  document.getElementById('client-kpis').innerHTML = kpis.map(function(k) {
+    return '<div class="kpi-card" style="--kpi-color:'+k.c+'"><div class="kpi-value">'+k.v+'</div><div class="kpi-label">'+k.l+'</div></div>';
+  }).join('');
+
+  var tiers = {standard:0,silver:0,gold:0,platinum:0};
+  clients.forEach(function(c){tiers[c.tier||'standard']++;});
+  Charts.doughnut('c-client-seg', ['Standard','Silver','Gold','Platinum'], [tiers.standard,tiers.silver,tiers.gold,tiers.platinum], ['#93C5FD','#C4B5FD','#FCD34D','#E91E8C']);
+
+  var bkByClient = Utils.groupBy(FB, 'client_name');
+  var newClients  = Object.keys(bkByClient).filter(function(c){return bkByClient[c].length===1;}).length;
+  var returning   = Object.keys(bkByClient).filter(function(c){return bkByClient[c].length>1;}).length;
+  Charts.doughnut('c-client-type', ['New','Returning'], [newClients, returning], ['#6EE7B7','#E91E8C']);
+
+  // Top clients by payment
+  var payByClient = Utils.groupBy(FP, 'client_name');
+  var clientKeys = Object.keys(payByClient).sort(function(a,b){return Utils.sumRevenue(payByClient[b])-Utils.sumRevenue(payByClient[a]);}).slice(0,20);
+
+  var tierBadge = {standard:'<span class="badge badge-blue">Standard</span>',silver:'<span class="badge badge-violet">Silver</span>',gold:'<span class="badge badge-gold">★ Gold</span>',platinum:'<span class="badge badge-pink">Platinum</span>'};
+  var clientMap = {};
+  clients.forEach(function(c){clientMap[(c.first_name||'')+' '+(c.last_name||'')] = c;});
+
+  var html = clientKeys.map(function(name) {
+    var payments = payByClient[name];
+    var rev = Utils.sumRevenue(payments);
+    var avg = payments.length > 0 ? rev/payments.length : 0;
+    var client = clientMap[name] || {};
+    var tier = client.tier || 'standard';
+    var lastPay = payments.sort(function(a,b){return new Date(b.paid_at)-new Date(a.paid_at);})[0];
+    var bd = client.birthday ? new Date(client.birthday) : null;
+    var bdStr = bd ? bd.toLocaleDateString('en-CA',{month:'short',day:'numeric'}) : '—';
+    return '<tr><td class="tds">'+name+'</td><td>'+(tierBadge[tier]||tierBadge.standard)+'</td><td>'+payments.length+'</td><td class="td-pos">'+Utils.fCurrency(rev)+'</td><td>'+Utils.fCurrency(avg)+'</td><td class="td-muted">'+(lastPay?Utils.fDate(lastPay.paid_at):'—')+'</td><td class="td-muted">'+bdStr+'</td><td style="color:var(--amber);font-weight:600">'+(client.loyalty_points||0)+'</td></tr>';
+  }).join('') || '<tr><td colspan="8" style="text-align:center;padding:1.5rem;color:var(--text3)">No client data</td></tr>';
+  document.getElementById('client-tbody').innerHTML = html;
+  Utils.makeSortable(document.getElementById('client-table'));
+}
+
+// ── COMPARE ──
+function renderCompare() {
+  var range = Utils.getRange(STATE.period, STATE.customStart, STATE.customEnd);
+  var cmpRange = Utils.getCompareRange(STATE.period, range);
+  var curKPIs  = Utils.calcKPIs(FB, FP, SB.CACHE.clients);
+  var prevKPIs = Utils.calcKPIs(CB, CP, SB.CACHE.clients);
+
+  var kpiDefs = [
+    {l:'Revenue',   cur:curKPIs.revenue,   prev:prevKPIs.revenue,   fmt:Utils.fCurrency},
+    {l:'Bookings',  cur:curKPIs.bookings,  prev:prevKPIs.bookings,  fmt:function(v){return v;}},
+    {l:'Avg Ticket',cur:curKPIs.avgTicket, prev:prevKPIs.avgTicket, fmt:Utils.fCurrency},
+    {l:'Return Rate',cur:curKPIs.returnRate,prev:prevKPIs.returnRate,fmt:Utils.fPct}
+  ];
+
+  document.getElementById('compare-kpis').innerHTML = kpiDefs.map(function(k) {
+    var d = Utils.fDelta(k.cur, k.prev);
+    var cls = 'delta-'+d.dir;
+    return '<div class="kpi-card" style="--kpi-color:#E91E8C">' +
+      '<div class="kpi-top"><span class="kpi-delta '+cls+'">'+(d.dir==='up'?'↑':d.dir==='down'?'↓':'→')+' '+d.pct+'%</span></div>' +
+      '<div class="kpi-value">'+k.fmt(k.cur)+'</div>' +
+      '<div class="kpi-label">'+k.l+'</div>' +
+      '<div class="kpi-compare">Prev: '+k.fmt(k.prev)+'</div>' +
+      '</div>';
+  }).join('');
+
+  // Compare chart
+  var grouped = Utils.groupByDate(FP,'paid_at','day');
+  var cGrouped= Utils.groupByDate(CP,'paid_at','day');
+  var allKeys = Object.keys(grouped).sort().slice(-30);
+  var cur30   = allKeys.map(function(k){return Utils.sumRevenue(grouped[k]||[]);});
+  var prev30  = allKeys.map(function(k,i){var pk=Object.keys(cGrouped).sort()[i];return pk?Utils.sumRevenue(cGrouped[pk]||[]):0;});
+  Charts.revenueBar('c-compare-rev', allKeys.map(function(l){return Utils.fDate(l,{month:'short',day:'numeric'});}), cur30, prev30, null);
+
+  // Staff compare
+  var staffNames = ['Happy','Flower','Daisy','Hannah'];
+  var stgCur  = Utils.groupBy(FP,'staff_name');
+  var stgPrev = Utils.groupBy(CP,'staff_name');
+  var maxRev  = Math.max.apply(null, staffNames.map(function(s){return Utils.sumRevenue(stgCur[s]||[]);})) || 1;
+  document.getElementById('staff-compare-list').innerHTML = staffNames.map(function(s) {
+    var cur  = Utils.sumRevenue(stgCur[s]||[]);
+    var prev = Utils.sumRevenue(stgPrev[s]||[]);
+    var d = Utils.fDelta(cur, prev);
+    var pct = maxRev > 0 ? Math.round(cur/maxRev*100) : 0;
+    return '<div class="comp-row"><div style="font-size:.8rem;font-weight:500">'+s+'</div>' +
+      '<div style="display:flex;align-items:center;gap:.4rem"><div class="bar-mini"><div class="bar-mini-fill" style="width:'+pct+'%"></div></div></div>' +
+      '<div class="td-pos" style="font-size:.8rem">'+Utils.fCurrency(cur)+'</div>' +
+      '<div><span class="vs-chip vs-'+d.dir+'">'+(d.dir==='up'?'↑':d.dir==='down'?'↓':'→')+' '+d.pct+'%</span></div></div>';
+  }).join('');
+
+  // Service compare
+  var svcCur  = Utils.groupBy(FP,'service_name');
+  var svcPrev = Utils.groupBy(CP,'service_name');
+  var allSvc  = Object.keys(svcCur).sort(function(a,b){return Utils.sumRevenue(svcCur[b])-Utils.sumRevenue(svcCur[a]);}).slice(0,6);
+  var maxSvcRev = allSvc.length > 0 ? Utils.sumRevenue(svcCur[allSvc[0]]) : 1;
+  document.getElementById('service-compare-list').innerHTML = allSvc.map(function(s) {
+    var cur  = Utils.sumRevenue(svcCur[s]||[]);
+    var prev = Utils.sumRevenue(svcPrev[s]||[]);
+    var d = Utils.fDelta(cur, prev);
+    var pct = maxSvcRev > 0 ? Math.round(cur/maxSvcRev*100) : 0;
+    return '<div class="comp-row"><div style="font-size:.78rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+s+'</div>' +
+      '<div style="display:flex;align-items:center;gap:.4rem"><div class="bar-mini"><div class="bar-mini-fill" style="width:'+pct+'%"></div></div></div>' +
+      '<div class="td-pos" style="font-size:.78rem">'+Utils.fCurrency(cur)+'</div>' +
+      '<div><span class="vs-chip vs-'+d.dir+'">'+(d.dir==='up'?'↑':d.dir==='down'?'↓':'→')+' '+d.pct+'%</span></div></div>';
+  }).join('') || '<div style="padding:1rem;color:var(--text3);font-size:.8rem">No comparison data</div>';
+}
+
+// ── INTENSITY ──
+function renderIntensity() {
+  var kpis = Utils.calcKPIs(FB, FP, SB.CACHE.clients);
+  var iKpis = [
+    {l:'Busiest Day',  v:kpis.busiestDay||'—',  c:'#E91E8C'},
+    {l:'Busiest Hour', v:kpis.busiestHour||'—', c:'#7C3AED'},
+    {l:'Top Staff',    v:kpis.bestStaff||'—',   c:'#0891B2'},
+    {l:'Top Service',  v:(kpis.topService||'—').split(' ').slice(0,2).join(' '), c:'#059669'}
+  ];
+  document.getElementById('intensity-kpis').innerHTML = iKpis.map(function(k) {
+    return '<div class="kpi-card" style="--kpi-color:'+k.c+'"><div class="kpi-value" style="font-size:1.1rem">'+k.v+'</div><div class="kpi-label">'+k.l+'</div></div>';
+  }).join('');
+
+  // Big heatmap
+  var days = 7, hours = 12;
+  var grid = [];
+  for (var d=0;d<days;d++){grid.push([]);for(var h=0;h<hours;h++)grid[d].push(0);}
+  FB.forEach(function(b){
+    if(!b.booked_at)return;
+    var dt=new Date(b.booked_at);
+    var day=(dt.getDay()+6)%7;
+    var hour=dt.getHours()-9;
+    if(day>=0&&day<days&&hour>=0&&hour<hours)grid[day][hour]++;
+  });
+  Charts.heatmap('heatmap-big', grid);
+
+  // By day chart
+  var dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  var dayData = [0,0,0,0,0,0,0];
+  FB.forEach(function(b){if(b.booked_at){var d=(new Date(b.booked_at).getDay()+6)%7;dayData[d]++;}});
+  Charts.revenueBar('c-by-day', dayNames, dayData, null, null);
+
+  // By hour chart
+  var hourNames = ['9am','10am','11am','12pm','1pm','2pm','3pm','4pm','5pm','6pm'];
+  var hourData = new Array(10).fill(0);
+  FB.forEach(function(b){if(b.booked_at){var h=new Date(b.booked_at).getHours()-9;if(h>=0&&h<10)hourData[h]++;}});
+  Charts.revenueBar('c-by-hour', hourNames, hourData, null, null);
+}
+
+function renderFallback() {
+  Utils.toast('Running in demo mode — no live data', 'warning');
+  renderRevenue();
+}
+
+function exportAll(type) {
+  if (type === 'excel') Export.exportPayments(FP, STATE.period);
+  else if (type === 'csv') Export.exportBookings(FB, STATE.period);
+  else Export.exportRevenueReport(Utils.calcKPIs(FB,FP,SB.CACHE.clients), FB, FP, STATE.period);
+}
+</script>
+
+</body>
+</html>

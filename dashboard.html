@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>March Nails — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="css/core.css">
+<link rel="stylesheet" href="css/components.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* Dashboard specific */
+.kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: .85rem; margin-bottom: 1rem; }
+.kpi-sparkline { height: 36px; margin-top: .4rem; }
+.chart-area { height: 210px; position: relative; }
+.drill-container { display: none; }
+.drill-container.active { display: block; }
+.main-view { transition: opacity .2s; }
+.main-view.hidden { opacity: 0; pointer-events: none; }
+
+/* Heatmap labels */
+.heatmap-wrap { overflow-x: auto; }
+
+/* Top table */
+.rank-bar { height: 6px; background: var(--s1); border-radius: 4px; overflow: hidden; margin-top: 4px; }
+.rank-bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--pink), var(--violet)); transition: width .6s; }
+
+/* Comparison chip */
+.vs-chip {
+  display: inline-flex; align-items: center; gap: .35rem;
+  font-size: .68rem; font-weight: 600; padding: .18rem .55rem;
+  border-radius: 50px; white-space: nowrap;
+}
+.vs-up   { background: var(--green-bg); color: var(--green); }
+.vs-down { background: var(--red-bg);   color: var(--red); }
+.vs-flat { background: var(--s1); color: var(--text3); }
+
+@media (max-width: 1280px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 980px)  { .kpi-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 600px)  { .kpi-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-name">March <span>Nails</span></div>
+      <div class="brand-sub">Business Intelligence</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Analytics</div>
+      <a class="nav-item active" href="dashboard.html"><i class="fa-solid fa-gauge-high"></i>Dashboard</a>
+      <a class="nav-item" href="reports.html"><i class="fa-solid fa-chart-column"></i>Reports</a>
+      <div class="nav-section">Operations</div>
+      <a class="nav-item" href="appointments.html"><i class="fa-solid fa-calendar-check"></i>Appointments<span class="nav-badge" id="nb-pending">0</span></a>
+      <a class="nav-item" href="clients.html"><i class="fa-solid fa-users"></i>Clients</a>
+      <a class="nav-item" href="staff.html"><i class="fa-solid fa-id-badge"></i>Staff</a>
+      <div class="nav-section">Business</div>
+      <a class="nav-item" href="appointments.html#revenue"><i class="fa-solid fa-money-bill-trend-up"></i>Revenue</a>
+      <a class="nav-item" href="appointments.html#emails"><i class="fa-solid fa-envelope"></i>Email Log</a>
+      <a class="nav-item" href="appointments.html#services"><i class="fa-solid fa-scissors"></i>Services</a>
+      <a class="nav-item" href="appointments.html#loyalty"><i class="fa-solid fa-crown"></i>Loyalty</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar">A</div>
+        <div><div class="user-name">Admin</div><div class="user-role">Salon Owner</div></div>
+        <button class="btn btn-ghost btn-icon" onclick="logout()" title="Sign out" style="margin-left:auto"><i class="fa-solid fa-right-from-bracket" style="font-size:.8rem;color:var(--text3)"></i></button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-area">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <button class="btn btn-ghost btn-icon tbmenu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="fa-solid fa-bars"></i></button>
+      <div class="topbar-title" id="tb-title">Dashboard</div>
+      <div class="topbar-date" id="tb-date"></div>
+      <div class="topbar-right">
+        <div id="conn-status" style="font-size:.72rem;color:var(--text3)"><i class="fa-solid fa-circle-notch fa-spin" style="font-size:.7rem"></i> Connecting…</div>
+        <button class="btn btn-primary btn-sm" onclick="window.location.href='appointments.html#new'"><i class="fa-solid fa-plus"></i>New Appointment</button>
+        <a href="appointments.html" class="btn btn-ghost btn-icon" title="Notifications"><i class="fa-solid fa-bell" style="font-size:.95rem"></i></a>
+      </div>
+    </div>
+
+    <div class="page-content">
+
+      <!-- PAGE HEADER -->
+      <div class="page-header">
+        <div>
+          <h1 id="dash-greeting">Good morning ✦</h1>
+          <p id="dash-subtext">Loading data...</p>
+        </div>
+        <div class="page-actions">
+          <div class="export-group">
+            <button class="export-btn excel" onclick="exportDashboard('excel')"><i class="fa-solid fa-file-excel"></i>Excel</button>
+            <button class="export-btn pdf"   onclick="exportDashboard('pdf')"><i class="fa-solid fa-file-pdf"></i>PDF</button>
+            <button class="export-btn csv"   onclick="exportDashboard('csv')"><i class="fa-solid fa-file-csv"></i>CSV</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- FILTER BAR -->
+      <div class="filter-bar">
+        <span class="filter-bar-label"><i class="fa-solid fa-filter" style="color:var(--pink)"></i></span>
+
+        <!-- Period -->
+        <div class="filter-group" id="period-pills">
+          <button class="period-pill active" data-period="today">Today</button>
+          <button class="period-pill" data-period="yesterday">Yesterday</button>
+          <button class="period-pill" data-period="7d">7 Days</button>
+          <button class="period-pill" data-period="30d">30 Days</button>
+          <button class="period-pill" data-period="this_month">This Month</button>
+          <button class="period-pill" data-period="last_month">Last Month</button>
+          <button class="period-pill" data-period="this_year">This Year</button>
+          <button class="period-pill" data-period="custom">Custom</button>
+        </div>
+
+        <div class="filter-sep"></div>
+
+        <!-- Custom date range (hidden by default) -->
+        <div class="date-range-wrap" id="custom-range" style="display:none">
+          <input type="date" class="date-input" id="f-start">
+          <span class="date-range-sep">→</span>
+          <input type="date" class="date-input" id="f-end">
+          <button class="btn btn-primary btn-sm" onclick="applyCustomRange()">Apply</button>
+        </div>
+
+        <div class="filter-sep"></div>
+
+        <!-- Staff -->
+        <select class="filter-select" id="f-staff">
+          <option value="all">All Staff</option>
+          <option value="Happy">Happy</option>
+          <option value="Flower">Flower</option>
+          <option value="Daisy">Daisy</option>
+          <option value="Hannah">Hannah</option>
+        </select>
+
+        <!-- Service -->
+        <select class="filter-select" id="f-service">
+          <option value="all">All Services</option>
+          <option value="Acrylic Full Set">Acrylic Full Set</option>
+          <option value="Acrylic Refill">Acrylic Refill</option>
+          <option value="Gel-X Extensions">Gel-X Extensions</option>
+          <option value="Pedicure Shellac">Pedicure Shellac</option>
+          <option value="Manicure Shellac">Manicure Shellac</option>
+          <option value="Lash Extensions">Lash Extensions</option>
+        </select>
+
+        <!-- Compare toggle -->
+        <button class="compare-toggle" id="compare-btn" onclick="toggleCompare()">
+          <i class="fa-solid fa-code-compare"></i>Compare
+        </button>
+      </div>
+
+      <!-- KPI CARDS -->
+      <div class="kpi-grid" id="kpi-grid"></div>
+
+      <!-- DRILL-DOWN BREADCRUMB -->
+      <div class="drill-breadcrumb" id="drill-crumb" style="display:none">
+        <button class="drill-back" onclick="drillBack()"><i class="fa-solid fa-chevron-left"></i>Back</button>
+        <span class="drill-sep">›</span>
+        <span class="drill-crumb active" id="drill-label">Detail</span>
+      </div>
+
+      <!-- MAIN CHARTS VIEW -->
+      <div id="main-view">
+        <div class="grid grid-2 mb-1">
+          <!-- Revenue chart with drill-down -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Revenue</div>
+                <div class="card-subtitle" id="rev-subtitle">Click a bar to drill down</div>
+              </div>
+              <div class="card-actions">
+                <div id="rev-compare-chip"></div>
+                <select class="filter-select" id="rev-group" onchange="refreshCharts()" style="min-width:90px">
+                  <option value="day">Daily</option>
+                  <option value="week">Weekly</option>
+                  <option value="month">Monthly</option>
+                </select>
+              </div>
+            </div>
+            <div class="chart-area"><canvas id="c-revenue"></canvas></div>
+          </div>
+
+          <!-- Booking status + service breakdown -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Booking Status</div>
+              <div class="card-actions">
+                <select class="filter-select" id="status-view" onchange="refreshCharts()" style="min-width:110px">
+                  <option value="status">By Status</option>
+                  <option value="service">By Service</option>
+                  <option value="staff">By Staff</option>
+                  <option value="method">By Payment</option>
+                </select>
+              </div>
+            </div>
+            <div class="chart-area"><canvas id="c-breakdown"></canvas></div>
+          </div>
+        </div>
+
+        <!-- DRILL-DOWN DETAIL CHART -->
+        <div class="card mb-1" id="drill-detail" style="display:none">
+          <div class="card-header">
+            <div>
+              <div class="card-title" id="drill-detail-title">Detail</div>
+              <div class="card-subtitle" id="drill-detail-sub"></div>
+            </div>
+            <div class="card-actions">
+              <button class="btn btn-ghost btn-sm" onclick="drillBack()"><i class="fa-solid fa-chevron-left"></i>Back</button>
+            </div>
+          </div>
+          <div class="chart-area"><canvas id="c-drill"></canvas></div>
+        </div>
+
+        <div class="grid grid-3 mb-1">
+          <!-- Staff comparison -->
+          <div class="card" style="grid-column: span 2">
+            <div class="card-header">
+              <div><div class="card-title">Staff Performance</div><div class="card-subtitle">Revenue, bookings and commission</div></div>
+              <div class="card-actions">
+                <select class="filter-select" id="staff-metric" onchange="refreshCharts()" style="min-width:100px">
+                  <option value="revenue">Revenue</option>
+                  <option value="bookings">Bookings</option>
+                  <option value="commission">Commission</option>
+                </select>
+              </div>
+            </div>
+            <div class="chart-area"><canvas id="c-staff"></canvas></div>
+          </div>
+
+          <!-- Top services -->
+          <div class="card">
+            <div class="card-header"><div class="card-title">Top Services</div></div>
+            <div id="top-services-list"></div>
+          </div>
+        </div>
+
+        <!-- Heatmap + trend -->
+        <div class="grid grid-2 mb-1">
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">Booking Heatmap</div><div class="card-subtitle">Day × Hour intensity</div></div>
+              <div id="heatmap-legend" style="display:flex;gap:.3rem;align-items:center;font-size:.65rem;color:var(--text3)">
+                Low <div style="width:10px;height:10px;border-radius:2px;background:var(--s1)"></div>
+                <div style="width:10px;height:10px;border-radius:2px;background:rgba(233,30,140,.3)"></div>
+                <div style="width:10px;height:10px;border-radius:2px;background:rgba(233,30,140,.6)"></div>
+                <div style="width:10px;height:10px;border-radius:2px;background:rgba(233,30,140,.9)"></div> High
+              </div>
+            </div>
+            <div class="heatmap-wrap"><div id="heatmap-container"></div></div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">Revenue Trend</div><div class="card-subtitle">30-day rolling</div></div>
+            </div>
+            <div class="chart-area"><canvas id="c-trend"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Summary table -->
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Period Summary</div><div class="card-subtitle" id="summary-period-label"></div></div>
+            <div class="card-actions">
+              <div class="table-controls" style="margin:0">
+                <div class="search-box" style="min-width:140px">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="summary-search" placeholder="Search…">
+                </div>
+              </div>
+              <div class="export-group">
+                <button class="export-btn excel" onclick="exportSummaryTable('excel')"><i class="fa-solid fa-file-excel"></i>Excel</button>
+                <button class="export-btn csv"   onclick="exportSummaryTable('csv')"><i class="fa-solid fa-file-csv"></i>CSV</button>
+              </div>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table" id="summary-table">
+              <thead>
+                <tr>
+                  <th>Date</th><th>Client</th><th>Service</th><th>Staff</th>
+                  <th>Amount</th><th>Method</th><th>Commission</th><th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="summary-tbody">
+                <tr><td colspan="8"><div class="loading"><div class="spinner"></div>Loading…</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:.75rem;flex-wrap:wrap;gap:.5rem">
+            <div class="table-info" id="summary-info"></div>
+            <div class="pagination" id="summary-pagination"></div>
+          </div>
+        </div>
+      </div>
+      <!-- /main-view -->
+
+    </div><!-- /page-content -->
+  </div><!-- /main-area -->
+</div><!-- /app-layout -->
+
+<div id="toast-container"></div>
+
+<script src="js/supabase.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/export.js"></script>
+<script>
+'use strict';
+
+// ── State ──
+var STATE = {
+  period: 'today',
+  customStart: null,
+  customEnd: null,
+  staff: 'all',
+  service: 'all',
+  compare: false,
+  drillLevel: 0,
+  drillDate: null,
+  page: 1,
+  pageSize: 15
+};
+
+var FILTERED_BOOKINGS = [];
+var FILTERED_PAYMENTS = [];
+var COMPARE_BOOKINGS  = [];
+var COMPARE_PAYMENTS  = [];
+
+// ── Auth ──
+if (!sessionStorage.getItem('mn_auth')) { window.location.href = 'index.html'; }
+function logout() { sessionStorage.removeItem('mn_auth'); window.location.href = 'index.html'; }
+
+// ── Clock ──
+Utils.startClock(
+  document.getElementById('dash-greeting'),
+  document.getElementById('tb-date')
+);
+
+// ── Init ──
+window.addEventListener('DOMContentLoaded', function() {
+  setupFilterListeners();
+  SB.testConnection().then(function(ok) {
+    var statusEl = document.getElementById('conn-status');
+    if (ok) {
+      statusEl.innerHTML = '<i class="fa-solid fa-circle-check" style="color:var(--green);font-size:.7rem"></i> <span style="color:var(--green)">Live</span>';
+    } else {
+      statusEl.innerHTML = '<i class="fa-solid fa-circle-exclamation" style="color:var(--amber);font-size:.7rem"></i> <span style="color:var(--amber)">Offline</span>';
+    }
+    loadAndRender();
+  });
+});
+
+function setupFilterListeners() {
+  // Period pills
+  document.getElementById('period-pills').addEventListener('click', function(e) {
+    var pill = e.target.closest('.period-pill');
+    if (!pill) return;
+    document.querySelectorAll('.period-pill').forEach(function(p) { p.classList.remove('active'); });
+    pill.classList.add('active');
+    STATE.period = pill.dataset.period;
+    STATE.page = 1;
+    STATE.drillLevel = 0;
+    hideDrill();
+    var cr = document.getElementById('custom-range');
+    cr.style.display = STATE.period === 'custom' ? 'flex' : 'none';
+    if (STATE.period !== 'custom') render();
+  });
+
+  // Staff filter
+  document.getElementById('f-staff').addEventListener('change', function() {
+    STATE.staff = this.value; STATE.page = 1; render();
+  });
+
+  // Service filter
+  document.getElementById('f-service').addEventListener('change', function() {
+    STATE.service = this.value; STATE.page = 1; render();
+  });
+
+  // Summary search
+  var searchEl = document.getElementById('summary-search');
+  if (searchEl) {
+    searchEl.addEventListener('input', function() {
+      var q = this.value.toLowerCase();
+      var rows = document.querySelectorAll('#summary-tbody tr[data-row]');
+      var vis = 0;
+      rows.forEach(function(r) {
+        var show = !q || r.textContent.toLowerCase().indexOf(q) !== -1;
+        r.style.display = show ? '' : 'none';
+        if (show) vis++;
+      });
+      document.getElementById('summary-info').textContent = vis + ' results';
+    });
+  }
+}
+
+function applyCustomRange() {
+  STATE.customStart = document.getElementById('f-start').value;
+  STATE.customEnd   = document.getElementById('f-end').value;
+  if (!STATE.customStart || !STATE.customEnd) { Utils.toast('Select start and end date', 'warning'); return; }
+  STATE.page = 1; render();
+}
+
+function toggleCompare() {
+  STATE.compare = !STATE.compare;
+  var btn = document.getElementById('compare-btn');
+  btn.classList.toggle('active', STATE.compare);
+  render();
+}
+
+// ── Load data ──
+function loadAndRender() {
+  SB.loadAll().then(function() {
+    render();
+    updatePendingBadge();
+  }).catch(function() {
+    renderFallback();
+  });
+}
+
+function updatePendingBadge() {
+  var pending = SB.CACHE.bookings.filter(function(b) { return b.status === 'pending'; });
+  var badge = document.getElementById('nb-pending');
+  if (badge) { badge.textContent = pending.length; badge.style.display = pending.length ? '' : 'none'; }
+}
+
+// ── Filter data ──
+function applyFilters() {
+  var range = Utils.getRange(STATE.period, STATE.customStart, STATE.customEnd);
+  FILTERED_BOOKINGS = Utils.filterBookings(SB.CACHE.bookings, {
+    range: range, staff: STATE.staff, service: STATE.service
+  });
+  FILTERED_PAYMENTS = SB.CACHE.payments.filter(function(p) {
+    if (!Utils.inRange(p.paid_at, range)) return false;
+    if (STATE.staff   !== 'all' && p.staff_name   !== STATE.staff)   return false;
+    if (STATE.service !== 'all' && p.service_name !== STATE.service) return false;
+    return true;
+  });
+
+  if (STATE.compare) {
+    var cmpRange = Utils.getCompareRange(STATE.period, range);
+    COMPARE_BOOKINGS = Utils.filterBookings(SB.CACHE.bookings, { range: cmpRange });
+    COMPARE_PAYMENTS = SB.CACHE.payments.filter(function(p) { return Utils.inRange(p.paid_at, cmpRange); });
+  }
+}
+
+// ── Main render ──
+function render() {
+  applyFilters();
+  var range = Utils.getRange(STATE.period, STATE.customStart, STATE.customEnd);
+  var kpis  = Utils.calcKPIs(FILTERED_BOOKINGS, FILTERED_PAYMENTS, SB.CACHE.clients, range);
+  var cKPIs = STATE.compare ? Utils.calcKPIs(COMPARE_BOOKINGS, COMPARE_PAYMENTS, SB.CACHE.clients, Utils.getCompareRange(STATE.period, range)) : null;
+
+  renderKPIs(kpis, cKPIs);
+  refreshCharts();
+  renderSummaryTable();
+  updateSubtext(kpis, range);
+}
+
+function updateSubtext(kpis, range) {
+  var sub = document.getElementById('dash-subtext');
+  var lbl = document.getElementById('summary-period-label');
+  var txt = Utils.fDate(range.start.toISOString(), {month:'short',day:'numeric'}) + ' – ' +
+            Utils.fDate(range.end.toISOString(), {month:'short',day:'numeric'});
+  if (sub) sub.textContent = txt + ' · ' + kpis.bookings + ' bookings · ' + Utils.fCurrency(kpis.revenue) + ' revenue';
+  if (lbl) lbl.textContent = txt;
+}
+
+// ── KPI Cards ──
+function renderKPIs(kpis, prev) {
+  var cards = [
+    { key: 'revenue',    label: 'Total Revenue',    val: Utils.fCurrency(kpis.revenue),    prevVal: prev ? prev.revenue    : null, color: '#E91E8C', icon: 'fa-money-bill-trend-up', isCurrency: true },
+    { key: 'bookings',   label: 'Total Bookings',   val: kpis.bookings,                    prevVal: prev ? prev.bookings   : null, color: '#7C3AED', icon: 'fa-calendar-check' },
+    { key: 'avgTicket',  label: 'Avg Ticket',       val: Utils.fCurrency(kpis.avgTicket),  prevVal: prev ? prev.avgTicket  : null, color: '#0891B2', icon: 'fa-ticket', isCurrency: true },
+    { key: 'clients',    label: 'Active Clients',   val: kpis.clients,                     prevVal: prev ? prev.clients    : null, color: '#059669', icon: 'fa-users' },
+    { key: 'returnRate', label: 'Return Rate',      val: Utils.fPct(kpis.returnRate),      prevVal: prev ? prev.returnRate : null, color: '#D97706', icon: 'fa-rotate-left' },
+    { key: 'noshowRate', label: 'No-show Rate',     val: Utils.fPct(kpis.noshowRate),      prevVal: prev ? prev.noshowRate : null, color: '#EF4444', icon: 'fa-user-slash', lowerBetter: true },
+    { key: 'commission', label: 'Total Commission', val: Utils.fCurrency(kpis.commission), prevVal: prev ? prev.commission : null, color: '#F59E0B', icon: 'fa-hand-holding-dollar', isCurrency: true },
+    { key: 'netRevenue', label: 'Net Revenue',      val: Utils.fCurrency(kpis.netRevenue), prevVal: prev ? prev.netRevenue : null, color: '#10B981', icon: 'fa-coins', isCurrency: true },
+    { key: 'bestStaff',  label: 'Top Staff',        val: kpis.bestStaff || '—',            prevVal: null, color: '#8B5CF6', icon: 'fa-star', noCompare: true },
+    { key: 'topSvc',     label: 'Top Service',      val: (kpis.topService || '—').split(' ').slice(0,2).join(' '), prevVal: null, color: '#06B6D4', icon: 'fa-scissors', noCompare: true }
+  ];
+
+  var html = '';
+  cards.forEach(function(c) {
+    var delta = '';
+    if (!c.noCompare && prev && c.prevVal !== null) {
+      var d = Utils.fDelta(
+        parseFloat(String(c.val).replace(/[^0-9.]/g,'')),
+        parseFloat(c.prevVal)
+      );
+      var cls = c.lowerBetter ? (d.dir === 'up' ? 'delta-down' : 'delta-up') : ('delta-' + d.dir);
+      var arrow = d.dir === 'up' ? '↑' : d.dir === 'down' ? '↓' : '→';
+      delta = '<span class="kpi-delta ' + cls + '">' + arrow + ' ' + d.pct + '%</span>';
+    } else if (!c.noCompare) {
+      delta = '';
+    }
+
+    html += '<div class="kpi-card" style="--kpi-color:' + c.color + '">' +
+      '<div class="kpi-top">' +
+        '<div class="kpi-icon" style="background:' + c.color + '18"><i class="fa-solid ' + c.icon + '" style="color:' + c.color + '"></i></div>' +
+        delta +
+      '</div>' +
+      '<div class="kpi-value" id="kpi-' + c.key + '">' + c.val + '</div>' +
+      '<div class="kpi-label">' + c.label + '</div>' +
+    '</div>';
+  });
+  document.getElementById('kpi-grid').innerHTML = html;
+
+  // Animate values
+  setTimeout(function() {
+    document.querySelectorAll('.kpi-value').forEach(function(el) {
+      el.style.opacity = '1';
+    });
+  }, 50);
+}
+
+// ── Charts ──
+function refreshCharts() {
+  if (!FILTERED_PAYMENTS) return;
+
+  var groupBy = document.getElementById('rev-group') ? document.getElementById('rev-group').value : 'day';
+  var grouped = Utils.groupByDate(FILTERED_PAYMENTS, 'paid_at', groupBy);
+  var labels  = Object.keys(grouped).sort();
+  var revData = labels.map(function(k) { return Utils.sumRevenue(grouped[k]); });
+
+  var cmpData = null;
+  if (STATE.compare && COMPARE_PAYMENTS.length) {
+    var cGrouped = Utils.groupByDate(COMPARE_PAYMENTS, 'paid_at', groupBy);
+    cmpData = labels.map(function(k, i) {
+      var ck = Object.keys(cGrouped).sort()[i];
+      return ck ? Utils.sumRevenue(cGrouped[ck]) : 0;
+    });
+    var cmpTotal = Utils.sumRevenue(COMPARE_PAYMENTS);
+    var curTotal = Utils.sumRevenue(FILTERED_PAYMENTS);
+    var diff = Utils.fDelta(curTotal, cmpTotal);
+    var chip = document.getElementById('rev-compare-chip');
+    if (chip) {
+      chip.innerHTML = '<span class="vs-chip vs-' + diff.dir + '">' +
+        (diff.dir === 'up' ? '↑' : diff.dir === 'down' ? '↓' : '→') + ' ' + diff.pct + '% vs prev</span>';
+    }
+  }
+
+  // Format labels
+  var fmtLabels = labels.map(function(l) {
+    if (groupBy === 'day') return Utils.fDate(l, {month:'short',day:'numeric'});
+    if (groupBy === 'month') { var p = l.split('-'); return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(p[1])-1] + ' ' + p[0]; }
+    return l;
+  });
+
+  // Revenue bar — drill-down on click
+  Charts.revenueBar('c-revenue', fmtLabels, revData, cmpData, function(label, val) {
+    drillDown(label, labels[fmtLabels.indexOf(label)], val);
+  });
+  document.getElementById('rev-subtitle').textContent = 'Click a bar to drill down · ' + Utils.fCurrency(Utils.sumRevenue(FILTERED_PAYMENTS)) + ' total';
+
+  // Breakdown chart
+  renderBreakdown();
+
+  // Staff comparison
+  renderStaffChart();
+
+  // Top services
+  renderTopServices();
+
+  // Heatmap
+  renderHeatmap();
+
+  // Trend
+  renderTrend();
+}
+
+function renderBreakdown() {
+  var view = document.getElementById('status-view') ? document.getElementById('status-view').value : 'status';
+
+  if (view === 'status') {
+    var confirmed  = FILTERED_BOOKINGS.filter(function(b) { return b.status === 'confirmed';  }).length;
+    var pending    = FILTERED_BOOKINGS.filter(function(b) { return b.status === 'pending';    }).length;
+    var completed  = FILTERED_BOOKINGS.filter(function(b) { return b.status === 'completed';  }).length;
+    var cancelled  = FILTERED_BOOKINGS.filter(function(b) { return b.status === 'cancelled';  }).length;
+    var noshow     = FILTERED_BOOKINGS.filter(function(b) { return b.status === 'no-show';    }).length;
+    Charts.bookingStatus('c-breakdown', confirmed, pending, completed, cancelled, noshow);
+
+  } else if (view === 'service') {
+    var sg = Utils.groupBy(FILTERED_PAYMENTS, 'service_name');
+    var sKeys = Object.keys(sg).sort(function(a,b) { return Utils.sumRevenue(sg[b]) - Utils.sumRevenue(sg[a]); }).slice(0,6);
+    Charts.doughnut('c-breakdown', sKeys, sKeys.map(function(k) { return Utils.sumRevenue(sg[k]); }));
+
+  } else if (view === 'staff') {
+    var stg = Utils.groupBy(FILTERED_PAYMENTS, 'staff_name');
+    var stKeys = Object.keys(stg);
+    Charts.doughnut('c-breakdown', stKeys, stKeys.map(function(k) { return Utils.sumRevenue(stg[k]); }),
+      ['#E91E8C','#7C3AED','#0891B2','#D97706']);
+
+  } else if (view === 'method') {
+    var mg = Utils.groupBy(FILTERED_PAYMENTS, 'method');
+    var mKeys = Object.keys(mg);
+    var mLabels = mKeys.map(function(k) { return k.replace('_',' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); }); });
+    Charts.doughnut('c-breakdown', mLabels, mKeys.map(function(k) { return Utils.sumRevenue(mg[k]); }),
+      ['#10B981','#3B82F6','#8B5CF6','#F59E0B']);
+  }
+}
+
+function renderStaffChart() {
+  var metric = document.getElementById('staff-metric') ? document.getElementById('staff-metric').value : 'revenue';
+  var staffNames = ['Happy','Flower','Daisy','Hannah'];
+  var stg = Utils.groupBy(FILTERED_PAYMENTS, 'staff_name');
+  var stgBk = Utils.groupBy(FILTERED_BOOKINGS, 'staff_name');
+
+  var data = staffNames.map(function(s) {
+    if (metric === 'revenue')   return Utils.sumRevenue(stg[s] || []);
+    if (metric === 'commission') return Utils.sumCommission(stg[s] || []);
+    return (stgBk[s] || []).length;
+  });
+
+  Charts.hBar('c-staff', staffNames, data, '#E91E8C');
+}
+
+function renderTopServices() {
+  var sg = Utils.groupBy(FILTERED_PAYMENTS, 'service_name');
+  var keys = Object.keys(sg).sort(function(a,b) { return Utils.sumRevenue(sg[b]) - Utils.sumRevenue(sg[a]); }).slice(0,5);
+  var maxRev = keys.length > 0 ? Utils.sumRevenue(sg[keys[0]]) : 1;
+  var html = '';
+  var nums = ['gold','silver','bronze','',''];
+  keys.forEach(function(k, i) {
+    var rev = Utils.sumRevenue(sg[k]);
+    var pct = maxRev > 0 ? (rev / maxRev * 100) : 0;
+    html += '<div class="rank-item">' +
+      '<div class="rank-num ' + (nums[i]||'') + '">' + (i+1) + '</div>' +
+      '<div class="rank-body">' +
+        '<div class="rank-name">' + k + '</div>' +
+        '<div class="rank-meta">' + (sg[k].length) + ' bookings</div>' +
+        '<div class="rank-bar"><div class="rank-bar-fill" style="width:' + pct + '%"></div></div>' +
+      '</div>' +
+      '<div class="rank-value">' + Utils.fCurrency(rev) + '</div>' +
+      '</div>';
+  });
+  if (!html) html = '<div class="empty-state"><i class="fa-solid fa-scissors"></i><p>No data</p></div>';
+  document.getElementById('top-services-list').innerHTML = html;
+}
+
+function renderHeatmap() {
+  var days = 7, hours = 10;
+  var grid = [];
+  for (var d = 0; d < days; d++) {
+    grid.push([]);
+    for (var h = 0; h < hours; h++) grid[d].push(0);
+  }
+  FILTERED_BOOKINGS.forEach(function(b) {
+    if (!b.booked_at) return;
+    var dt = new Date(b.booked_at);
+    var day = (dt.getDay() + 6) % 7; // Mon=0
+    var hour = dt.getHours() - 9;
+    if (day >= 0 && day < days && hour >= 0 && hour < hours) grid[day][hour]++;
+  });
+  Charts.heatmap('heatmap-container', grid);
+}
+
+function renderTrend() {
+  // Last 30 days rolling revenue
+  var now = new Date();
+  var labels = [], data = [];
+  for (var i = 29; i >= 0; i--) {
+    var d = new Date(now); d.setDate(d.getDate() - i);
+    var ds = d.toISOString().split('T')[0];
+    labels.push(i % 5 === 0 ? Utils.fDate(ds, {month:'short',day:'numeric'}) : '');
+    var dayPay = SB.CACHE.payments.filter(function(p) { return p.paid_at && p.paid_at.startsWith(ds); });
+    data.push(Utils.sumRevenue(dayPay));
+  }
+  Charts.lineChart('c-trend', labels, [{label:'Revenue', data:data}]);
+}
+
+// ── Drill-down ──
+function drillDown(fmtDate, rawDate, totalRev) {
+  if (!rawDate) return;
+  STATE.drillLevel = 1;
+  STATE.drillDate = rawDate;
+
+  // Filter bookings/payments for this specific day
+  var dayBookings = FILTERED_BOOKINGS.filter(function(b) {
+    return b.booked_at && b.booked_at.startsWith(rawDate);
+  });
+  var dayPayments = FILTERED_PAYMENTS.filter(function(p) {
+    return p.paid_at && p.paid_at.startsWith(rawDate);
+  });
+
+  // Show drill UI
+  document.getElementById('drill-crumb').style.display = 'flex';
+  document.getElementById('drill-label').textContent = fmtDate;
+  document.getElementById('drill-detail').style.display = 'block';
+  document.getElementById('drill-detail-title').textContent = 'Revenue on ' + fmtDate;
+  document.getElementById('drill-detail-sub').textContent =
+    dayPayments.length + ' payments · ' + Utils.fCurrency(Utils.sumRevenue(dayPayments));
+
+  // Hourly breakdown for that day
+  var hours = ['9am','10am','11am','12pm','1pm','2pm','3pm','4pm','5pm'];
+  var hourData = hours.map(function(_, hi) {
+    var h = hi + 9;
+    return dayPayments.filter(function(p) {
+      return p.paid_at && new Date(p.paid_at).getHours() === h;
+    }).reduce(function(s, p) { return s + parseFloat(p.amount||0); }, 0);
+  });
+
+  Charts.revenueBar('c-drill', hours, hourData, null, function(hourLabel) {
+    // Second drill: hour → individual transactions
+    var h = hours.indexOf(hourLabel) + 9;
+    var txns = dayPayments.filter(function(p) {
+      return p.paid_at && new Date(p.paid_at).getHours() === h;
+    });
+    renderDrillTable(txns, fmtDate + ' · ' + hourLabel);
+  });
+
+  // Update summary table to show only this day
+  renderSummaryTable(dayBookings, dayPayments);
+}
+
+function renderDrillTable(payments, label) {
+  document.getElementById('drill-detail-title').textContent = 'Transactions — ' + label;
+  var html = payments.map(function(p) {
+    return '<tr>' +
+      '<td class="td-muted">' + Utils.fDateTime(p.paid_at) + '</td>' +
+      '<td class="tds">' + (p.client_name||'—') + '</td>' +
+      '<td class="td-muted">' + (p.service_name||'—') + '</td>' +
+      '<td class="td-muted">' + (p.staff_name||'—') + '</td>' +
+      '<td class="td-pos">' + Utils.fCurrency(p.amount) + '</td>' +
+      '<td class="td-muted">' + (p.method||'—') + '</td>' +
+      '</tr>';
+  }).join('') || '<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--text3)">No transactions</td></tr>';
+
+  var table = document.getElementById('drill-detail');
+  table.querySelector('.chart-area').style.display = 'none';
+  var existing = table.querySelector('.drill-txn-table');
+  if (existing) existing.remove();
+  var wrap = document.createElement('div');
+  wrap.className = 'table-wrap drill-txn-table';
+  wrap.innerHTML = '<table class="data-table"><thead><tr><th>Time</th><th>Client</th><th>Service</th><th>Staff</th><th>Amount</th><th>Method</th></tr></thead><tbody>' + html + '</tbody></table>';
+  table.appendChild(wrap);
+}
+
+function drillBack() {
+  STATE.drillLevel = 0;
+  STATE.drillDate = null;
+  document.getElementById('drill-crumb').style.display = 'none';
+  document.getElementById('drill-detail').style.display = 'none';
+  var table = document.getElementById('drill-detail');
+  var txnTable = table.querySelector('.drill-txn-table');
+  if (txnTable) txnTable.remove();
+  var chartArea = table.querySelector('.chart-area');
+  if (chartArea) chartArea.style.display = '';
+  renderSummaryTable();
+}
+
+function hideDrill() {
+  drillBack();
+}
+
+// ── Summary table ──
+var ALL_ROWS = [];
+
+function renderSummaryTable(bookingsOverride, paymentsOverride) {
+  var bookings = bookingsOverride || FILTERED_BOOKINGS;
+  var payments = paymentsOverride || FILTERED_PAYMENTS;
+
+  // Build rows — merge bookings with payment info
+  var paymentsByBooking = {};
+  payments.forEach(function(p) {
+    if (p.booking_id) paymentsByBooking[p.booking_id] = p;
+  });
+
+  ALL_ROWS = bookings.map(function(b) {
+    var pay = paymentsByBooking[b.id] || {};
+    return {
+      date:     b.booked_at,
+      client:   b.client_name || '—',
+      service:  b.service_name || '—',
+      staff:    b.staff_name || '—',
+      amount:   pay.amount || b.service_price || 0,
+      method:   pay.method || b.payment_method || '—',
+      commission: pay.commission || 0,
+      status:   b.status || 'pending'
+    };
+  }).sort(function(a,b) { return new Date(b.date) - new Date(a.date); });
+
+  renderPage(1);
+}
+
+function renderPage(p) {
+  STATE.page = p;
+  var start = (p-1) * STATE.pageSize;
+  var pageRows = ALL_ROWS.slice(start, start + STATE.pageSize);
+  var statusMap = {
+    confirmed: 'status-confirmed', pending: 'status-pending',
+    completed: 'status-completed', cancelled: 'status-cancelled', 'no-show': 'status-noshow'
+  };
+  var html = pageRows.map(function(r) {
+    var cls = statusMap[r.status] || 'status-pending';
+    var lbl = r.status ? r.status.charAt(0).toUpperCase() + r.status.slice(1) : 'Pending';
+    return '<tr data-row="1">' +
+      '<td class="td-muted">' + Utils.fDateTime(r.date) + '</td>' +
+      '<td class="tds">' + r.client + '</td>' +
+      '<td class="td-muted">' + r.service + '</td>' +
+      '<td class="td-muted">' + r.staff + '</td>' +
+      '<td class="td-pos">' + Utils.fCurrency(r.amount) + '</td>' +
+      '<td class="td-muted">' + r.method.replace('_',' ') + '</td>' +
+      '<td class="td-num" style="color:var(--pink)">' + Utils.fCurrency(r.commission) + '</td>' +
+      '<td><span class="status ' + cls + '">' + lbl + '</span></td>' +
+      '</tr>';
+  }).join('');
+
+  if (!html) html = '<tr><td colspan="8"><div class="empty-state" style="padding:1.5rem"><i class="fa-solid fa-calendar-xmark"></i><p>No records for this period</p></div></td></tr>';
+  document.getElementById('summary-tbody').innerHTML = html;
+
+  var total = ALL_ROWS.length;
+  document.getElementById('summary-info').textContent = total + ' total records';
+  renderPagination(total);
+
+  // Make sortable
+  Utils.makeSortable(document.getElementById('summary-table'));
+}
+
+function renderPagination(total) {
+  var pages = Math.ceil(total / STATE.pageSize);
+  if (pages <= 1) { document.getElementById('summary-pagination').innerHTML = ''; return; }
+  var cur = STATE.page;
+  var html = '<button class="page-btn" onclick="renderPage(' + (cur-1) + ')" ' + (cur<=1?'disabled':'') + '>&lsaquo;</button>';
+  for (var i = 1; i <= Math.min(pages, 7); i++) {
+    html += '<button class="page-btn' + (i===cur?' active':'') + '" onclick="renderPage('+i+')">' + i + '</button>';
+  }
+  if (pages > 7) html += '<span style="color:var(--text3);font-size:.75rem;padding:0 .3rem">…' + pages + '</span>';
+  html += '<button class="page-btn" onclick="renderPage(' + (cur+1) + ')" ' + (cur>=pages?'disabled':'') + '>&rsaquo;</button>';
+  document.getElementById('summary-pagination').innerHTML = html;
+}
+
+// ── Fallback (no Supabase) ──
+function renderFallback() {
+  // Show demo data so the UI is not empty
+  var kpis = { revenue:840, bookings:12, clients:215, avgTicket:70, returnRate:68,
+    noshowRate:8.3, commission:210, netRevenue:630, bestStaff:'Flower', topService:'Acrylic Refill' };
+  renderKPIs(kpis, null);
+  document.getElementById('dash-subtext').textContent = 'Demo mode — connect Supabase to see live data';
+
+  // Render empty charts with placeholder labels
+  var labels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  Charts.revenueBar('c-revenue', labels, [420,580,340,690,780,920,310], null, null);
+  Charts.bookingStatus('c-breakdown', 48, 12, 89, 8, 5);
+  Charts.hBar('c-staff', ['Happy','Flower','Daisy','Hannah'], [3200,3520,1900,1575], '#E91E8C');
+  Charts.heatmap('heatmap-container', [[1,3,4,2,0,1,2,3,1,0],[0,2,5,4,3,2,1,2,0,0],[1,1,3,5,4,3,2,1,1,0],[0,3,4,4,5,4,3,2,1,0],[2,3,4,5,4,3,2,1,0,0],[1,4,5,5,4,3,2,1,0,0],[0,0,0,0,0,0,0,0,0,0]]);
+
+  var tLabels = [], tData = [];
+  for (var i=29;i>=0;i--) {
+    tLabels.push(i%5===0?('Day -'+i):''); tData.push(Math.random()*600+200);
+  }
+  Charts.lineChart('c-trend', tLabels, [{label:'Revenue',data:tData}]);
+
+  var svcHtml = ['Acrylic Refill','Acrylic Full Set','Gel-X Extensions','Pedicure Shellac','Manicure Shellac'].map(function(s,i) {
+    var rev = [4080,3900,3520,2090,1925][i];
+    return '<div class="rank-item"><div class="rank-num '+ ['gold','silver','bronze','',''][i] +'">'+(i+1)+'</div><div class="rank-body"><div class="rank-name">'+s+'</div><div class="rank-bar"><div class="rank-bar-fill" style="width:'+Math.round(rev/40.8)+'%"></div></div></div><div class="rank-value">'+Utils.fCurrency(rev)+'</div></div>';
+  }).join('');
+  document.getElementById('top-services-list').innerHTML = svcHtml;
+  document.getElementById('summary-tbody').innerHTML = '<tr><td colspan="8"><div class="empty-state" style="padding:1.5rem"><i class="fa-solid fa-database"></i><h3>Connect Supabase</h3><p>Go to Settings to configure your database</p></div></td></tr>';
+}
+
+// ── Export ──
+function exportDashboard(type) {
+  if (type === 'excel') Export.exportPayments(FILTERED_PAYMENTS, STATE.period);
+  else if (type === 'csv') Export.exportBookings(FILTERED_BOOKINGS, STATE.period);
+  else Export.exportRevenueReport(
+    Utils.calcKPIs(FILTERED_BOOKINGS, FILTERED_PAYMENTS, SB.CACHE.clients),
+    FILTERED_BOOKINGS, FILTERED_PAYMENTS, STATE.period
+  );
+}
+function exportSummaryTable(type) {
+  if (type === 'excel') Export.exportBookings(FILTERED_BOOKINGS, STATE.period);
+  else Export.downloadCSV(Export.toCSV(ALL_ROWS.map(function(r) {
+    return [Utils.fDateTime(r.date), r.client, r.service, r.staff, Utils.fCurrency(r.amount), r.method, Utils.fCurrency(r.commission), r.status];
+  }), ['Date','Client','Service','Staff','Amount','Method','Commission','Status']), 'dashboard-' + STATE.period);
+}
+</script>
+
+</body>
+</html>
