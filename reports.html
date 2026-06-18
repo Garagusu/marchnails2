@@ -36,13 +36,19 @@
     <div class="sidebar-brand"><div class="brand-name">March <span>Nails</span></div><div class="brand-sub">Business Intelligence</div></div>
     <nav class="sidebar-nav">
       <div class="nav-section">Analytics</div>
-      <a class="nav-item" href="dashboard.html"><i class="fa-solid fa-gauge-high"></i>Dashboard</a>
+      <a class="nav-item " href="dashboard.html"><i class="fa-solid fa-gauge-high"></i>Dashboard</a>
       <a class="nav-item active" href="reports.html"><i class="fa-solid fa-chart-column"></i>Reports</a>
       <div class="nav-section">Operations</div>
-      <a class="nav-item" href="appointments.html"><i class="fa-solid fa-calendar-check"></i>Appointments</a>
-      <a class="nav-item" href="clients.html"><i class="fa-solid fa-users"></i>Clients</a>
-      <a class="nav-item" href="staff.html"><i class="fa-solid fa-id-badge"></i>Staff</a>
+      <a class="nav-item " href="appointments.html"><i class="fa-solid fa-calendar-check"></i>Appointments</a>
+      <a class="nav-item " href="clients.html"><i class="fa-solid fa-users"></i>Clients</a>
+      <a class="nav-item " href="staff.html"><i class="fa-solid fa-id-badge"></i>Staff</a>
+      <div class="nav-section">Business</div>
+      <a class="nav-item" href="reports.html"><i class="fa-solid fa-money-bill-trend-up"></i>Revenue</a>
+      <a class="nav-item" href="appointments.html"><i class="fa-solid fa-envelope"></i>Email Log</a>
+      <a class="nav-item" href="appointments.html"><i class="fa-solid fa-scissors"></i>Services</a>
+      <a class="nav-item" href="clients.html"><i class="fa-solid fa-crown"></i>Loyalty</a>
     </nav>
+    
     <div class="sidebar-footer">
       <div class="user-info">
         <div class="user-avatar">A</div>
@@ -267,8 +273,8 @@
 <script>
 'use strict';
 
-if (!sessionStorage.getItem('mn_auth')) { window.location.href = 'index.html'; }
-function logout() { sessionStorage.removeItem('mn_auth'); window.location.href = 'index.html'; }
+if (!localStorage.getItem('mn_auth')) { window.location.href = 'index.html'; }
+function logout() { localStorage.removeItem('mn_auth'); window.location.href = 'index.html'; }
 
 var STATE = { period: 'this_month', customStart: null, customEnd: null, staff: 'all', service: 'all' };
 var FP = [], FB = [], CP = [], CB = [];
@@ -277,7 +283,21 @@ Utils.startClock(null, document.getElementById('tb-date'));
 
 window.addEventListener('DOMContentLoaded', function() {
   setupFilters();
-  SB.testConnection().then(function() { SB.loadAll().then(render).catch(renderFallback); });
+    // Load demo data immediately - never show blank UI
+  if (SB.DEMO) {
+    SB.CACHE.clients   = SB.DEMO.clients;
+    SB.CACHE.payments  = SB.DEMO.payments;
+    SB.CACHE.bookings  = SB.DEMO.bookings;
+    SB.CACHE.email_log = SB.DEMO.email_log;
+  }
+  if (typeof render === "function") { render(); }
+  // Try Supabase in background (demo data already loaded)
+  if (window.location.protocol !== 'file:') {
+    SB.loadAll().then(function() {
+      if (typeof render === 'function') render();
+      else if (typeof renderKPIs === 'function') { renderKPIs(); renderClientList(); }
+    }).catch(function(){});
+  };
 });
 
 function setupFilters() {

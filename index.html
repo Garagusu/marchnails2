@@ -154,7 +154,7 @@ function doLogin() {
 
   setTimeout(function() {
     if (email === 'admin@admin.com' && pass === ADMIN_PW) {
-      sessionStorage.setItem('mn_auth', '1');
+      localStorage.setItem('mn_auth', '1');
       window.location.href = 'dashboard.html';
     } else {
       err.style.display = 'block';
@@ -165,7 +165,7 @@ function doLogin() {
 }
 
 // Already logged in?
-if (sessionStorage.getItem('mn_auth') === '1') {
+if (localStorage.getItem('mn_auth') === '1') {
   window.location.href = 'dashboard.html';
 }
 </script>

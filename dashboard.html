@@ -339,8 +339,8 @@ var COMPARE_BOOKINGS  = [];
 var COMPARE_PAYMENTS  = [];
 
 // ── Auth ──
-if (!sessionStorage.getItem('mn_auth')) { window.location.href = 'index.html'; }
-function logout() { sessionStorage.removeItem('mn_auth'); window.location.href = 'index.html'; }
+if (!localStorage.getItem('mn_auth')) { window.location.href = 'index.html'; }
+function logout() { localStorage.removeItem('mn_auth'); window.location.href = 'index.html'; }
 
 // ── Clock ──
 Utils.startClock(
@@ -351,15 +351,29 @@ Utils.startClock(
 // ── Init ──
 window.addEventListener('DOMContentLoaded', function() {
   setupFilterListeners();
-  SB.testConnection().then(function(ok) {
-    var statusEl = document.getElementById('conn-status');
-    if (ok) {
-      statusEl.innerHTML = '<i class="fa-solid fa-circle-check" style="color:var(--green);font-size:.7rem"></i> <span style="color:var(--green)">Live</span>';
-    } else {
-      statusEl.innerHTML = '<i class="fa-solid fa-circle-exclamation" style="color:var(--amber);font-size:.7rem"></i> <span style="color:var(--amber)">Offline</span>';
-    }
-    loadAndRender();
-  });
+  
+  // Load demo data IMMEDIATELY so UI is never blank
+  SB.CACHE.clients   = SB.DEMO ? SB.DEMO.clients   : [];
+  SB.CACHE.payments  = SB.DEMO ? SB.DEMO.payments  : [];
+  SB.CACHE.bookings  = SB.DEMO ? SB.DEMO.bookings  : [];
+  SB.CACHE.email_log = SB.DEMO ? SB.DEMO.email_log : [];
+  render();
+  updatePendingBadge();
+
+  // Then try Supabase in background
+  var statusEl = document.getElementById('conn-status');
+  if (window.location.protocol !== 'file:') {
+    SB.testConnection().then(function(ok) {
+      if (ok) {
+        statusEl.innerHTML = '<i class="fa-solid fa-circle-check" style="color:var(--green);font-size:.7rem"></i> <span style="color:var(--green)">Live</span>';
+        SB.loadAll().then(function() { render(); updatePendingBadge(); });
+      } else {
+        statusEl.innerHTML = '<i class="fa-solid fa-wifi" style="color:var(--amber);font-size:.7rem"></i> <span style="color:var(--amber)">Demo mode</span>';
+      }
+    });
+  } else {
+    statusEl.innerHTML = '<i class="fa-solid fa-circle-play" style="color:var(--violet);font-size:.7rem"></i> <span style="color:var(--violet)">Demo</span>';
+  }
 });
 
 function setupFilterListeners() {

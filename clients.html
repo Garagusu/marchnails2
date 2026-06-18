@@ -172,8 +172,8 @@
 <script>
 'use strict';
 
-if (!sessionStorage.getItem('mn_auth')) { window.location.href = 'index.html'; }
-function logout() { sessionStorage.removeItem('mn_auth'); window.location.href = 'index.html'; }
+if (!localStorage.getItem('mn_auth')) { window.location.href = 'index.html'; }
+function logout() { localStorage.removeItem('mn_auth'); window.location.href = 'index.html'; }
 
 var SELECTED_CLIENT = null;
 var SEGMENT = 'all';
@@ -182,12 +182,21 @@ var SEARCH_Q = '';
 Utils.startClock(null, document.getElementById('tb-date'));
 
 window.addEventListener('DOMContentLoaded', function() {
-  SB.testConnection().then(function() {
+    // Load demo data immediately - never show blank UI
+  if (SB.DEMO) {
+    SB.CACHE.clients   = SB.DEMO.clients;
+    SB.CACHE.payments  = SB.DEMO.payments;
+    SB.CACHE.bookings  = SB.DEMO.bookings;
+    SB.CACHE.email_log = SB.DEMO.email_log;
+  }
+  renderKPIs();
+  renderClientList();
+  // Try Supabase in background (demo data already loaded)
+  if (window.location.protocol !== 'file:') {
     SB.loadAll().then(function() {
-      renderKPIs();
-      renderClientList();
-    });
-  });
+      renderKPIs(); renderClientList();
+    }).catch(function(){});
+  };
 });
 
 function renderKPIs() {

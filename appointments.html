@@ -277,8 +277,8 @@
 <script>
 'use strict';
 
-if (!sessionStorage.getItem('mn_auth')) { window.location.href = 'index.html'; }
-function logout() { sessionStorage.removeItem('mn_auth'); window.location.href = 'index.html'; }
+if (!localStorage.getItem('mn_auth')) { window.location.href = 'index.html'; }
+function logout() { localStorage.removeItem('mn_auth'); window.location.href = 'index.html'; }
 
 var STATE = { period:'today', customStart:null, customEnd:null, staff:'all', status:'all', service:'all', view:'schedule', page:1, pageSize:20 };
 var CURRENT_DATE = new Date();
@@ -297,9 +297,27 @@ Utils.startClock(null, document.getElementById('tb-date'));
 window.addEventListener('DOMContentLoaded', function() {
   setupFilters();
   setNavDate();
-  SB.testConnection().then(function() {
-    SB.loadAll().then(render).catch(renderFallback);
-  });
+  // Load demo data immediately
+  if (SB.DEMO) {
+    SB.CACHE.clients   = SB.DEMO.clients;
+    SB.CACHE.payments  = SB.DEMO.payments;
+    SB.CACHE.bookings  = SB.DEMO.bookings;
+    SB.CACHE.email_log = SB.DEMO.email_log;
+  }
+  if (typeof render === 'function') render();
+  else if (typeof renderKPIs === 'function') { renderKPIs(); renderClientList(); }
+
+  // Try Supabase in background
+  if (window.location.protocol !== 'file:') {
+    SB.testConnection().then(function(ok) {
+      if (ok) {
+        SB.loadAll().then(function() {
+          if (typeof render === 'function') render();
+          else if (typeof renderKPIs === 'function') { renderKPIs(); renderClientList(); }
+        });
+      }
+    });
+  }
   populateClientSelect();
 });
 
