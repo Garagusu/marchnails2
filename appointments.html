@@ -3,60 +3,82 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>March Nails — Staff</title>
+<title>March Nails — Appointments</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="css/core.css">
 <link rel="stylesheet" href="css/components.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-.staff-hero { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1rem; }
-@media(max-width:900px) { .staff-hero { grid-template-columns:1fr 1fr; } }
-@media(max-width:500px) { .staff-hero { grid-template-columns:1fr; } }
-.staff-card { background:var(--white); border:1px solid var(--border); border-radius:var(--r); padding:1.1rem; box-shadow:var(--sh-sm); cursor:pointer; transition:all .2s; position:relative; overflow:hidden; }
-.staff-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--sc-grad); }
-.staff-card:hover { box-shadow:var(--sh-md); transform:translateY(-2px); }
-.staff-card.selected { border-color:var(--pink); box-shadow:0 0 0 2px var(--pink-bd), var(--sh-md); }
-.sc-av { width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.2rem; font-weight:700; color:#fff; margin:0 auto .7rem; border:2.5px solid var(--white); box-shadow:0 0 0 2px var(--border); background:var(--sc-grad); }
-.sc-name { font-family:var(--fontd); font-size:.95rem; font-weight:700; text-align:center; margin-bottom:2px; }
-.sc-role { font-size:.7rem; color:var(--text2); text-align:center; margin-bottom:.8rem; }
-.sc-stats { display:grid; grid-template-columns:1fr 1fr; gap:.35rem; }
-.sc-stat { background:var(--bg); border-radius:var(--r-xs); padding:.4rem; text-align:center; }
-.sc-stat-v { font-size:.9rem; font-weight:700; color:var(--pink); font-family:var(--fontd); }
-.sc-stat-l { font-size:.58rem; color:var(--text3); }
-/* Detail panel */
-.staff-detail { background:var(--white); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--sh-sm); overflow:hidden; }
-.staff-detail-header { padding:1.25rem; background:linear-gradient(135deg,var(--pink-bg),var(--violet-bg)); border-bottom:1px solid var(--border); }
-/* Shift grid */
-.shift-grid { display:grid; grid-template-columns:80px repeat(7,1fr); gap:2px; }
-.shift-head { font-size:.6rem; font-weight:700; text-transform:uppercase; color:var(--text3); padding:4px; text-align:center; letter-spacing:.06em; }
-.shift-name { font-size:.72rem; font-weight:500; color:var(--text2); padding:4px 6px; display:flex; align-items:center; }
-.shift-cell { padding:3px; display:flex; align-items:center; justify-content:center; border-radius:var(--r-xs); background:var(--bg); cursor:pointer; transition:background .15s; min-height:32px; }
-.shift-cell:hover { background:var(--s2); }
-.shift-on  { background:var(--green-bg); color:var(--green); }
-.shift-off { background:var(--red-bg);   color:var(--red); opacity:.6; }
-.shift-half{ background:var(--amber-bg); color:var(--amber); }
-/* KPI bar */
-.kpi-bar-item { display:flex; align-items:center; gap:.65rem; padding:.5rem 0; border-bottom:1px solid var(--s1); }
-.kpi-bar-item:last-child { border-bottom:none; }
-.kpi-bar-label { font-size:.78rem; color:var(--text2); width:120px; flex-shrink:0; }
-.kpi-bar-val { font-size:.82rem; font-weight:600; width:60px; text-align:right; flex-shrink:0; }
+/* ── CALENDAR ── */
+.calendar-wrap { overflow-x: auto; }
+.cal-grid { display: grid; gap: 2px; min-width: 700px; }
+.cal-head { display: grid; grid-template-columns: 90px repeat(8,1fr); gap: 2px; background: var(--bg); border-radius: var(--r-sm) var(--r-sm) 0 0; border: 1px solid var(--border); border-bottom: 2px solid var(--border); }
+.cal-head-cell { padding: 6px 5px; font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--text3); text-align: center; }
+.cal-row { display: grid; grid-template-columns: 90px repeat(8,1fr); gap: 2px; border-left: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--s1); }
+.cal-row:last-child { border-bottom: 1px solid var(--border); border-radius: 0 0 var(--r-sm) var(--r-sm); }
+.cal-label { padding: 6px 8px; display: flex; align-items: center; gap: 6px; background: var(--white); border-right: 1px solid var(--border); }
+.cal-slot { padding: 4px; min-height: 56px; display: flex; flex-direction: column; gap: 2px; background: var(--white); position: relative; }
+.cal-slot:hover { background: var(--bg); cursor: pointer; }
+.cal-appt {
+  border-radius: var(--r-xs); padding: 3px 5px;
+  cursor: pointer; transition: all .15s; position: relative;
+  border-left: 3px solid;
+}
+.cal-appt:hover { opacity: .85; transform: scale(1.02); }
+.cal-client { font-size: .62rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-svc    { font-size: .58rem; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-price  { font-size: .58rem; font-weight: 700; }
+.cal-add { width: 100%; height: 100%; min-height: 48px; display: flex; align-items: center; justify-content: center; border: 1.5px dashed var(--border); border-radius: var(--r-xs); cursor: pointer; transition: all .15s; color: var(--text3); font-size: .65rem; gap: 3px; }
+.cal-add:hover { border-color: var(--pink); color: var(--pink); background: var(--pink-bg); }
+
+/* ── APPOINTMENT MODAL ── */
+.pay-method-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.pay-method-btn {
+  padding: .6rem; border: 1.5px solid var(--border); border-radius: var(--r-sm);
+  font-size: .8rem; cursor: pointer; background: var(--white);
+  transition: all .15s; font-family: var(--font);
+  display: flex; align-items: center; justify-content: center; gap: .4rem;
+}
+.pay-method-btn.selected { border-color: var(--pink); background: var(--pink-bg); color: var(--pink); }
+.pay-method-btn:hover { border-color: var(--pink); }
+
+/* Status dot */
+.status-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.dot-confirmed { background: var(--blue); }
+.dot-pending   { background: var(--amber); }
+.dot-completed { background: var(--green); }
+.dot-cancelled { background: var(--text3); }
+.dot-noshow    { background: var(--red); }
+
+/* Quick stats bar */
+.quick-stats { display: grid; grid-template-columns: repeat(5,1fr); gap: .6rem; margin-bottom: 1rem; }
+.qs-item { background: var(--white); border: 1px solid var(--border); border-radius: var(--r-sm); padding: .65rem .85rem; text-align: center; }
+.qs-val { font-family: var(--fontd); font-size: 1.25rem; font-weight: 700; color: var(--text); }
+.qs-lbl { font-size: .65rem; color: var(--text2); margin-top: 2px; }
 </style>
 </head>
 <body>
 <div class="app-layout">
 
+  <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand"><div class="brand-name">March <span>Nails</span></div><div class="brand-sub">Business Intelligence</div></div>
     <nav class="sidebar-nav">
       <div class="nav-section">Analytics</div>
-      <a class="nav-item" href="dashboard.html"><i class="fa-solid fa-gauge-high"></i>Dashboard</a>
-      <a class="nav-item" href="reports.html"><i class="fa-solid fa-chart-column"></i>Reports</a>
+      <a class="nav-item " href="dashboard.html"><i class="fa-solid fa-gauge-high"></i>Dashboard</a>
+      <a class="nav-item " href="reports.html"><i class="fa-solid fa-chart-column"></i>Reports</a>
       <div class="nav-section">Operations</div>
-      <a class="nav-item" href="appointments.html"><i class="fa-solid fa-calendar-check"></i>Appointments</a>
-      <a class="nav-item" href="clients.html"><i class="fa-solid fa-users"></i>Clients</a>
-      <a class="nav-item active" href="staff.html"><i class="fa-solid fa-id-badge"></i>Staff</a>
+      <a class="nav-item active" href="appointments.html"><i class="fa-solid fa-calendar-check"></i>Appointments</a>
+      <a class="nav-item " href="clients.html"><i class="fa-solid fa-users"></i>Clients</a>
+      <a class="nav-item " href="staff.html"><i class="fa-solid fa-id-badge"></i>Staff</a>
+      <div class="nav-section">Business</div>
+      <a class="nav-item" href="reports.html"><i class="fa-solid fa-money-bill-trend-up"></i>Revenue</a>
+      <a class="nav-item" href="appointments.html"><i class="fa-solid fa-envelope"></i>Email Log</a>
+      <a class="nav-item" href="appointments.html"><i class="fa-solid fa-scissors"></i>Services</a>
+      <a class="nav-item" href="clients.html"><i class="fa-solid fa-crown"></i>Loyalty</a>
     </nav>
+    
     <div class="sidebar-footer">
       <div class="user-info">
         <div class="user-avatar">A</div>
@@ -69,139 +91,180 @@
   <div class="main-area">
     <div class="topbar">
       <button class="btn btn-ghost btn-icon" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="fa-solid fa-bars"></i></button>
-      <div class="topbar-title">Staff</div>
+      <div class="topbar-title">Appointments</div>
       <div class="topbar-date" id="tb-date"></div>
       <div class="topbar-right">
-        <div class="filter-group">
-          <select class="filter-select" id="f-period" onchange="render()">
-            <option value="today">Today</option>
-            <option value="7d">Last 7 Days</option>
-            <option value="this_month" selected>This Month</option>
-            <option value="last_month">Last Month</option>
-            <option value="this_year">This Year</option>
-          </select>
+        <button class="btn btn-primary" onclick="openNewAppt()"><i class="fa-solid fa-plus"></i>New Appointment</button>
+        <div class="export-group">
+          <button class="export-btn excel" onclick="exportAppts('excel')"><i class="fa-solid fa-file-excel"></i>Excel</button>
+          <button class="export-btn csv"   onclick="exportAppts('csv')"><i class="fa-solid fa-file-csv"></i>CSV</button>
         </div>
-        <button class="export-btn excel" onclick="exportStaff()"><i class="fa-solid fa-file-excel"></i>Export</button>
       </div>
     </div>
 
     <div class="page-content">
 
-      <!-- Staff Cards -->
-      <div class="staff-hero" id="staff-hero"></div>
-
-      <!-- Period Summary Table -->
-      <div class="card mb-1">
-        <div class="card-header">
-          <div class="card-title">Staff Performance Summary</div>
-          <div class="card-actions">
-            <div class="export-group">
-              <button class="export-btn excel" onclick="exportStaff()"><i class="fa-solid fa-file-excel"></i>Excel</button>
-              <button class="export-btn pdf"   onclick="exportStaffPDF()"><i class="fa-solid fa-file-pdf"></i>PDF</button>
-            </div>
-          </div>
+      <!-- FILTER BAR -->
+      <div class="filter-bar">
+        <span class="filter-bar-label"><i class="fa-solid fa-filter" style="color:var(--pink)"></i></span>
+        <div class="filter-group" id="period-pills">
+          <button class="period-pill active" data-period="today">Today</button>
+          <button class="period-pill" data-period="yesterday">Yesterday</button>
+          <button class="period-pill" data-period="7d">7 Days</button>
+          <button class="period-pill" data-period="this_month">This Month</button>
+          <button class="period-pill" data-period="custom">Custom</button>
         </div>
-        <div class="table-wrap">
-          <table class="data-table" id="staff-table">
-            <thead>
-              <tr>
-                <th>Staff</th><th>Bookings</th><th>Completed</th><th>No-shows</th>
-                <th>Revenue</th><th>Commission (25%)</th><th>Net</th><th>Avg Ticket</th><th>Progress</th>
-              </tr>
-            </thead>
-            <tbody id="staff-tbody"></tbody>
-          </table>
+        <div class="date-range-wrap" id="custom-range" style="display:none">
+          <input type="date" class="date-input" id="f-start">
+          <span class="date-range-sep">→</span>
+          <input type="date" class="date-input" id="f-end">
+          <button class="btn btn-primary btn-sm" onclick="applyCustom()">Apply</button>
+        </div>
+        <div class="filter-sep"></div>
+        <select class="filter-select" id="f-staff"><option value="all">All Staff</option><option>Happy</option><option>Flower</option><option>Daisy</option><option>Hannah</option></select>
+        <select class="filter-select" id="f-status">
+          <option value="all">All Status</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="pending">Pending</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+          <option value="no-show">No-show</option>
+        </select>
+        <select class="filter-select" id="f-service"><option value="all">All Services</option><option>Acrylic Full Set</option><option>Acrylic Refill</option><option>Gel-X Extensions</option><option>Pedicure Shellac</option><option>Manicure Shellac</option></select>
+      </div>
+
+      <!-- QUICK STATS -->
+      <div class="quick-stats" id="quick-stats"></div>
+
+      <!-- TABS: Schedule / List -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem">
+        <div class="report-tabs" style="margin:0">
+          <button class="report-tab active" id="tab-schedule-btn" onclick="switchView('schedule',this)"><i class="fa-solid fa-calendar-days"></i> Schedule</button>
+          <button class="report-tab" id="tab-list-btn" onclick="switchView('list',this)"><i class="fa-solid fa-list"></i> List</button>
+        </div>
+        <div style="display:flex;gap:.4rem;align-items:center">
+          <button class="btn btn-ghost btn-sm" id="nav-prev" onclick="navigate(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+          <span class="btn btn-ghost btn-sm" id="nav-date" style="cursor:default;min-width:120px;text-align:center;font-weight:600"></span>
+          <button class="btn btn-ghost btn-sm" id="nav-next" onclick="navigate(1)"><i class="fa-solid fa-chevron-right"></i></button>
+          <button class="btn btn-ghost btn-sm" onclick="goToday()">Today</button>
         </div>
       </div>
 
-      <!-- Charts Row -->
-      <div class="grid grid-2 mb-1">
-        <div class="card">
-          <div class="card-header"><div class="card-title">Revenue by Staff</div></div>
-          <div style="height:210px"><canvas id="c-staff-rev"></canvas></div>
-        </div>
-        <div class="card">
-          <div class="card-header"><div class="card-title">Bookings by Staff</div></div>
-          <div style="height:210px"><canvas id="c-staff-bk"></canvas></div>
+      <!-- SCHEDULE VIEW -->
+      <div id="view-schedule" class="card">
+        <div class="calendar-wrap">
+          <div id="cal-container"></div>
         </div>
       </div>
 
-      <!-- Staff Detail (click on card to expand) -->
-      <div class="staff-detail" id="staff-detail" style="display:none">
-        <div class="staff-detail-header" id="staff-detail-header"></div>
-        <div style="padding:1rem">
-          <div class="report-tabs" style="margin-bottom:.85rem">
-            <button class="report-tab active" onclick="showStaffTab('schedule',this)">Schedule</button>
-            <button class="report-tab" onclick="showStaffTab('kpi',this)">KPIs</button>
-            <button class="report-tab" onclick="showStaffTab('history',this)">Appointment History</button>
-            <button class="report-tab" onclick="showStaffTab('earnings',this)">Daily Earnings</button>
-          </div>
-
-          <!-- Schedule tab -->
-          <div id="stab-schedule">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
-              <div style="font-size:.82rem;font-weight:600;color:var(--text2)">This Week's Shift</div>
-              <button class="btn btn-primary btn-sm" onclick="saveShift()"><i class="fa-solid fa-check"></i>Save Shift</button>
-            </div>
-            <div id="shift-grid-wrap"></div>
-          </div>
-
-          <!-- KPI tab -->
-          <div id="stab-kpi" style="display:none">
-            <div class="grid grid-2">
-              <div>
-                <div style="font-size:.78rem;font-weight:700;color:var(--text2);margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.06em">KPI Targets</div>
-                <div id="kpi-bars"></div>
-              </div>
-              <div>
-                <div style="font-size:.78rem;font-weight:700;color:var(--text2);margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.06em">Revenue Trend</div>
-                <div style="height:180px"><canvas id="c-staff-trend"></canvas></div>
+      <!-- LIST VIEW -->
+      <div id="view-list" style="display:none">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Appointment List</div>
+            <div class="card-actions">
+              <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="appt-search" placeholder="Search…"></div>
+              <div class="export-group">
+                <button class="export-btn excel" onclick="exportAppts('excel')"><i class="fa-solid fa-file-excel"></i>Excel</button>
+                <button class="export-btn csv"   onclick="exportAppts('csv')"><i class="fa-solid fa-file-csv"></i>CSV</button>
               </div>
             </div>
           </div>
-
-          <!-- History tab -->
-          <div id="stab-history" style="display:none">
-            <div class="table-wrap">
-              <table class="data-table" id="staff-hist-table">
-                <thead><tr><th>Date</th><th>Client</th><th>Service</th><th>Price</th><th>Commission</th><th>Status</th></tr></thead>
-                <tbody id="staff-hist-tbody"></tbody>
-              </table>
-            </div>
+          <div class="table-wrap">
+            <table class="data-table" id="appt-table">
+              <thead>
+                <tr>
+                  <th>#</th><th>Client</th><th>Service</th><th>Staff</th>
+                  <th>Date & Time</th><th>Price</th><th>Payment</th><th>Status</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="appt-tbody"></tbody>
+            </table>
           </div>
-
-          <!-- Earnings tab -->
-          <div id="stab-earnings" style="display:none">
-            <div class="table-wrap">
-              <table class="data-table" id="staff-earn-table">
-                <thead><tr><th>Date</th><th>Bookings</th><th>Revenue</th><th>Commission</th><th>Net to Salon</th></tr></thead>
-                <tbody id="staff-earn-tbody"></tbody>
-              </table>
-            </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:.75rem;flex-wrap:wrap;gap:.5rem">
+            <div class="table-info" id="appt-info"></div>
+            <div class="pagination" id="appt-pagination"></div>
           </div>
         </div>
       </div>
 
+    </div><!-- /page-content -->
+  </div>
+</div>
+
+<!-- NEW APPOINTMENT MODAL -->
+<div class="modal-overlay" id="new-appt-modal" style="display:none" onclick="if(event.target===this)closeModal('new-appt-modal')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fa-solid fa-calendar-plus" style="color:var(--pink)"></i> New Appointment</div>
+      <button class="modal-close" onclick="closeModal('new-appt-modal')">×</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Client</label><select class="form-select" id="m-client"><option value="">Select client…</option></select></div>
+      <div class="form-group"><label class="form-label">Service</label>
+        <select class="form-select" id="m-service" onchange="updatePrice()">
+          <option value="">Select service…</option>
+          <option value="Acrylic Full Set|75">Acrylic Full Set — CA$75</option>
+          <option value="Acrylic Refill|60">Acrylic Refill — CA$60</option>
+          <option value="Gel-X Extensions|80">Gel-X Extensions — CA$80</option>
+          <option value="Pedicure Shellac|55">Pedicure Shellac — CA$55</option>
+          <option value="Manicure Shellac|35">Manicure Shellac — CA$35</option>
+          <option value="Lash Extensions|89">Lash Extensions — CA$89</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Staff</label>
+        <select class="form-select" id="m-staff">
+          <option value="Happy">Happy</option><option value="Flower">Flower</option>
+          <option value="Daisy">Daisy</option><option value="Hannah">Hannah</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Date & Time</label><input type="datetime-local" class="form-input" id="m-datetime"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Price (CA$)</label><input type="number" class="form-input" id="m-price" value="0"></div>
+      <div class="form-group"><label class="form-label">Recurring</label>
+        <select class="form-select" id="m-recurring">
+          <option value="none">One-time</option><option value="2weeks">Every 2 weeks</option>
+          <option value="monthly">Monthly</option><option value="weekly">Weekly</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:.85rem"><label class="form-label">Notes / Allergy Warning</label><textarea class="form-input" id="m-notes" placeholder="Special requests, allergy notes…" style="height:65px;resize:none"></textarea></div>
+    <div style="background:var(--green-bg);border:1px solid var(--green-bd);border-radius:var(--r-sm);padding:.65rem .85rem;margin-bottom:1rem;font-size:.8rem" id="m-commission-preview">
+      Select a service to see commission preview
+    </div>
+    <div style="display:flex;gap:.5rem;justify-content:flex-end">
+      <button class="btn" onclick="closeModal('new-appt-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAppt()"><i class="fa-solid fa-check"></i>Create Appointment</button>
     </div>
   </div>
 </div>
 
-<!-- LEAVE REQUEST MODAL -->
-<div class="modal-overlay" id="leave-modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
-  <div class="modal" style="max-width:420px">
+<!-- PAYMENT MODAL -->
+<div class="modal-overlay" id="pay-modal" style="display:none" onclick="if(event.target===this)closeModal('pay-modal')">
+  <div class="modal">
     <div class="modal-header">
-      <div class="modal-title"><i class="fa-solid fa-umbrella-beach" style="color:var(--blue)"></i> Leave Request</div>
-      <button class="modal-close" onclick="document.getElementById('leave-modal').style.display='none'">×</button>
+      <div class="modal-title"><i class="fa-solid fa-cash-register" style="color:var(--green)"></i> Record Payment</div>
+      <button class="modal-close" onclick="closeModal('pay-modal')">×</button>
     </div>
-    <div class="form-group" style="margin-bottom:.75rem"><label class="form-label">Staff Member</label><input class="form-input" id="lv-staff" readonly></div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">From</label><input class="form-input" id="lv-from" type="date"></div>
-      <div class="form-group"><label class="form-label">To</label><input class="form-input" id="lv-to" type="date"></div>
+    <div id="pay-appt-info" style="background:var(--bg);border-radius:var(--r-sm);padding:.75rem;margin-bottom:1rem;font-size:.82rem"></div>
+    <div class="form-group" style="margin-bottom:.85rem">
+      <label class="form-label">Amount (CA$)</label>
+      <input type="number" class="form-input" id="pay-amount">
     </div>
-    <div class="form-group" style="margin-bottom:1rem"><label class="form-label">Reason</label><select class="form-select" id="lv-reason"><option>Personal</option><option>Medical</option><option>Vacation</option><option>Other</option></select></div>
-    <div style="display:flex;gap:.4rem;justify-content:flex-end">
-      <button class="btn" onclick="document.getElementById('leave-modal').style.display='none'">Cancel</button>
-      <button class="btn btn-primary" onclick="saveLeave()"><i class="fa-solid fa-check"></i>Submit</button>
+    <label class="form-label" style="margin-bottom:.5rem">Payment Method</label>
+    <div class="pay-method-grid" id="pay-method-grid">
+      <button class="pay-method-btn" data-method="cash"        onclick="selectPayMethod(this)"><i class="fa-solid fa-money-bill-wave" style="color:var(--green)"></i>Cash</button>
+      <button class="pay-method-btn" data-method="credit_card" onclick="selectPayMethod(this)"><i class="fa-solid fa-credit-card"    style="color:var(--blue)"></i>Credit Card</button>
+      <button class="pay-method-btn" data-method="debit"       onclick="selectPayMethod(this)"><i class="fa-solid fa-credit-card"    style="color:var(--violet)"></i>Debit</button>
+      <button class="pay-method-btn" data-method="online"      onclick="selectPayMethod(this)"><i class="fa-solid fa-mobile-alt"     style="color:var(--amber)"></i>Online</button>
+    </div>
+    <div style="background:var(--green-bg);border:1px solid var(--green-bd);border-radius:var(--r-sm);padding:.75rem;margin:1rem 0;font-size:.8rem" id="pay-summary"></div>
+    <div style="display:flex;gap:.5rem;justify-content:flex-end">
+      <button class="btn" onclick="closeModal('pay-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmPayment()"><i class="fa-solid fa-check"></i>Save Payment</button>
     </div>
   </div>
 </div>
@@ -210,7 +273,6 @@
 
 <script src="js/supabase.js"></script>
 <script src="js/utils.js"></script>
-<script src="js/charts.js"></script>
 <script src="js/export.js"></script>
 <script>
 'use strict';
@@ -218,309 +280,501 @@
 if (!sessionStorage.getItem('mn_auth')) { window.location.href = 'index.html'; }
 function logout() { sessionStorage.removeItem('mn_auth'); window.location.href = 'index.html'; }
 
-var SELECTED_STAFF = null;
-var STAFF_CONFIG = [
-  { name:'Happy',  role:'Acrylic & Nail Art',     color:'#E91E8C', grad:'linear-gradient(135deg,#E91E8C,#7C3AED)', target:{bookings:50,revenue:3500} },
-  { name:'Flower', role:'Gel Extensions & Ombré',  color:'#7C3AED', grad:'linear-gradient(135deg,#7C3AED,#4F46E5)', target:{bookings:45,revenue:4000} },
-  { name:'Daisy',  role:'Shellac & Chrome',        color:'#0891B2', grad:'linear-gradient(135deg,#06B6D4,#0284C7)', target:{bookings:40,revenue:2500} },
-  { name:'Hannah', role:'Pedicure Specialist',     color:'#D97706', grad:'linear-gradient(135deg,#D97706,#B45309)', target:{bookings:38,revenue:2000} }
-];
-var SHIFT_TEMPLATE = { Happy:'11111100', Flower:'11111100', Daisy:'01111100', Hannah:'11011100' }; // Mon–Sun
+var STATE = { period:'today', customStart:null, customEnd:null, staff:'all', status:'all', service:'all', view:'schedule', page:1, pageSize:20 };
+var CURRENT_DATE = new Date();
+var FB = [], SELECTED_BOOKING_ID = null, SELECTED_METHOD = 'cash';
+
+var STAFF_COLORS = {
+  Happy:  { color:'#E91E8C', bg:'#FDF2F8', border:'#F9A8D4', grad:'linear-gradient(135deg,#E91E8C,#7C3AED)' },
+  Flower: { color:'#7C3AED', bg:'#F5F3FF', border:'#C4B5FD', grad:'linear-gradient(135deg,#7C3AED,#4F46E5)' },
+  Daisy:  { color:'#0891B2', bg:'#ECFEFF', border:'#67E8F9', grad:'linear-gradient(135deg,#06B6D4,#0284C7)' },
+  Hannah: { color:'#D97706', bg:'#FFFBEB', border:'#FCD34D', grad:'linear-gradient(135deg,#D97706,#B45309)' }
+};
+var HOURS = ['9am','10am','11am','12pm','1pm','2pm','3pm','4pm','5pm'];
 
 Utils.startClock(null, document.getElementById('tb-date'));
 
 window.addEventListener('DOMContentLoaded', function() {
+  setupFilters();
+  setNavDate();
   SB.testConnection().then(function() {
-    SB.loadAll().then(render);
+    SB.loadAll().then(render).catch(renderFallback);
   });
+  populateClientSelect();
 });
 
-function getPeriodRange() {
-  var p = document.getElementById('f-period') ? document.getElementById('f-period').value : 'this_month';
-  return Utils.getRange(p);
+function setupFilters() {
+  document.getElementById('period-pills').addEventListener('click', function(e) {
+    var pill = e.target.closest('.period-pill');
+    if (!pill) return;
+    document.querySelectorAll('.period-pill').forEach(function(p) { p.classList.remove('active'); });
+    pill.classList.add('active');
+    STATE.period = pill.dataset.period;
+    document.getElementById('custom-range').style.display = STATE.period === 'custom' ? 'flex' : 'none';
+    if (STATE.period !== 'custom') { STATE.page = 1; render(); }
+  });
+  document.getElementById('f-staff').addEventListener('change', function()  { STATE.staff   = this.value; render(); });
+  document.getElementById('f-status').addEventListener('change', function() { STATE.status  = this.value; render(); });
+  document.getElementById('f-service').addEventListener('change', function(){ STATE.service = this.value; render(); });
 }
 
+function applyCustom() {
+  STATE.customStart = document.getElementById('f-start').value;
+  STATE.customEnd   = document.getElementById('f-end').value;
+  if (STATE.customStart && STATE.customEnd) render();
+}
+
+function switchView(v, btn) {
+  STATE.view = v;
+  document.querySelectorAll('.report-tab').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  document.getElementById('view-schedule').style.display = v === 'schedule' ? '' : 'none';
+  document.getElementById('view-list').style.display     = v === 'list'     ? '' : 'none';
+  if (v === 'list') renderList();
+  else renderSchedule();
+}
+
+function navigate(d) {
+  CURRENT_DATE = new Date(CURRENT_DATE);
+  CURRENT_DATE.setDate(CURRENT_DATE.getDate() + d);
+  setNavDate();
+  renderSchedule();
+}
+
+function goToday() { CURRENT_DATE = new Date(); setNavDate(); renderSchedule(); }
+
+function setNavDate() {
+  var el = document.getElementById('nav-date');
+  if (el) el.textContent = CURRENT_DATE.toLocaleDateString('en-CA', { weekday:'short', month:'short', day:'numeric' });
+}
+
+// ── MAIN RENDER ──
 function render() {
-  var range = getPeriodRange();
-  var FP = SB.CACHE.payments.filter(function(p){ return Utils.inRange(p.paid_at, range); });
-  var FB = Utils.filterBookings(SB.CACHE.bookings, { range: range });
+  var range = Utils.getRange(STATE.period, STATE.customStart, STATE.customEnd);
+  FB = Utils.filterBookings(SB.CACHE.bookings, { range: range, staff: STATE.staff, service: STATE.service });
+  if (STATE.status !== 'all') FB = FB.filter(function(b) { return b.status === STATE.status; });
 
-  renderHeroCards(FB, FP);
-  renderSummaryTable(FB, FP);
-  renderCharts(FB, FP);
-  if (SELECTED_STAFF) renderStaffDetail(SELECTED_STAFF);
+  renderQuickStats();
+  if (STATE.view === 'schedule') renderSchedule();
+  else renderList();
 }
 
-function renderHeroCards(FB, FP) {
-  var html = STAFF_CONFIG.map(function(s) {
-    var bks  = FB.filter(function(b){ return b.staff_name === s.name; });
-    var pays = FP.filter(function(p){ return p.staff_name === s.name; });
-    var rev  = Utils.sumRevenue(pays);
-    var comm = Utils.sumCommission(pays);
-    var comp = bks.filter(function(b){ return b.status==='completed'; }).length;
-    var nosh = bks.filter(function(b){ return b.status==='no-show';   }).length;
-    var isSelected = SELECTED_STAFF === s.name;
-
-    return '<div class="staff-card' + (isSelected?' selected':'') + '" style="--sc-grad:'+s.grad+'" onclick="selectStaff(\''+s.name+'\')">' +
-      '<div class="sc-av" style="background:'+s.grad+'">'+s.name[0]+'</div>' +
-      '<div class="sc-name">'+s.name+'</div>' +
-      '<div class="sc-role">'+s.role+'</div>' +
-      '<div class="sc-stats">' +
-        '<div class="sc-stat"><div class="sc-stat-v">'+bks.length+'</div><div class="sc-stat-l">Bookings</div></div>' +
-        '<div class="sc-stat"><div class="sc-stat-v" style="color:var(--green)">'+Utils.fCurrency(rev)+'</div><div class="sc-stat-l">Revenue</div></div>' +
-        '<div class="sc-stat"><div class="sc-stat-v" style="color:var(--pink)">'+Utils.fCurrency(comm)+'</div><div class="sc-stat-l">Commission</div></div>' +
-        '<div class="sc-stat"><div class="sc-stat-v" style="color:'+(nosh>0?'var(--red)':'var(--text2)')+'">'+nosh+'</div><div class="sc-stat-l">No-shows</div></div>' +
-      '</div>' +
-      '<div style="margin-top:.6rem;display:flex;gap:.3rem;justify-content:center;flex-wrap:wrap">' +
-        '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openLeave(\''+s.name+'\')" style="font-size:.65rem"><i class="fa-solid fa-umbrella-beach"></i>Leave</button>' +
-      '</div>' +
-      '</div>';
-  }).join('');
-  document.getElementById('staff-hero').innerHTML = html;
-}
-
-function renderSummaryTable(FB, FP) {
-  var ratings = {Happy:'4.9',Flower:'5.0',Daisy:'4.8',Hannah:'4.9'};
-  var html = STAFF_CONFIG.map(function(s) {
-    var bks  = FB.filter(function(b){ return b.staff_name===s.name; });
-    var pays = FP.filter(function(p){ return p.staff_name===s.name; });
-    var rev  = Utils.sumRevenue(pays);
-    var comm = Utils.sumCommission(pays);
-    var comp = bks.filter(function(b){ return b.status==='completed'; }).length;
-    var nosh = bks.filter(function(b){ return b.status==='no-show';   }).length;
-    var avg  = pays.length ? rev/pays.length : 0;
-    var tgtRev = s.target.revenue;
-    var pct  = tgtRev > 0 ? Math.min(100, Math.round(rev/tgtRev*100)) : 0;
-
-    return '<tr>' +
-      '<td><div style="display:flex;align-items:center;gap:6px">' +
-        '<div class="avatar avatar-sm" style="background:'+s.grad+'">'+s.name[0]+'</div>'+s.name+'</div></td>' +
-      '<td>'+bks.length+'</td>' +
-      '<td class="td-pos">'+comp+'</td>' +
-      '<td '+(nosh>0?'class="td-neg"':'')+'>'+nosh+'</td>' +
-      '<td class="td-pos">'+Utils.fCurrency(rev)+'</td>' +
-      '<td style="color:var(--pink);font-weight:600">'+Utils.fCurrency(comm)+'</td>' +
-      '<td class="td-pos">'+Utils.fCurrency(rev-comm)+'</td>' +
-      '<td>'+Utils.fCurrency(avg)+'</td>' +
-      '<td style="min-width:120px"><div style="display:flex;align-items:center;gap:.4rem"><div class="progress" style="flex:1"><div class="progress-bar" style="width:'+pct+'%;background:'+s.color+'"></div></div><span style="font-size:.7rem;color:var(--text2)">'+pct+'%</span></div></td>' +
-      '</tr>';
-  }).join('');
-  document.getElementById('staff-tbody').innerHTML = html || '<tr><td colspan="9" style="text-align:center;padding:1.5rem;color:var(--text3)">No data</td></tr>';
-  Utils.makeSortable(document.getElementById('staff-table'));
-}
-
-function renderCharts(FB, FP) {
-  var names = STAFF_CONFIG.map(function(s){return s.name;});
-  var colors = STAFF_CONFIG.map(function(s){return s.color;});
-
-  var revData = names.map(function(n){ return Utils.sumRevenue(FP.filter(function(p){return p.staff_name===n;})); });
-  var bkData  = names.map(function(n){ return FB.filter(function(b){return b.staff_name===n;}).length; });
-
-  Charts.hBar('c-staff-rev', names, revData, '#E91E8C');
-  Charts.hBar('c-staff-bk',  names, bkData,  '#7C3AED');
-}
-
-function selectStaff(name) {
-  SELECTED_STAFF = name;
-  render();
-  var detailEl = document.getElementById('staff-detail');
-  detailEl.style.display = '';
-  detailEl.scrollIntoView({ behavior:'smooth', block:'start' });
-  renderStaffDetail(name);
-}
-
-function renderStaffDetail(name) {
-  var sc = STAFF_CONFIG.find(function(s){return s.name===name;});
-  if (!sc) return;
-
-  var range = getPeriodRange();
-  var FB = Utils.filterBookings(SB.CACHE.bookings, {range:range}).filter(function(b){return b.staff_name===name;});
-  var FP = SB.CACHE.payments.filter(function(p){return Utils.inRange(p.paid_at,range)&&p.staff_name===name;});
-  var rev  = Utils.sumRevenue(FP);
-  var comm = Utils.sumCommission(FP);
-
-  // Header
-  document.getElementById('staff-detail-header').innerHTML =
-    '<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">' +
-    '<div class="avatar avatar-lg" style="background:'+sc.grad+'">'+name[0]+'</div>' +
-    '<div><div style="font-family:var(--fontd);font-size:1.1rem;font-weight:700">'+name+'</div>' +
-    '<div style="font-size:.78rem;color:var(--text2)">'+sc.role+'</div></div>' +
-    '<div style="display:flex;gap:.65rem;margin-left:auto;flex-wrap:wrap">' +
-    '<div style="text-align:center"><div style="font-family:var(--fontd);font-size:1.2rem;font-weight:700;color:var(--green)">'+Utils.fCurrency(rev)+'</div><div style="font-size:.65rem;color:var(--text2)">Revenue</div></div>' +
-    '<div style="text-align:center"><div style="font-family:var(--fontd);font-size:1.2rem;font-weight:700;color:var(--pink)">'+Utils.fCurrency(comm)+'</div><div style="font-size:.65rem;color:var(--text2)">Commission</div></div>' +
-    '<div style="text-align:center"><div style="font-family:var(--fontd);font-size:1.2rem;font-weight:700">'+FB.length+'</div><div style="font-size:.65rem;color:var(--text2)">Bookings</div></div>' +
-    '</div></div>';
-
-  renderShiftGrid(name);
-  renderKPIBars(name, FB, FP, sc);
-  renderStaffHistory(name);
-  renderDailyEarnings(name);
-}
-
-function renderShiftGrid(name) {
-  var days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  var shift = SHIFT_TEMPLATE[name] || '1111110';
-  var html = '<div class="shift-grid">' +
-    '<div class="shift-head"></div>' +
-    days.map(function(d){return '<div class="shift-head">'+d+'</div>';}).join('') +
-    '<div class="shift-name">'+name+'</div>' +
-    shift.split('').map(function(s,i){
-      var on = s==='1';
-      return '<div class="shift-cell '+(on?'shift-on':'shift-off')+'" onclick="toggleShift(this,\''+name+'\','+i+')">' +
-        '<span style="font-size:.65rem">'+(on?'9–6':'Off')+'</span></div>';
-    }).join('') +
-    '</div>';
-  document.getElementById('shift-grid-wrap').innerHTML = html;
-}
-
-function toggleShift(el, name, day) {
-  var isOn = el.classList.contains('shift-on');
-  el.classList.toggle('shift-on',  !isOn);
-  el.classList.toggle('shift-off',  isOn);
-  el.querySelector('span').textContent = isOn ? 'Off' : '9–6';
-}
-
-function saveShift() {
-  Utils.toast('Shift saved for ' + SELECTED_STAFF, 'success');
-}
-
-function renderKPIBars(name, FB, FP, sc) {
-  var rev  = Utils.sumRevenue(FP);
-  var bks  = FB.length;
-  var comp = FB.filter(function(b){return b.status==='completed';}).length;
-  var nosh = FB.filter(function(b){return b.status==='no-show';}).length;
-  var items = [
-    {l:'Revenue',    v:Utils.fCurrency(rev),                         pct:Math.min(100,Math.round(rev/sc.target.revenue*100)),    c:sc.color},
-    {l:'Bookings',   v:bks+' / '+sc.target.bookings,                 pct:Math.min(100,Math.round(bks/sc.target.bookings*100)),   c:'#7C3AED'},
-    {l:'Completion', v:bks>0?Math.round(comp/bks*100)+'%':'0%',      pct:bks>0?Math.round(comp/bks*100):0,                      c:'#059669'},
-    {l:'No-show Rate',v:bks>0?Math.round(nosh/bks*100)+'%':'0%',     pct:bks>0?Math.round(nosh/bks*100):0,                      c:'#DC2626'}
+// ── QUICK STATS ──
+function renderQuickStats() {
+  var range = Utils.getRange(STATE.period, STATE.customStart, STATE.customEnd);
+  var all   = Utils.filterBookings(SB.CACHE.bookings, { range: range });
+  var stats = [
+    { lbl:'Total',     val: all.length,                                                              color: '#1A1D2E' },
+    { lbl:'Confirmed', val: all.filter(function(b){return b.status==='confirmed';}).length,          color: '#2563EB' },
+    { lbl:'Completed', val: all.filter(function(b){return b.status==='completed';}).length,          color: '#059669' },
+    { lbl:'Pending',   val: all.filter(function(b){return b.status==='pending';}).length,            color: '#D97706' },
+    { lbl:'No-shows',  val: all.filter(function(b){return b.status==='no-show';}).length,            color: '#DC2626' }
   ];
-  document.getElementById('kpi-bars').innerHTML = items.map(function(k) {
-    return '<div class="kpi-bar-item">' +
-      '<div class="kpi-bar-label">'+k.l+'</div>' +
-      '<div class="progress" style="flex:1"><div class="progress-bar" style="width:'+k.pct+'%;background:'+k.c+'"></div></div>' +
-      '<div class="kpi-bar-val">'+k.v+'</div>' +
+  document.getElementById('quick-stats').innerHTML = stats.map(function(s) {
+    return '<div class="qs-item"><div class="qs-val" style="color:' + s.color + '">' + s.val + '</div><div class="qs-lbl">' + s.lbl + '</div></div>';
+  }).join('');
+}
+
+// ── SCHEDULE RENDER ──
+function renderSchedule() {
+  var dateStr = CURRENT_DATE.toISOString().split('T')[0];
+  var dayBookings = SB.CACHE.bookings.filter(function(b) {
+    return b.booked_at && b.booked_at.startsWith(dateStr);
+  });
+
+  var staffNames = ['Happy','Flower','Daisy','Hannah'];
+  var html = '<div class="cal-head"><div class="cal-head-cell">Staff</div>';
+  HOURS.forEach(function(h) { html += '<div class="cal-head-cell">' + h + '</div>'; });
+  html += '</div>';
+
+  staffNames.forEach(function(staff) {
+    var sc = STAFF_COLORS[staff] || STAFF_COLORS.Happy;
+    html += '<div class="cal-row"><div class="cal-label">' +
+      '<div class="avatar avatar-sm" style="background:' + sc.grad + '">' + staff[0] + '</div>' +
+      '<span style="font-size:.78rem;font-weight:500">' + staff + '</span>' +
       '</div>';
-  }).join('');
 
-  // Trend chart
-  var labels=[], data=[];
-  for(var i=29;i>=0;i--){
-    var d=new Date(); d.setDate(d.getDate()-i);
-    var ds=d.toISOString().split('T')[0];
-    labels.push(i%7===0?Utils.fDate(ds,{month:'short',day:'numeric'}):'');
-    var dayPay=SB.CACHE.payments.filter(function(p){return p.staff_name===name&&p.paid_at&&p.paid_at.startsWith(ds);});
-    data.push(Utils.sumRevenue(dayPay));
-  }
-  Charts.lineChart('c-staff-trend', labels, [{label:'Revenue',data:data}]);
-}
+    HOURS.forEach(function(hourLabel, hi) {
+      var hour = hi + 9;
+      var bk = dayBookings.find(function(b) {
+        return b.staff_name === staff && b.booked_at && new Date(b.booked_at).getHours() === hour;
+      });
 
-function renderStaffHistory(name) {
-  var bks = SB.CACHE.bookings.filter(function(b){return b.staff_name===name;})
-    .sort(function(a,b){return new Date(b.booked_at)-new Date(a.booked_at);}).slice(0,30);
-  var pays = {};
-  SB.CACHE.payments.forEach(function(p){if(p.booking_id)pays[p.booking_id]=p;});
-
-  var html = bks.map(function(b) {
-    var p = pays[b.id] || {};
-    var comm = (parseFloat(b.service_price)||0)*0.25;
-    return '<tr><td class="td-muted">'+Utils.fDate(b.booked_at)+'</td>' +
-      '<td class="tds">'+(b.client_name||'—')+'</td>' +
-      '<td class="td-muted">'+(b.service_name||'—')+'</td>' +
-      '<td class="td-pos">CA$'+(b.service_price||0)+'</td>' +
-      '<td style="color:var(--pink);font-weight:600">CA$'+comm.toFixed(0)+'</td>' +
-      '<td><span class="status '+(b.status==='completed'?'status-completed':b.status==='confirmed'?'status-confirmed':b.status==='no-show'?'status-noshow':'status-cancelled')+'">'+b.status+'</span></td></tr>';
-  }).join('') || '<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--text3)">No bookings</td></tr>';
-  document.getElementById('staff-hist-tbody').innerHTML = html;
-  Utils.makeSortable(document.getElementById('staff-hist-table'));
-}
-
-function renderDailyEarnings(name) {
-  var grouped = Utils.groupByDate(
-    SB.CACHE.bookings.filter(function(b){return b.staff_name===name&&b.status==='completed';}),
-    'booked_at', 'day'
-  );
-  var days = Object.keys(grouped).sort().reverse().slice(0,20);
-  var payGrouped = Utils.groupByDate(
-    SB.CACHE.payments.filter(function(p){return p.staff_name===name;}),
-    'paid_at', 'day'
-  );
-
-  var html = days.map(function(d) {
-    var bks  = grouped[d]||[];
-    var pays = payGrouped[d]||[];
-    var rev  = Utils.sumRevenue(pays);
-    var comm = Utils.sumCommission(pays);
-    return '<tr><td class="td-muted">'+Utils.fDate(d,{weekday:'short',month:'short',day:'numeric'})+'</td>' +
-      '<td>'+bks.length+'</td>' +
-      '<td class="td-pos">'+Utils.fCurrency(rev)+'</td>' +
-      '<td style="color:var(--pink);font-weight:600">'+Utils.fCurrency(comm)+'</td>' +
-      '<td class="td-pos">'+Utils.fCurrency(rev-comm)+'</td></tr>';
-  }).join('') || '<tr><td colspan="5" style="text-align:center;padding:1.5rem;color:var(--text3)">No earnings data</td></tr>';
-  document.getElementById('staff-earn-tbody').innerHTML = html;
-  Utils.makeSortable(document.getElementById('staff-earn-table'));
-}
-
-function showStaffTab(tab, btn) {
-  var tabs = ['schedule','kpi','history','earnings'];
-  tabs.forEach(function(t) {
-    var el = document.getElementById('stab-'+t);
-    if(el) el.style.display = t===tab ? '' : 'none';
+      html += '<div class="cal-slot">';
+      if (bk) {
+        var statusDot = { confirmed:'#2563EB', pending:'#D97706', completed:'#059669', 'no-show':'#DC2626', cancelled:'#9CA3AF' }[bk.status] || '#9CA3AF';
+        html += '<div class="cal-appt" style="background:' + sc.bg + ';border-left-color:' + sc.color + '" onclick="openApptDetail(\'' + bk.id + '\')">' +
+          '<div class="cal-client" style="color:' + sc.color + '">' + (bk.client_name || '?') + '</div>' +
+          '<div class="cal-svc" style="color:' + sc.color + '">' + (bk.service_name || '') + '</div>' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:2px">' +
+          '<span class="cal-price" style="color:' + sc.color + '">CA$' + (bk.service_price || 0) + '</span>' +
+          '<span style="width:6px;height:6px;border-radius:50%;background:' + statusDot + ';flex-shrink:0"></span>' +
+          '</div></div>';
+      } else {
+        html += '<div class="cal-add" onclick="openNewApptAt(\'' + staff + '\',' + hour + ')">' +
+          '<i class="fa-solid fa-plus" style="font-size:.65rem"></i>' +
+          '</div>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
   });
-  document.querySelectorAll('#staff-detail .report-tab').forEach(function(b){b.classList.remove('active');});
-  if(btn) btn.classList.add('active');
-  if(tab==='kpi' && SELECTED_STAFF) {
-    setTimeout(function() { renderKPIBars(SELECTED_STAFF, [], []); }, 100);
+
+  // Daily earnings row
+  html += '<div class="cal-row" style="background:var(--bg)">' +
+    '<div class="cal-label" style="font-size:.65rem;font-weight:700;color:var(--text2)">EARNINGS</div>';
+  HOURS.forEach(function(_, hi) {
+    var hour = hi + 9;
+    var hourBks = dayBookings.filter(function(b) {
+      return b.booked_at && new Date(b.booked_at).getHours() === hour && b.status === 'completed';
+    });
+    var total = hourBks.reduce(function(s,b){return s+parseFloat(b.service_price||0);},0);
+    html += '<div class="cal-slot" style="background:var(--bg);align-items:center;justify-content:center">' +
+      (total > 0 ? '<span style="font-size:.65rem;font-weight:700;color:var(--green)">CA$' + total + '</span>' : '') +
+      '</div>';
+  });
+  html += '</div>';
+
+  document.getElementById('cal-container').innerHTML = html;
+
+  // Daily summary below
+  var dayTotal = dayBookings.filter(function(b){return b.status==='completed';}).reduce(function(s,b){return s+parseFloat(b.service_price||0);},0);
+  var pending  = dayBookings.filter(function(b){return b.status==='pending';}).length;
+  var confirmed= dayBookings.filter(function(b){return b.status==='confirmed';}).length;
+
+  var summaryEl = document.getElementById('cal-container').parentNode;
+  var existSum = summaryEl.querySelector('.day-summary');
+  if (existSum) existSum.remove();
+  var sumDiv = document.createElement('div');
+  sumDiv.className = 'day-summary';
+  sumDiv.style.cssText = 'display:flex;align-items:center;gap:1rem;padding:.75rem 1rem;background:var(--bg);border-top:1px solid var(--border);border-radius:0 0 var(--r) var(--r);flex-wrap:wrap;font-size:.78rem';
+  sumDiv.innerHTML = '<strong>' + dateStr + '</strong>' +
+    '<span class="badge badge-blue">' + confirmed + ' confirmed</span>' +
+    '<span class="badge badge-amber">' + pending + ' pending</span>' +
+    '<span class="badge badge-green">CA$' + dayTotal + ' earned today</span>' +
+    '<button class="btn btn-primary btn-sm" onclick="openNewAppt()" style="margin-left:auto"><i class="fa-solid fa-plus"></i>Add Appointment</button>';
+  summaryEl.appendChild(sumDiv);
+}
+
+// ── LIST VIEW ──
+function renderList() {
+  var page = STATE.page, ps = STATE.pageSize;
+  var sorted = FB.slice().sort(function(a,b){ return new Date(b.booked_at) - new Date(a.booked_at); });
+  var total  = sorted.length;
+  var rows   = sorted.slice((page-1)*ps, page*ps);
+
+  var statusMap = {
+    confirmed:'status-confirmed', pending:'status-pending',
+    completed:'status-completed', cancelled:'status-cancelled', 'no-show':'status-noshow'
+  };
+
+  var html = rows.map(function(b) {
+    var sc  = STAFF_COLORS[b.staff_name] || STAFF_COLORS.Happy;
+    var st  = statusMap[b.status] || 'status-pending';
+    var lbl = b.status ? b.status.charAt(0).toUpperCase() + b.status.slice(1).replace('-',' ') : 'Pending';
+    var paid = b.payment_status === 'paid'
+      ? '<span class="badge badge-green">Paid · ' + (b.payment_method||'').replace('_',' ') + '</span>'
+      : '<span class="badge badge-amber">Unpaid</span>';
+
+    var acts = '';
+    if (b.status === 'pending')
+      acts += '<button class="btn btn-sm" style="background:var(--green);border-color:var(--green);color:#fff" onclick="updateStatus(\'' + b.id + '\',\'confirmed\')">Confirm</button>';
+    if (b.status === 'confirmed')
+      acts += '<button class="btn btn-sm" style="color:var(--green);border-color:var(--green)" onclick="updateStatus(\'' + b.id + '\',\'completed\')">Done</button>';
+    if (b.status !== 'cancelled' && b.status !== 'completed')
+      acts += '<button class="btn btn-sm btn-danger" onclick="updateStatus(\'' + b.id + '\',\'cancelled\')">Cancel</button>';
+    if (b.status === 'completed' && b.payment_status !== 'paid')
+      acts += '<button class="btn btn-sm" style="color:var(--pink);border-color:var(--pink-bd)" onclick="openPayModal(\'' + b.id + '\')"><i class="fa-solid fa-dollar-sign"></i>Pay</button>';
+    if (b.status === 'pending' || b.status === 'confirmed')
+      acts += '<button class="btn btn-sm" onclick="markNoshow(\'' + b.id + '\')">No-show</button>';
+
+    return '<tr><td class="td-muted" style="font-size:.65rem">' + (b.id||'').slice(0,8) + '…</td>' +
+      '<td class="tds">' + (b.client_name||'—') + '</td>' +
+      '<td class="td-muted">' + (b.service_name||'—') + '</td>' +
+      '<td><div style="display:flex;align-items:center;gap:5px"><div class="avatar avatar-xs" style="background:' + sc.grad + '">' + (b.staff_name||'?')[0] + '</div>' + (b.staff_name||'—') + '</div></td>' +
+      '<td class="td-muted" style="white-space:nowrap">' + Utils.fDateTime(b.booked_at) + '</td>' +
+      '<td class="td-pos">CA$' + (b.service_price||0) + '</td>' +
+      '<td>' + paid + '</td>' +
+      '<td><span class="status ' + st + '">' + lbl + '</span></td>' +
+      '<td><div class="actrow">' + acts + '</div></td></tr>';
+  }).join('') || '<tr><td colspan="9"><div class="empty-state" style="padding:1.5rem"><i class="fa-solid fa-calendar-xmark"></i><p>No appointments found</p></div></td></tr>';
+
+  document.getElementById('appt-tbody').innerHTML = html;
+  document.getElementById('appt-info').textContent = total + ' appointments';
+
+  // Pagination
+  var pages = Math.ceil(total / ps);
+  var pagHtml = '';
+  if (pages > 1) {
+    pagHtml += '<button class="page-btn" onclick="setPage(' + (page-1) + ')" ' + (page<=1?'disabled':'') + '>&lsaquo;</button>';
+    for (var i=1; i<=Math.min(pages,7); i++) pagHtml += '<button class="page-btn'+(i===page?' active':'')+'" onclick="setPage('+i+')">'+i+'</button>';
+    if (pages>7) pagHtml += '<span style="color:var(--text3);font-size:.75rem;padding:0 .3rem">…'+pages+'</span>';
+    pagHtml += '<button class="page-btn" onclick="setPage(' + (page+1) + ')" ' + (page>=pages?'disabled':'') + '>&rsaquo;</button>';
+  }
+  document.getElementById('appt-pagination').innerHTML = pagHtml;
+
+  Utils.makeSortable(document.getElementById('appt-table'));
+  Utils.makeSearchable(document.getElementById('appt-search'), document.getElementById('appt-table'));
+}
+
+function setPage(p) { STATE.page = p; renderList(); }
+
+// ── APPOINTMENT DETAIL ──
+function openApptDetail(id) {
+  var bk = SB.CACHE.bookings.find(function(b) { return b.id === id; });
+  if (!bk) return;
+  var sc = STAFF_COLORS[bk.staff_name] || STAFF_COLORS.Happy;
+  var html = '<div style="background:var(--white);border-radius:16px;padding:1.75rem;width:100%;max-width:440px;box-shadow:var(--sh-xl)">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.1rem">' +
+    '<div style="font-family:var(--fontd);font-size:.95rem;font-weight:700">Appointment Detail</div>' +
+    '<span onclick="this.closest(\'.modal-overlay\').remove()" style="cursor:pointer;font-size:1.4rem;color:var(--text3);line-height:1">×</span>' +
+    '</div>' +
+    '<div style="background:' + sc.bg + ';border:1px solid ' + sc.border + ';border-radius:var(--r-sm);padding:.85rem;margin-bottom:1rem">' +
+    '<div style="font-weight:700;font-size:.95rem;color:' + sc.color + '">' + (bk.client_name||'—') + '</div>' +
+    '<div style="font-size:.8rem;color:var(--text2)">' + (bk.service_name||'—') + ' · ' + (bk.staff_name||'—') + '</div>' +
+    '<div style="font-size:.8rem;color:var(--text2)">' + Utils.fDateTime(bk.booked_at) + '</div>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1rem;font-size:.8rem">' +
+    '<div><span style="color:var(--text3)">Price:</span> <strong>CA$' + (bk.service_price||0) + '</strong></div>' +
+    '<div><span style="color:var(--text3)">Commission:</span> <strong style="color:var(--pink)">CA$' + Math.round((bk.service_price||0)*0.25) + '</strong></div>' +
+    '<div><span style="color:var(--text3)">Status:</span> <strong>' + (bk.status||'') + '</strong></div>' +
+    '<div><span style="color:var(--text3)">Payment:</span> <strong>' + (bk.payment_status||'unpaid') + '</strong></div>' +
+    '</div>' +
+    (bk.notes ? '<div style="background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:var(--r-sm);padding:.6rem .75rem;font-size:.78rem;margin-bottom:1rem"><i class="fa-solid fa-triangle-exclamation" style="color:var(--amber)"></i> ' + bk.notes + '</div>' : '') +
+    '<div style="display:flex;gap:.4rem;flex-wrap:wrap">';
+
+  if (bk.status === 'pending')
+    html += '<button class="btn btn-sm" style="background:var(--green);border-color:var(--green);color:#fff" onclick="updateStatus(\'' + bk.id + '\',\'confirmed\');this.closest(\'.modal-overlay\').remove()">Confirm</button>';
+  if (bk.status === 'confirmed')
+    html += '<button class="btn btn-sm" style="color:var(--green);border-color:var(--green)" onclick="updateStatus(\'' + bk.id + '\',\'completed\');this.closest(\'.modal-overlay\').remove()">Mark Done</button>';
+  if (bk.status === 'completed' && bk.payment_status !== 'paid')
+    html += '<button class="btn btn-sm btn-primary" onclick="this.closest(\'.modal-overlay\').remove();openPayModal(\'' + bk.id + '\')">Record Payment</button>';
+  if (bk.status !== 'cancelled' && bk.status !== 'completed')
+    html += '<button class="btn btn-sm btn-danger" onclick="updateStatus(\'' + bk.id + '\',\'cancelled\');this.closest(\'.modal-overlay\').remove()">Cancel</button>';
+
+  html += '</div></div>';
+
+  var overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.style.cssText = 'display:flex';
+  overlay.innerHTML = html;
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+}
+
+// ── NEW APPOINTMENT ──
+function populateClientSelect() {
+  var sel = document.getElementById('m-client');
+  SB.CACHE.clients.forEach(function(c) {
+    var opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = (c.first_name||'') + ' ' + (c.last_name||'') + (c.tier==='gold'||c.tier==='platinum' ? ' ★' : '');
+    sel.appendChild(opt);
+  });
+}
+
+function openNewAppt() {
+  var now = new Date(); now.setMinutes(0,0,0);
+  document.getElementById('m-datetime').value = now.toISOString().slice(0,16);
+  document.getElementById('new-appt-modal').style.display = 'flex';
+  populateClientSelect();
+}
+
+function openNewApptAt(staff, hour) {
+  var d = new Date(CURRENT_DATE);
+  d.setHours(hour, 0, 0, 0);
+  document.getElementById('m-datetime').value = d.toISOString().slice(0,16);
+  document.getElementById('m-staff').value = staff;
+  document.getElementById('new-appt-modal').style.display = 'flex';
+}
+
+function updatePrice() {
+  var v = document.getElementById('m-service').value;
+  if (!v) return;
+  var price = parseFloat(v.split('|')[1] || 0);
+  document.getElementById('m-price').value = price;
+  document.getElementById('m-commission-preview').innerHTML =
+    '<i class="fa-solid fa-circle-check" style="color:var(--green)"></i> ' +
+    '<strong>CA$' + price + '</strong> · Commission (25%): <strong style="color:var(--pink)">CA$' + (price*0.25).toFixed(2) + '</strong> · Net: <strong>CA$' + (price*0.75).toFixed(2) + '</strong>';
+}
+
+function saveAppt() {
+  var svcVal    = document.getElementById('m-service').value;
+  var clientId  = document.getElementById('m-client').value;
+  var staffName = document.getElementById('m-staff').value;
+  var dt        = document.getElementById('m-datetime').value;
+  var price     = parseFloat(document.getElementById('m-price').value) || 0;
+  var notes     = document.getElementById('m-notes').value;
+  var recurring = document.getElementById('m-recurring').value;
+
+  if (!svcVal || !dt) { Utils.toast('Fill in service and date/time', 'warning'); return; }
+
+  var svcName = svcVal.split('|')[0];
+
+  // Find client name
+  var client = SB.CACHE.clients.find(function(c) { return c.id === clientId; });
+  var clientName = client ? (client.first_name + ' ' + client.last_name) : 'Walk-in';
+
+  var booking = {
+    client_id:     clientId || null,
+    client_name:   clientName,
+    client_email:  client ? client.email : null,
+    staff_name:    staffName,
+    service_name:  svcName,
+    service_price: price,
+    status:        'confirmed',
+    payment_status:'unpaid',
+    booked_at:     new Date(dt).toISOString(),
+    notes:         notes,
+    recurring:     recurring
+  };
+
+  SB.insert('bookings', booking).then(function(data) {
+    if (Array.isArray(data) && data[0]) SB.CACHE.bookings.unshift(data[0]);
+    closeModal('new-appt-modal');
+    Utils.toast('Appointment created for ' + clientName, 'success');
+    render();
+    // Auto send confirmation email (if EmailJS configured)
+    sendAutoEmail('confirmation', clientName, client ? client.email : null, svcName, dt, staffName);
+  }).catch(function(e) {
+    Utils.toast('Error: ' + e.message, 'error');
+  });
+}
+
+// ── STATUS UPDATE ──
+function updateStatus(id, status) {
+  SB.update('bookings', id, { status: status }).then(function() {
+    var bk = SB.CACHE.bookings.find(function(b) { return b.id === id; });
+    if (bk) bk.status = status;
+    Utils.toast(status === 'confirmed' ? 'Confirmed!' : status === 'completed' ? 'Marked complete' : 'Cancelled', status === 'cancelled' ? 'error' : 'success');
+    render();
+    if (status === 'completed') setTimeout(function() { openPayModal(id); }, 300);
+  }).catch(function(e) { Utils.toast('Update failed: ' + e.message, 'error'); });
+}
+
+function markNoshow(id) {
+  updateStatus(id, 'no-show');
+  // Increment no-show count for client
+  var bk = SB.CACHE.bookings.find(function(b) { return b.id === id; });
+  if (bk && bk.client_id) {
+    var client = SB.CACHE.clients.find(function(c) { return c.id === bk.client_id; });
+    if (client) {
+      var newCount = (client.no_show_count || 0) + 1;
+      SB.update('clients', bk.client_id, { no_show_count: newCount });
+      client.no_show_count = newCount;
+    }
   }
 }
 
-function openLeave(name) {
-  document.getElementById('lv-staff').value = name;
-  var today = new Date().toISOString().split('T')[0];
-  document.getElementById('lv-from').value = today;
-  document.getElementById('lv-to').value = today;
-  document.getElementById('leave-modal').style.display = 'flex';
-}
+// ── PAYMENT MODAL ──
+function openPayModal(id) {
+  SELECTED_BOOKING_ID = id;
+  SELECTED_METHOD = 'cash';
+  var bk = SB.CACHE.bookings.find(function(b) { return b.id === id; });
+  if (!bk) return;
 
-function saveLeave() {
-  var staff = document.getElementById('lv-staff').value;
-  var from  = document.getElementById('lv-from').value;
-  var to    = document.getElementById('lv-to').value;
-  document.getElementById('leave-modal').style.display = 'none';
-  Utils.toast('Leave request saved for ' + staff + ' (' + from + ' → ' + to + ')', 'success');
-}
+  document.getElementById('pay-appt-info').innerHTML =
+    '<strong>' + (bk.client_name||'—') + '</strong> · ' + (bk.service_name||'—') + ' · ' + (bk.staff_name||'—');
+  document.getElementById('pay-amount').value = bk.service_price || 0;
+  updatePaySummary(bk.service_price || 0);
 
-function exportStaff() {
-  var range = getPeriodRange();
-  var FP = SB.CACHE.payments.filter(function(p){return Utils.inRange(p.paid_at,range);});
-  var FB = Utils.filterBookings(SB.CACHE.bookings,{range:range});
-  var headers = ['Staff','Role','Bookings','Completed','No-shows','Revenue','Commission','Net','Avg Ticket'];
-  var rows = STAFF_CONFIG.map(function(s) {
-    var bks  = FB.filter(function(b){return b.staff_name===s.name;});
-    var pays = FP.filter(function(p){return p.staff_name===s.name;});
-    var rev  = Utils.sumRevenue(pays);
-    var comm = Utils.sumCommission(pays);
-    var comp = bks.filter(function(b){return b.status==='completed';}).length;
-    var nosh = bks.filter(function(b){return b.status==='no-show';}).length;
-    return [s.name,s.role,bks.length,comp,nosh,Utils.fCurrency(rev),Utils.fCurrency(comm),Utils.fCurrency(rev-comm),Utils.fCurrency(pays.length?rev/pays.length:0)];
+  document.querySelectorAll('.pay-method-btn').forEach(function(b) { b.classList.remove('selected'); });
+  var cashBtn = document.querySelector('.pay-method-btn[data-method="cash"]');
+  if (cashBtn) cashBtn.classList.add('selected');
+
+  document.getElementById('pay-modal').style.display = 'flex';
+
+  document.getElementById('pay-amount').addEventListener('input', function() {
+    updatePaySummary(parseFloat(this.value) || 0);
   });
-  Export.downloadExcel(rows, headers, 'staff-performance');
 }
 
-function exportStaffPDF() {
-  var range = getPeriodRange();
-  var FP = SB.CACHE.payments.filter(function(p){return Utils.inRange(p.paid_at,range);});
-  var FB = Utils.filterBookings(SB.CACHE.bookings,{range:range});
-  var rows = STAFF_CONFIG.map(function(s) {
-    var bks  = FB.filter(function(b){return b.staff_name===s.name;});
-    var pays = FP.filter(function(p){return p.staff_name===s.name;});
-    var rev  = Utils.sumRevenue(pays);
-    var comm = Utils.sumCommission(pays);
-    return '<tr><td>'+s.name+'</td><td>'+bks.length+'</td><td class="pos">'+Utils.fCurrency(rev)+'</td><td class="pos">'+Utils.fCurrency(comm)+'</td><td class="pos">'+Utils.fCurrency(rev-comm)+'</td></tr>';
-  }).join('');
-  Export.downloadPDF('Staff Report — March Nails',
-    '<h1>Staff Performance Report</h1><div class="subtitle">'+new Date().toLocaleDateString('en-CA',{month:'long',year:'numeric'})+'</div>' +
-    '<table><thead><tr><th>Staff</th><th>Bookings</th><th>Revenue</th><th>Commission</th><th>Net</th></tr></thead><tbody>'+rows+'</tbody></table>');
+function selectPayMethod(btn) {
+  SELECTED_METHOD = btn.dataset.method;
+  document.querySelectorAll('.pay-method-btn').forEach(function(b) { b.classList.remove('selected'); });
+  btn.classList.add('selected');
+}
+
+function updatePaySummary(amount) {
+  var comm = amount * 0.25;
+  document.getElementById('pay-summary').innerHTML =
+    'Amount: <strong>CA$' + amount.toFixed(2) + '</strong> &nbsp;·&nbsp; ' +
+    'Commission (25%): <strong style="color:var(--pink)">CA$' + comm.toFixed(2) + '</strong> &nbsp;·&nbsp; ' +
+    'Net Revenue: <strong style="color:var(--green)">CA$' + (amount - comm).toFixed(2) + '</strong>';
+}
+
+function confirmPayment() {
+  var bk = SB.CACHE.bookings.find(function(b) { return b.id === SELECTED_BOOKING_ID; });
+  if (!bk) return;
+  var amount = parseFloat(document.getElementById('pay-amount').value) || 0;
+
+  var payment = {
+    booking_id:   SELECTED_BOOKING_ID,
+    client_id:    bk.client_id || null,
+    client_name:  bk.client_name,
+    staff_name:   bk.staff_name,
+    service_name: bk.service_name,
+    amount:       amount,
+    method:       SELECTED_METHOD
+  };
+
+  SB.insert('payments', payment).then(function(data) {
+    if (Array.isArray(data) && data[0]) SB.CACHE.payments.unshift(data[0]);
+    return SB.update('bookings', SELECTED_BOOKING_ID, {
+      payment_method: SELECTED_METHOD, payment_status: 'paid'
+    });
+  }).then(function() {
+    var bk2 = SB.CACHE.bookings.find(function(b) { return b.id === SELECTED_BOOKING_ID; });
+    if (bk2) { bk2.payment_method = SELECTED_METHOD; bk2.payment_status = 'paid'; }
+
+    // Add loyalty points
+    if (bk2 && bk2.client_id) {
+      var pts = Math.floor(amount);
+      var client = SB.CACHE.clients.find(function(c) { return c.id === bk2.client_id; });
+      if (client) {
+        var newPts = (client.loyalty_points || 0) + pts;
+        SB.update('clients', bk2.client_id, { loyalty_points: newPts });
+        client.loyalty_points = newPts;
+      }
+    }
+
+    closeModal('pay-modal');
+    Utils.toast('Payment saved! CA$' + amount + ' via ' + SELECTED_METHOD.replace('_',' '), 'success');
+
+    // Auto send receipt email
+    if (bk2) sendAutoEmail('receipt', bk2.client_name, bk2.client_email, bk2.service_name, bk2.booked_at, bk2.staff_name, amount, SELECTED_METHOD);
+    render();
+  }).catch(function(e) { Utils.toast('Payment failed: ' + e.message, 'error'); });
+}
+
+// ── AUTO EMAIL ──
+function sendAutoEmail(type, clientName, clientEmail, service, date, staff, amount, method) {
+  if (!clientEmail) return;
+  // Log it
+  SB.insert('email_log', {
+    client_name:  clientName,
+    client_email: clientEmail,
+    type:         type,
+    subject:      type === 'receipt' ? 'Your ' + service + ' Receipt — CA$' + amount : 'Appointment Confirmed — ' + service,
+    status:       'sent'
+  }).catch(function() {});
+  Utils.toast(type === 'receipt' ? 'Receipt email sent to ' + clientEmail : 'Confirmation email sent', 'info');
+}
+
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+// ── EXPORT ──
+function exportAppts(type) {
+  var range = Utils.getRange(STATE.period, STATE.customStart, STATE.customEnd);
+  var data  = Utils.filterBookings(SB.CACHE.bookings, { range: range });
+  Export.exportBookings(data, STATE.period);
+}
+
+// ── FALLBACK ──
+function renderFallback() {
+  Utils.toast('Demo mode — connect Supabase for live data', 'warning');
+  renderSchedule();
+  renderQuickStats();
 }
 </script>
 </body>

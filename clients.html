@@ -3,44 +3,50 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>March Nails — Staff</title>
+<title>March Nails — Clients</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="css/core.css">
 <link rel="stylesheet" href="css/components.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-.staff-hero { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1rem; }
-@media(max-width:900px) { .staff-hero { grid-template-columns:1fr 1fr; } }
-@media(max-width:500px) { .staff-hero { grid-template-columns:1fr; } }
-.staff-card { background:var(--white); border:1px solid var(--border); border-radius:var(--r); padding:1.1rem; box-shadow:var(--sh-sm); cursor:pointer; transition:all .2s; position:relative; overflow:hidden; }
-.staff-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--sc-grad); }
-.staff-card:hover { box-shadow:var(--sh-md); transform:translateY(-2px); }
-.staff-card.selected { border-color:var(--pink); box-shadow:0 0 0 2px var(--pink-bd), var(--sh-md); }
-.sc-av { width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.2rem; font-weight:700; color:#fff; margin:0 auto .7rem; border:2.5px solid var(--white); box-shadow:0 0 0 2px var(--border); background:var(--sc-grad); }
-.sc-name { font-family:var(--fontd); font-size:.95rem; font-weight:700; text-align:center; margin-bottom:2px; }
-.sc-role { font-size:.7rem; color:var(--text2); text-align:center; margin-bottom:.8rem; }
-.sc-stats { display:grid; grid-template-columns:1fr 1fr; gap:.35rem; }
-.sc-stat { background:var(--bg); border-radius:var(--r-xs); padding:.4rem; text-align:center; }
-.sc-stat-v { font-size:.9rem; font-weight:700; color:var(--pink); font-family:var(--fontd); }
-.sc-stat-l { font-size:.58rem; color:var(--text3); }
-/* Detail panel */
-.staff-detail { background:var(--white); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--sh-sm); overflow:hidden; }
-.staff-detail-header { padding:1.25rem; background:linear-gradient(135deg,var(--pink-bg),var(--violet-bg)); border-bottom:1px solid var(--border); }
-/* Shift grid */
-.shift-grid { display:grid; grid-template-columns:80px repeat(7,1fr); gap:2px; }
-.shift-head { font-size:.6rem; font-weight:700; text-transform:uppercase; color:var(--text3); padding:4px; text-align:center; letter-spacing:.06em; }
-.shift-name { font-size:.72rem; font-weight:500; color:var(--text2); padding:4px 6px; display:flex; align-items:center; }
-.shift-cell { padding:3px; display:flex; align-items:center; justify-content:center; border-radius:var(--r-xs); background:var(--bg); cursor:pointer; transition:background .15s; min-height:32px; }
-.shift-cell:hover { background:var(--s2); }
-.shift-on  { background:var(--green-bg); color:var(--green); }
-.shift-off { background:var(--red-bg);   color:var(--red); opacity:.6; }
-.shift-half{ background:var(--amber-bg); color:var(--amber); }
-/* KPI bar */
-.kpi-bar-item { display:flex; align-items:center; gap:.65rem; padding:.5rem 0; border-bottom:1px solid var(--s1); }
-.kpi-bar-item:last-child { border-bottom:none; }
-.kpi-bar-label { font-size:.78rem; color:var(--text2); width:120px; flex-shrink:0; }
-.kpi-bar-val { font-size:.82rem; font-weight:600; width:60px; text-align:right; flex-shrink:0; }
+.client-grid { display: grid; grid-template-columns: 340px 1fr; gap: 1rem; }
+@media (max-width:1100px) { .client-grid { grid-template-columns: 1fr; } }
+.client-card { background:var(--white); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--sh-sm); overflow:hidden; }
+.client-card-header { padding:1.1rem; border-bottom:1px solid var(--border); }
+.profile-hero { display:flex; align-items:flex-start; gap:.85rem; margin-bottom:.85rem; }
+.profile-avatar { width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.2rem; font-weight:700; color:#fff; flex-shrink:0; background:linear-gradient(135deg,var(--pink),var(--violet)); }
+.profile-name { font-family:var(--fontd); font-size:1rem; font-weight:700; margin-bottom:2px; }
+.profile-meta { font-size:.75rem; color:var(--text2); line-height:1.5; }
+.profile-tags { display:flex; gap:.35rem; flex-wrap:wrap; margin-top:.4rem; }
+.ltv-box { background:linear-gradient(135deg,var(--pink-bg),var(--violet-bg)); border:1px solid var(--pink-bd); border-radius:var(--r-sm); padding:.75rem; text-align:center; margin-bottom:.85rem; }
+.ltv-val { font-family:var(--fontd); font-size:1.6rem; font-weight:700; color:var(--pink); }
+.ltv-lbl { font-size:.68rem; color:var(--text2); }
+.stat-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:.4rem; margin-bottom:.85rem; }
+.stat-box { background:var(--bg); border-radius:var(--r-sm); padding:.5rem; text-align:center; }
+.stat-v { font-size:.95rem; font-weight:700; font-family:var(--fontd); }
+.stat-l { font-size:.6rem; color:var(--text2); margin-top:1px; }
+.loyalty-bar-wrap { background:var(--gold-bg); border:1px solid var(--amber-bd); border-radius:var(--r-sm); padding:.75rem; margin-bottom:.85rem; }
+.allergy-box { background:var(--red-bg); border:1px solid var(--red-bd); border-radius:var(--r-sm); padding:.6rem .75rem; margin-bottom:.5rem; font-size:.78rem; }
+.pref-box { background:var(--blue-bg); border:1px solid var(--blue-bd); border-radius:var(--r-sm); padding:.6rem .75rem; font-size:.78rem; }
+/* Photo grid */
+.photo-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:.4rem; }
+.photo-thumb { aspect-ratio:1; border-radius:var(--r-sm); background:var(--pink-bg); border:1px solid var(--pink-bd); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; cursor:pointer; transition:all .15s; }
+.photo-thumb:hover { border-color:var(--pink); transform:scale(1.02); }
+.photo-add { border-style:dashed; background:var(--s1); border-color:var(--border2); }
+/* Client list */
+.client-list-item { display:flex; align-items:center; gap:.75rem; padding:.7rem .85rem; border-bottom:1px solid var(--s1); cursor:pointer; transition:background .12s; }
+.client-list-item:hover { background:var(--bg); }
+.client-list-item.selected { background:var(--pink-bg); }
+.client-list-item:last-child { border-bottom:none; }
+.cli-name { font-size:.82rem; font-weight:600; margin-bottom:1px; }
+.cli-meta { font-size:.68rem; color:var(--text2); }
+.cli-ltv  { font-size:.78rem; font-weight:700; color:var(--pink); white-space:nowrap; }
+/* Segment filter tabs */
+.seg-tabs { display:flex; gap:.25rem; flex-wrap:wrap; margin-bottom:.75rem; }
+.seg-tab { padding:.25rem .65rem; border-radius:50px; font-size:.72rem; font-weight:500; cursor:pointer; border:1.5px solid var(--border); background:var(--white); color:var(--text2); transition:all .15s; }
+.seg-tab:hover { border-color:var(--pink); color:var(--pink); }
+.seg-tab.active { background:var(--pink); border-color:var(--pink); color:#fff; }
 </style>
 </head>
 <body>
@@ -50,13 +56,19 @@
     <div class="sidebar-brand"><div class="brand-name">March <span>Nails</span></div><div class="brand-sub">Business Intelligence</div></div>
     <nav class="sidebar-nav">
       <div class="nav-section">Analytics</div>
-      <a class="nav-item" href="dashboard.html"><i class="fa-solid fa-gauge-high"></i>Dashboard</a>
-      <a class="nav-item" href="reports.html"><i class="fa-solid fa-chart-column"></i>Reports</a>
+      <a class="nav-item " href="dashboard.html"><i class="fa-solid fa-gauge-high"></i>Dashboard</a>
+      <a class="nav-item " href="reports.html"><i class="fa-solid fa-chart-column"></i>Reports</a>
       <div class="nav-section">Operations</div>
-      <a class="nav-item" href="appointments.html"><i class="fa-solid fa-calendar-check"></i>Appointments</a>
-      <a class="nav-item" href="clients.html"><i class="fa-solid fa-users"></i>Clients</a>
-      <a class="nav-item active" href="staff.html"><i class="fa-solid fa-id-badge"></i>Staff</a>
+      <a class="nav-item " href="appointments.html"><i class="fa-solid fa-calendar-check"></i>Appointments</a>
+      <a class="nav-item active" href="clients.html"><i class="fa-solid fa-users"></i>Clients</a>
+      <a class="nav-item " href="staff.html"><i class="fa-solid fa-id-badge"></i>Staff</a>
+      <div class="nav-section">Business</div>
+      <a class="nav-item" href="reports.html"><i class="fa-solid fa-money-bill-trend-up"></i>Revenue</a>
+      <a class="nav-item" href="appointments.html"><i class="fa-solid fa-envelope"></i>Email Log</a>
+      <a class="nav-item" href="appointments.html"><i class="fa-solid fa-scissors"></i>Services</a>
+      <a class="nav-item" href="clients.html"><i class="fa-solid fa-crown"></i>Loyalty</a>
     </nav>
+    
     <div class="sidebar-footer">
       <div class="user-info">
         <div class="user-avatar">A</div>
@@ -69,139 +81,84 @@
   <div class="main-area">
     <div class="topbar">
       <button class="btn btn-ghost btn-icon" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="fa-solid fa-bars"></i></button>
-      <div class="topbar-title">Staff</div>
+      <div class="topbar-title">Clients</div>
       <div class="topbar-date" id="tb-date"></div>
       <div class="topbar-right">
-        <div class="filter-group">
-          <select class="filter-select" id="f-period" onchange="render()">
-            <option value="today">Today</option>
-            <option value="7d">Last 7 Days</option>
-            <option value="this_month" selected>This Month</option>
-            <option value="last_month">Last Month</option>
-            <option value="this_year">This Year</option>
-          </select>
-        </div>
-        <button class="export-btn excel" onclick="exportStaff()"><i class="fa-solid fa-file-excel"></i>Export</button>
+        <button class="btn btn-primary" onclick="openNewClient()"><i class="fa-solid fa-user-plus"></i>Add Client</button>
+        <button class="export-btn excel" onclick="Export.exportClients(SB.CACHE.clients)"><i class="fa-solid fa-file-excel"></i>Export</button>
       </div>
     </div>
 
     <div class="page-content">
 
-      <!-- Staff Cards -->
-      <div class="staff-hero" id="staff-hero"></div>
+      <!-- KPI Row -->
+      <div class="grid grid-5 mb-1" id="client-kpis"></div>
 
-      <!-- Period Summary Table -->
-      <div class="card mb-1">
-        <div class="card-header">
-          <div class="card-title">Staff Performance Summary</div>
-          <div class="card-actions">
-            <div class="export-group">
-              <button class="export-btn excel" onclick="exportStaff()"><i class="fa-solid fa-file-excel"></i>Excel</button>
-              <button class="export-btn pdf"   onclick="exportStaffPDF()"><i class="fa-solid fa-file-pdf"></i>PDF</button>
+      <!-- Main layout: list + profile -->
+      <div class="client-grid">
+
+        <!-- LEFT: Client list -->
+        <div>
+          <!-- Search & Segments -->
+          <div class="card" style="margin-bottom:.75rem;padding:.75rem">
+            <div class="search-box" style="margin-bottom:.6rem">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="client-search" placeholder="Search by name, email, phone…" oninput="filterClientList(this.value)">
+            </div>
+            <div class="seg-tabs" id="seg-tabs">
+              <button class="seg-tab active" data-seg="all" onclick="setSegment('all',this)">All</button>
+              <button class="seg-tab" data-seg="gold" onclick="setSegment('gold',this)">★ Gold+</button>
+              <button class="seg-tab" data-seg="silver" onclick="setSegment('silver',this)">Silver</button>
+              <button class="seg-tab" data-seg="vip" onclick="setSegment('vip',this)">VIP</button>
+              <button class="seg-tab" data-seg="new" onclick="setSegment('new',this)">New (1 visit)</button>
+              <button class="seg-tab" data-seg="inactive" onclick="setSegment('inactive',this)">Inactive 30d</button>
+              <button class="seg-tab" data-seg="noshow" onclick="setSegment('noshow',this)">No-shows</button>
+              <button class="seg-tab" data-seg="birthday" onclick="setSegment('birthday',this)">🎂 Birthday</button>
             </div>
           </div>
-        </div>
-        <div class="table-wrap">
-          <table class="data-table" id="staff-table">
-            <thead>
-              <tr>
-                <th>Staff</th><th>Bookings</th><th>Completed</th><th>No-shows</th>
-                <th>Revenue</th><th>Commission (25%)</th><th>Net</th><th>Avg Ticket</th><th>Progress</th>
-              </tr>
-            </thead>
-            <tbody id="staff-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Charts Row -->
-      <div class="grid grid-2 mb-1">
-        <div class="card">
-          <div class="card-header"><div class="card-title">Revenue by Staff</div></div>
-          <div style="height:210px"><canvas id="c-staff-rev"></canvas></div>
-        </div>
-        <div class="card">
-          <div class="card-header"><div class="card-title">Bookings by Staff</div></div>
-          <div style="height:210px"><canvas id="c-staff-bk"></canvas></div>
-        </div>
-      </div>
-
-      <!-- Staff Detail (click on card to expand) -->
-      <div class="staff-detail" id="staff-detail" style="display:none">
-        <div class="staff-detail-header" id="staff-detail-header"></div>
-        <div style="padding:1rem">
-          <div class="report-tabs" style="margin-bottom:.85rem">
-            <button class="report-tab active" onclick="showStaffTab('schedule',this)">Schedule</button>
-            <button class="report-tab" onclick="showStaffTab('kpi',this)">KPIs</button>
-            <button class="report-tab" onclick="showStaffTab('history',this)">Appointment History</button>
-            <button class="report-tab" onclick="showStaffTab('earnings',this)">Daily Earnings</button>
-          </div>
-
-          <!-- Schedule tab -->
-          <div id="stab-schedule">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
-              <div style="font-size:.82rem;font-weight:600;color:var(--text2)">This Week's Shift</div>
-              <button class="btn btn-primary btn-sm" onclick="saveShift()"><i class="fa-solid fa-check"></i>Save Shift</button>
-            </div>
-            <div id="shift-grid-wrap"></div>
-          </div>
-
-          <!-- KPI tab -->
-          <div id="stab-kpi" style="display:none">
-            <div class="grid grid-2">
-              <div>
-                <div style="font-size:.78rem;font-weight:700;color:var(--text2);margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.06em">KPI Targets</div>
-                <div id="kpi-bars"></div>
-              </div>
-              <div>
-                <div style="font-size:.78rem;font-weight:700;color:var(--text2);margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.06em">Revenue Trend</div>
-                <div style="height:180px"><canvas id="c-staff-trend"></canvas></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- History tab -->
-          <div id="stab-history" style="display:none">
-            <div class="table-wrap">
-              <table class="data-table" id="staff-hist-table">
-                <thead><tr><th>Date</th><th>Client</th><th>Service</th><th>Price</th><th>Commission</th><th>Status</th></tr></thead>
-                <tbody id="staff-hist-tbody"></tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Earnings tab -->
-          <div id="stab-earnings" style="display:none">
-            <div class="table-wrap">
-              <table class="data-table" id="staff-earn-table">
-                <thead><tr><th>Date</th><th>Bookings</th><th>Revenue</th><th>Commission</th><th>Net to Salon</th></tr></thead>
-                <tbody id="staff-earn-tbody"></tbody>
-              </table>
-            </div>
+          <div class="client-card">
+            <div id="client-list" style="max-height:640px;overflow-y:auto"></div>
           </div>
         </div>
+
+        <!-- RIGHT: Client profile -->
+        <div id="client-profile">
+          <div class="card" style="text-align:center;padding:3rem">
+            <i class="fa-solid fa-user-circle" style="font-size:3rem;color:var(--border2);display:block;margin-bottom:.75rem"></i>
+            <div style="font-size:.88rem;color:var(--text2)">Select a client to view their profile</div>
+          </div>
+        </div>
+
       </div>
 
     </div>
   </div>
 </div>
 
-<!-- LEAVE REQUEST MODAL -->
-<div class="modal-overlay" id="leave-modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
-  <div class="modal" style="max-width:420px">
+<!-- NEW CLIENT MODAL -->
+<div class="modal-overlay" id="new-client-modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal">
     <div class="modal-header">
-      <div class="modal-title"><i class="fa-solid fa-umbrella-beach" style="color:var(--blue)"></i> Leave Request</div>
-      <button class="modal-close" onclick="document.getElementById('leave-modal').style.display='none'">×</button>
+      <div class="modal-title"><i class="fa-solid fa-user-plus" style="color:var(--pink)"></i> New Client</div>
+      <button class="modal-close" onclick="document.getElementById('new-client-modal').style.display='none'">×</button>
     </div>
-    <div class="form-group" style="margin-bottom:.75rem"><label class="form-label">Staff Member</label><input class="form-input" id="lv-staff" readonly></div>
     <div class="form-row">
-      <div class="form-group"><label class="form-label">From</label><input class="form-input" id="lv-from" type="date"></div>
-      <div class="form-group"><label class="form-label">To</label><input class="form-input" id="lv-to" type="date"></div>
+      <div class="form-group"><label class="form-label">First Name</label><input class="form-input" id="nc-first" placeholder="Emma"></div>
+      <div class="form-group"><label class="form-label">Last Name</label><input class="form-input" id="nc-last" placeholder="Johnson"></div>
     </div>
-    <div class="form-group" style="margin-bottom:1rem"><label class="form-label">Reason</label><select class="form-select" id="lv-reason"><option>Personal</option><option>Medical</option><option>Vacation</option><option>Other</option></select></div>
-    <div style="display:flex;gap:.4rem;justify-content:flex-end">
-      <button class="btn" onclick="document.getElementById('leave-modal').style.display='none'">Cancel</button>
-      <button class="btn btn-primary" onclick="saveLeave()"><i class="fa-solid fa-check"></i>Submit</button>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="nc-email" type="email" placeholder="emma@email.com"></div>
+      <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="nc-phone" placeholder="(613) 555-0000"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Birthday</label><input class="form-input" id="nc-birthday" type="date"></div>
+      <div class="form-group"><label class="form-label">Tier</label><select class="form-select" id="nc-tier"><option value="standard">Standard</option><option value="silver">Silver</option><option value="gold">Gold</option></select></div>
+    </div>
+    <div class="form-group" style="margin-bottom:.75rem"><label class="form-label">Allergy / Warning Notes</label><textarea class="form-input" id="nc-allergy" placeholder="Any allergies or warnings…" style="height:55px;resize:none"></textarea></div>
+    <div class="form-group" style="margin-bottom:1rem"><label class="form-label">Preferences</label><textarea class="form-input" id="nc-pref" placeholder="Color preferences, favorite staff…" style="height:55px;resize:none"></textarea></div>
+    <div style="display:flex;gap:.5rem;justify-content:flex-end">
+      <button class="btn" onclick="document.getElementById('new-client-modal').style.display='none'">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNewClient()"><i class="fa-solid fa-check"></i>Save Client</button>
     </div>
   </div>
 </div>
@@ -218,309 +175,339 @@
 if (!sessionStorage.getItem('mn_auth')) { window.location.href = 'index.html'; }
 function logout() { sessionStorage.removeItem('mn_auth'); window.location.href = 'index.html'; }
 
-var SELECTED_STAFF = null;
-var STAFF_CONFIG = [
-  { name:'Happy',  role:'Acrylic & Nail Art',     color:'#E91E8C', grad:'linear-gradient(135deg,#E91E8C,#7C3AED)', target:{bookings:50,revenue:3500} },
-  { name:'Flower', role:'Gel Extensions & Ombré',  color:'#7C3AED', grad:'linear-gradient(135deg,#7C3AED,#4F46E5)', target:{bookings:45,revenue:4000} },
-  { name:'Daisy',  role:'Shellac & Chrome',        color:'#0891B2', grad:'linear-gradient(135deg,#06B6D4,#0284C7)', target:{bookings:40,revenue:2500} },
-  { name:'Hannah', role:'Pedicure Specialist',     color:'#D97706', grad:'linear-gradient(135deg,#D97706,#B45309)', target:{bookings:38,revenue:2000} }
-];
-var SHIFT_TEMPLATE = { Happy:'11111100', Flower:'11111100', Daisy:'01111100', Hannah:'11011100' }; // Mon–Sun
+var SELECTED_CLIENT = null;
+var SEGMENT = 'all';
+var SEARCH_Q = '';
 
 Utils.startClock(null, document.getElementById('tb-date'));
 
 window.addEventListener('DOMContentLoaded', function() {
   SB.testConnection().then(function() {
-    SB.loadAll().then(render);
+    SB.loadAll().then(function() {
+      renderKPIs();
+      renderClientList();
+    });
   });
 });
 
-function getPeriodRange() {
-  var p = document.getElementById('f-period') ? document.getElementById('f-period').value : 'this_month';
-  return Utils.getRange(p);
-}
-
-function render() {
-  var range = getPeriodRange();
-  var FP = SB.CACHE.payments.filter(function(p){ return Utils.inRange(p.paid_at, range); });
-  var FB = Utils.filterBookings(SB.CACHE.bookings, { range: range });
-
-  renderHeroCards(FB, FP);
-  renderSummaryTable(FB, FP);
-  renderCharts(FB, FP);
-  if (SELECTED_STAFF) renderStaffDetail(SELECTED_STAFF);
-}
-
-function renderHeroCards(FB, FP) {
-  var html = STAFF_CONFIG.map(function(s) {
-    var bks  = FB.filter(function(b){ return b.staff_name === s.name; });
-    var pays = FP.filter(function(p){ return p.staff_name === s.name; });
-    var rev  = Utils.sumRevenue(pays);
-    var comm = Utils.sumCommission(pays);
-    var comp = bks.filter(function(b){ return b.status==='completed'; }).length;
-    var nosh = bks.filter(function(b){ return b.status==='no-show';   }).length;
-    var isSelected = SELECTED_STAFF === s.name;
-
-    return '<div class="staff-card' + (isSelected?' selected':'') + '" style="--sc-grad:'+s.grad+'" onclick="selectStaff(\''+s.name+'\')">' +
-      '<div class="sc-av" style="background:'+s.grad+'">'+s.name[0]+'</div>' +
-      '<div class="sc-name">'+s.name+'</div>' +
-      '<div class="sc-role">'+s.role+'</div>' +
-      '<div class="sc-stats">' +
-        '<div class="sc-stat"><div class="sc-stat-v">'+bks.length+'</div><div class="sc-stat-l">Bookings</div></div>' +
-        '<div class="sc-stat"><div class="sc-stat-v" style="color:var(--green)">'+Utils.fCurrency(rev)+'</div><div class="sc-stat-l">Revenue</div></div>' +
-        '<div class="sc-stat"><div class="sc-stat-v" style="color:var(--pink)">'+Utils.fCurrency(comm)+'</div><div class="sc-stat-l">Commission</div></div>' +
-        '<div class="sc-stat"><div class="sc-stat-v" style="color:'+(nosh>0?'var(--red)':'var(--text2)')+'">'+nosh+'</div><div class="sc-stat-l">No-shows</div></div>' +
-      '</div>' +
-      '<div style="margin-top:.6rem;display:flex;gap:.3rem;justify-content:center;flex-wrap:wrap">' +
-        '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openLeave(\''+s.name+'\')" style="font-size:.65rem"><i class="fa-solid fa-umbrella-beach"></i>Leave</button>' +
-      '</div>' +
-      '</div>';
-  }).join('');
-  document.getElementById('staff-hero').innerHTML = html;
-}
-
-function renderSummaryTable(FB, FP) {
-  var ratings = {Happy:'4.9',Flower:'5.0',Daisy:'4.8',Hannah:'4.9'};
-  var html = STAFF_CONFIG.map(function(s) {
-    var bks  = FB.filter(function(b){ return b.staff_name===s.name; });
-    var pays = FP.filter(function(p){ return p.staff_name===s.name; });
-    var rev  = Utils.sumRevenue(pays);
-    var comm = Utils.sumCommission(pays);
-    var comp = bks.filter(function(b){ return b.status==='completed'; }).length;
-    var nosh = bks.filter(function(b){ return b.status==='no-show';   }).length;
-    var avg  = pays.length ? rev/pays.length : 0;
-    var tgtRev = s.target.revenue;
-    var pct  = tgtRev > 0 ? Math.min(100, Math.round(rev/tgtRev*100)) : 0;
-
-    return '<tr>' +
-      '<td><div style="display:flex;align-items:center;gap:6px">' +
-        '<div class="avatar avatar-sm" style="background:'+s.grad+'">'+s.name[0]+'</div>'+s.name+'</div></td>' +
-      '<td>'+bks.length+'</td>' +
-      '<td class="td-pos">'+comp+'</td>' +
-      '<td '+(nosh>0?'class="td-neg"':'')+'>'+nosh+'</td>' +
-      '<td class="td-pos">'+Utils.fCurrency(rev)+'</td>' +
-      '<td style="color:var(--pink);font-weight:600">'+Utils.fCurrency(comm)+'</td>' +
-      '<td class="td-pos">'+Utils.fCurrency(rev-comm)+'</td>' +
-      '<td>'+Utils.fCurrency(avg)+'</td>' +
-      '<td style="min-width:120px"><div style="display:flex;align-items:center;gap:.4rem"><div class="progress" style="flex:1"><div class="progress-bar" style="width:'+pct+'%;background:'+s.color+'"></div></div><span style="font-size:.7rem;color:var(--text2)">'+pct+'%</span></div></td>' +
-      '</tr>';
-  }).join('');
-  document.getElementById('staff-tbody').innerHTML = html || '<tr><td colspan="9" style="text-align:center;padding:1.5rem;color:var(--text3)">No data</td></tr>';
-  Utils.makeSortable(document.getElementById('staff-table'));
-}
-
-function renderCharts(FB, FP) {
-  var names = STAFF_CONFIG.map(function(s){return s.name;});
-  var colors = STAFF_CONFIG.map(function(s){return s.color;});
-
-  var revData = names.map(function(n){ return Utils.sumRevenue(FP.filter(function(p){return p.staff_name===n;})); });
-  var bkData  = names.map(function(n){ return FB.filter(function(b){return b.staff_name===n;}).length; });
-
-  Charts.hBar('c-staff-rev', names, revData, '#E91E8C');
-  Charts.hBar('c-staff-bk',  names, bkData,  '#7C3AED');
-}
-
-function selectStaff(name) {
-  SELECTED_STAFF = name;
-  render();
-  var detailEl = document.getElementById('staff-detail');
-  detailEl.style.display = '';
-  detailEl.scrollIntoView({ behavior:'smooth', block:'start' });
-  renderStaffDetail(name);
-}
-
-function renderStaffDetail(name) {
-  var sc = STAFF_CONFIG.find(function(s){return s.name===name;});
-  if (!sc) return;
-
-  var range = getPeriodRange();
-  var FB = Utils.filterBookings(SB.CACHE.bookings, {range:range}).filter(function(b){return b.staff_name===name;});
-  var FP = SB.CACHE.payments.filter(function(p){return Utils.inRange(p.paid_at,range)&&p.staff_name===name;});
-  var rev  = Utils.sumRevenue(FP);
-  var comm = Utils.sumCommission(FP);
-
-  // Header
-  document.getElementById('staff-detail-header').innerHTML =
-    '<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">' +
-    '<div class="avatar avatar-lg" style="background:'+sc.grad+'">'+name[0]+'</div>' +
-    '<div><div style="font-family:var(--fontd);font-size:1.1rem;font-weight:700">'+name+'</div>' +
-    '<div style="font-size:.78rem;color:var(--text2)">'+sc.role+'</div></div>' +
-    '<div style="display:flex;gap:.65rem;margin-left:auto;flex-wrap:wrap">' +
-    '<div style="text-align:center"><div style="font-family:var(--fontd);font-size:1.2rem;font-weight:700;color:var(--green)">'+Utils.fCurrency(rev)+'</div><div style="font-size:.65rem;color:var(--text2)">Revenue</div></div>' +
-    '<div style="text-align:center"><div style="font-family:var(--fontd);font-size:1.2rem;font-weight:700;color:var(--pink)">'+Utils.fCurrency(comm)+'</div><div style="font-size:.65rem;color:var(--text2)">Commission</div></div>' +
-    '<div style="text-align:center"><div style="font-family:var(--fontd);font-size:1.2rem;font-weight:700">'+FB.length+'</div><div style="font-size:.65rem;color:var(--text2)">Bookings</div></div>' +
-    '</div></div>';
-
-  renderShiftGrid(name);
-  renderKPIBars(name, FB, FP, sc);
-  renderStaffHistory(name);
-  renderDailyEarnings(name);
-}
-
-function renderShiftGrid(name) {
-  var days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  var shift = SHIFT_TEMPLATE[name] || '1111110';
-  var html = '<div class="shift-grid">' +
-    '<div class="shift-head"></div>' +
-    days.map(function(d){return '<div class="shift-head">'+d+'</div>';}).join('') +
-    '<div class="shift-name">'+name+'</div>' +
-    shift.split('').map(function(s,i){
-      var on = s==='1';
-      return '<div class="shift-cell '+(on?'shift-on':'shift-off')+'" onclick="toggleShift(this,\''+name+'\','+i+')">' +
-        '<span style="font-size:.65rem">'+(on?'9–6':'Off')+'</span></div>';
-    }).join('') +
-    '</div>';
-  document.getElementById('shift-grid-wrap').innerHTML = html;
-}
-
-function toggleShift(el, name, day) {
-  var isOn = el.classList.contains('shift-on');
-  el.classList.toggle('shift-on',  !isOn);
-  el.classList.toggle('shift-off',  isOn);
-  el.querySelector('span').textContent = isOn ? 'Off' : '9–6';
-}
-
-function saveShift() {
-  Utils.toast('Shift saved for ' + SELECTED_STAFF, 'success');
-}
-
-function renderKPIBars(name, FB, FP, sc) {
-  var rev  = Utils.sumRevenue(FP);
-  var bks  = FB.length;
-  var comp = FB.filter(function(b){return b.status==='completed';}).length;
-  var nosh = FB.filter(function(b){return b.status==='no-show';}).length;
-  var items = [
-    {l:'Revenue',    v:Utils.fCurrency(rev),                         pct:Math.min(100,Math.round(rev/sc.target.revenue*100)),    c:sc.color},
-    {l:'Bookings',   v:bks+' / '+sc.target.bookings,                 pct:Math.min(100,Math.round(bks/sc.target.bookings*100)),   c:'#7C3AED'},
-    {l:'Completion', v:bks>0?Math.round(comp/bks*100)+'%':'0%',      pct:bks>0?Math.round(comp/bks*100):0,                      c:'#059669'},
-    {l:'No-show Rate',v:bks>0?Math.round(nosh/bks*100)+'%':'0%',     pct:bks>0?Math.round(nosh/bks*100):0,                      c:'#DC2626'}
+function renderKPIs() {
+  var clients = SB.CACHE.clients;
+  var today = new Date();
+  var bdToday = clients.filter(function(c) {
+    if (!c.birthday) return false;
+    var bd = new Date(c.birthday);
+    return bd.getMonth() === today.getMonth() && bd.getDate() === today.getDate();
+  });
+  var inactive30 = clients.filter(function(c) {
+    var lastBk = SB.CACHE.bookings.filter(function(b) { return b.client_name === (c.first_name+' '+c.last_name); })
+      .sort(function(a,b){return new Date(b.booked_at)-new Date(a.booked_at);})[0];
+    if (!lastBk) return true;
+    return (today - new Date(lastBk.booked_at)) > 30*24*3600*1000;
+  });
+  var kpis = [
+    {l:'Total Clients', v:clients.length,                                                      c:'#E91E8C', i:'fa-users'},
+    {l:'VIP (Gold+)',   v:clients.filter(function(c){return c.tier==='gold'||c.tier==='platinum';}).length, c:'#D97706', i:'fa-crown'},
+    {l:'Silver',        v:clients.filter(function(c){return c.tier==='silver';}).length,        c:'#7C3AED', i:'fa-star'},
+    {l:'Birthdays Today',v:bdToday.length,                                                      c:'#E91E8C', i:'fa-cake-candles'},
+    {l:'Inactive 30d',  v:inactive30.length,                                                    c:'#DC2626', i:'fa-user-clock'}
   ];
-  document.getElementById('kpi-bars').innerHTML = items.map(function(k) {
-    return '<div class="kpi-bar-item">' +
-      '<div class="kpi-bar-label">'+k.l+'</div>' +
-      '<div class="progress" style="flex:1"><div class="progress-bar" style="width:'+k.pct+'%;background:'+k.c+'"></div></div>' +
-      '<div class="kpi-bar-val">'+k.v+'</div>' +
+  document.getElementById('client-kpis').innerHTML = kpis.map(function(k) {
+    return '<div class="kpi-card" style="--kpi-color:'+k.c+'"><div class="kpi-top"><div class="kpi-icon" style="background:'+k.c+'18"><i class="fa-solid '+k.i+'" style="color:'+k.c+'"></i></div></div><div class="kpi-value">'+k.v+'</div><div class="kpi-label">'+k.l+'</div></div>';
+  }).join('');
+}
+
+function setSegment(seg, btn) {
+  SEGMENT = seg;
+  document.querySelectorAll('.seg-tab').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  renderClientList();
+}
+
+function filterClientList(q) { SEARCH_Q = q.toLowerCase(); renderClientList(); }
+
+function getFilteredClients() {
+  var clients = SB.CACHE.clients.slice();
+  var today = new Date();
+
+  // Segment
+  if (SEGMENT === 'gold')     clients = clients.filter(function(c){return c.tier==='gold'||c.tier==='platinum';});
+  else if (SEGMENT === 'silver')   clients = clients.filter(function(c){return c.tier==='silver';});
+  else if (SEGMENT === 'vip')      clients = clients.filter(function(c){return c.vip;});
+  else if (SEGMENT === 'new')      clients = clients.filter(function(c){
+    return SB.CACHE.bookings.filter(function(b){return b.client_id===c.id;}).length === 1;
+  });
+  else if (SEGMENT === 'noshow')   clients = clients.filter(function(c){return (c.no_show_count||0)>0;});
+  else if (SEGMENT === 'birthday') clients = clients.filter(function(c){
+    if (!c.birthday) return false;
+    var bd=new Date(c.birthday); return bd.getMonth()===today.getMonth()&&bd.getDate()===today.getDate();
+  });
+  else if (SEGMENT === 'inactive') clients = clients.filter(function(c){
+    var bks=SB.CACHE.bookings.filter(function(b){return b.client_id===c.id;})
+      .sort(function(a,b){return new Date(b.booked_at)-new Date(a.booked_at);});
+    if(!bks.length) return true;
+    return (today-new Date(bks[0].booked_at))>30*24*3600*1000;
+  });
+
+  // Search
+  if (SEARCH_Q) {
+    clients = clients.filter(function(c) {
+      var name=((c.first_name||'')+' '+(c.last_name||'')).toLowerCase();
+      return name.indexOf(SEARCH_Q)!==-1 || (c.email||'').toLowerCase().indexOf(SEARCH_Q)!==-1 || (c.phone||'').indexOf(SEARCH_Q)!==-1;
+    });
+  }
+  return clients;
+}
+
+function renderClientList() {
+  var clients = getFilteredClients();
+  var tierBadge = {standard:'badge-blue',silver:'badge-violet',gold:'badge-gold',platinum:'badge-pink'};
+  var grads = ['linear-gradient(135deg,#E91E8C,#7C3AED)','linear-gradient(135deg,#7C3AED,#4F46E5)','linear-gradient(135deg,#06B6D4,#0284C7)','linear-gradient(135deg,#D97706,#B45309)','linear-gradient(135deg,#EF4444,#DC2626)'];
+
+  var html = clients.map(function(c, i) {
+    var name = (c.first_name||'') + ' ' + (c.last_name||'');
+    var bks  = SB.CACHE.bookings.filter(function(b){return b.client_id===c.id;});
+    var pay  = SB.CACHE.payments.filter(function(p){return p.client_id===c.id;});
+    var ltv  = Utils.sumRevenue(pay);
+    var isSelected = SELECTED_CLIENT && SELECTED_CLIENT.id === c.id;
+    var bd = c.birthday ? new Date(c.birthday) : null;
+    var today = new Date();
+    var isBd = bd && bd.getMonth()===today.getMonth() && bd.getDate()===today.getDate();
+
+    return '<div class="client-list-item' + (isSelected?' selected':'') + '" data-id="' + c.id + '" onclick="selectClient(\'' + c.id + '\')">' +
+      '<div class="avatar avatar-md" style="background:' + grads[i%grads.length] + '">' + (c.first_name||'?')[0] + '</div>' +
+      '<div style="flex:1;min-width:0">' +
+        '<div class="cli-name">' + name + (isBd?' 🎂':'') + '</div>' +
+        '<div class="cli-meta">' + (c.email||'') + ' · ' + bks.length + ' visits</div>' +
+      '</div>' +
+      '<div style="text-align:right;flex-shrink:0">' +
+        '<div class="cli-ltv">' + Utils.fCurrency(ltv) + '</div>' +
+        '<span class="badge ' + (tierBadge[c.tier]||'badge-blue') + '" style="font-size:.58rem">' + (c.tier||'std') + '</span>' +
+      '</div>' +
       '</div>';
   }).join('');
 
-  // Trend chart
-  var labels=[], data=[];
-  for(var i=29;i>=0;i--){
-    var d=new Date(); d.setDate(d.getDate()-i);
-    var ds=d.toISOString().split('T')[0];
-    labels.push(i%7===0?Utils.fDate(ds,{month:'short',day:'numeric'}):'');
-    var dayPay=SB.CACHE.payments.filter(function(p){return p.staff_name===name&&p.paid_at&&p.paid_at.startsWith(ds);});
-    data.push(Utils.sumRevenue(dayPay));
-  }
-  Charts.lineChart('c-staff-trend', labels, [{label:'Revenue',data:data}]);
+  document.getElementById('client-list').innerHTML = html ||
+    '<div class="empty-state" style="padding:2rem"><i class="fa-solid fa-user-slash"></i><p>No clients match</p></div>';
 }
 
-function renderStaffHistory(name) {
-  var bks = SB.CACHE.bookings.filter(function(b){return b.staff_name===name;})
-    .sort(function(a,b){return new Date(b.booked_at)-new Date(a.booked_at);}).slice(0,30);
-  var pays = {};
-  SB.CACHE.payments.forEach(function(p){if(p.booking_id)pays[p.booking_id]=p;});
-
-  var html = bks.map(function(b) {
-    var p = pays[b.id] || {};
-    var comm = (parseFloat(b.service_price)||0)*0.25;
-    return '<tr><td class="td-muted">'+Utils.fDate(b.booked_at)+'</td>' +
-      '<td class="tds">'+(b.client_name||'—')+'</td>' +
-      '<td class="td-muted">'+(b.service_name||'—')+'</td>' +
-      '<td class="td-pos">CA$'+(b.service_price||0)+'</td>' +
-      '<td style="color:var(--pink);font-weight:600">CA$'+comm.toFixed(0)+'</td>' +
-      '<td><span class="status '+(b.status==='completed'?'status-completed':b.status==='confirmed'?'status-confirmed':b.status==='no-show'?'status-noshow':'status-cancelled')+'">'+b.status+'</span></td></tr>';
-  }).join('') || '<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--text3)">No bookings</td></tr>';
-  document.getElementById('staff-hist-tbody').innerHTML = html;
-  Utils.makeSortable(document.getElementById('staff-hist-table'));
+function selectClient(id) {
+  SELECTED_CLIENT = SB.CACHE.clients.find(function(c) { return c.id === id; });
+  if (!SELECTED_CLIENT) return;
+  renderClientList(); // re-render to show selection
+  renderClientProfile(SELECTED_CLIENT);
 }
 
-function renderDailyEarnings(name) {
-  var grouped = Utils.groupByDate(
-    SB.CACHE.bookings.filter(function(b){return b.staff_name===name&&b.status==='completed';}),
-    'booked_at', 'day'
-  );
-  var days = Object.keys(grouped).sort().reverse().slice(0,20);
-  var payGrouped = Utils.groupByDate(
-    SB.CACHE.payments.filter(function(p){return p.staff_name===name;}),
-    'paid_at', 'day'
-  );
+function renderClientProfile(c) {
+  var name = (c.first_name||'') + ' ' + (c.last_name||'');
+  var bks  = SB.CACHE.bookings.filter(function(b){return b.client_id===c.id;}).sort(function(a,b){return new Date(b.booked_at)-new Date(a.booked_at);});
+  var pay  = SB.CACHE.payments.filter(function(p){return p.client_id===c.id;});
+  var ltv  = Utils.sumRevenue(pay);
+  var avg  = pay.length ? ltv/pay.length : 0;
+  var emails = SB.CACHE.email_log.filter(function(e){return e.client_id===c.id;}).slice(0,8);
 
-  var html = days.map(function(d) {
-    var bks  = grouped[d]||[];
-    var pays = payGrouped[d]||[];
-    var rev  = Utils.sumRevenue(pays);
-    var comm = Utils.sumCommission(pays);
-    return '<tr><td class="td-muted">'+Utils.fDate(d,{weekday:'short',month:'short',day:'numeric'})+'</td>' +
-      '<td>'+bks.length+'</td>' +
-      '<td class="td-pos">'+Utils.fCurrency(rev)+'</td>' +
-      '<td style="color:var(--pink);font-weight:600">'+Utils.fCurrency(comm)+'</td>' +
-      '<td class="td-pos">'+Utils.fCurrency(rev-comm)+'</td></tr>';
-  }).join('') || '<tr><td colspan="5" style="text-align:center;padding:1.5rem;color:var(--text3)">No earnings data</td></tr>';
-  document.getElementById('staff-earn-tbody').innerHTML = html;
-  Utils.makeSortable(document.getElementById('staff-earn-table'));
+  // Loyalty
+  var tierPts = {standard:0, silver:500, gold:1000, platinum:2000};
+  var nextTier = {standard:'Silver', silver:'Gold', gold:'Platinum', platinum:'Platinum!'};
+  var pts = c.loyalty_points || 0;
+  var nextPts = tierPts[c.tier==='standard'?'silver':c.tier==='silver'?'gold':c.tier==='gold'?'platinum':'platinum'] || 2000;
+  var pct = Math.min(100, nextPts > 0 ? (pts/nextPts*100) : 100);
+
+  // tier badge colors
+  var tierC = {standard:'badge-blue',silver:'badge-violet',gold:'badge-gold',platinum:'badge-pink'};
+
+  // Birthday
+  var bd = c.birthday ? new Date(c.birthday) : null;
+  var bdStr = bd ? bd.toLocaleDateString('en-CA',{month:'long',day:'numeric'}) : '—';
+  var today = new Date();
+  var isBdToday = bd && bd.getMonth()===today.getMonth() && bd.getDate()===today.getDate();
+
+  // Build profile HTML
+  var profileHTML = '<div class="client-card">' +
+    // Header
+    '<div style="background:linear-gradient(135deg,var(--pink-bg),var(--violet-bg));padding:1.1rem;border-bottom:1px solid var(--border)">' +
+      '<div class="profile-hero">' +
+        '<div class="profile-avatar" style="' + (c.vip?'outline:2px solid var(--gold);outline-offset:2px':'') + '">' + (c.first_name||'?')[0] + '</div>' +
+        '<div style="flex:1">' +
+          '<div class="profile-name">' + name + (isBdToday?' 🎂':'') + '</div>' +
+          '<div class="profile-meta">' + (c.email||'') + '<br>' + (c.phone||'—') + ' · Birthday: ' + bdStr + '</div>' +
+          '<div class="profile-tags">' +
+            '<span class="badge ' + (tierC[c.tier]||'badge-blue') + '">' + (c.tier||'standard') + '</span>' +
+            (c.vip ? '<span class="badge badge-gold">★ VIP</span>' : '') +
+            (bks.length>10 ? '<span class="badge badge-pink">Loyal Client</span>' : '') +
+            ((c.no_show_count||0)>2 ? '<span class="badge badge-red">'+c.no_show_count+' No-shows</span>' : '') +
+          '</div>' +
+        '</div>' +
+        '<div style="text-align:right">' +
+          '<button class="btn btn-primary btn-sm" onclick="bookForClient(\'' + c.id + '\')"><i class="fa-solid fa-calendar-plus"></i>Book</button>' +
+        '</div>' +
+      '</div>' +
+
+      // LTV + Stats
+      '<div class="ltv-box">' +
+        '<div class="ltv-val">' + Utils.fCurrency(ltv) + '</div>' +
+        '<div class="ltv-lbl">Lifetime Value · ' + bks.length + ' visits</div>' +
+      '</div>' +
+      '<div class="stat-row">' +
+        '<div class="stat-box"><div class="stat-v">' + bks.length + '</div><div class="stat-l">Visits</div></div>' +
+        '<div class="stat-box"><div class="stat-v">' + Utils.fCurrency(avg) + '</div><div class="stat-l">Avg Ticket</div></div>' +
+        '<div class="stat-box"><div class="stat-v">' + (c.no_show_count||0) + '</div><div class="stat-l">No-shows</div></div>' +
+      '</div>' +
+
+      // Loyalty
+      '<div class="loyalty-bar-wrap">' +
+        '<div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:4px">' +
+          '<span style="font-weight:600">Loyalty Points</span>' +
+          '<span style="color:var(--gold);font-weight:700">' + pts + ' pts</span>' +
+        '</div>' +
+        '<div class="progress"><div class="progress-bar" style="width:' + pct + '%;background:linear-gradient(90deg,#B45309,#D97706)"></div></div>' +
+        '<div style="font-size:.68rem;color:var(--text2);margin-top:3px">' + (c.tier||'standard').charAt(0).toUpperCase()+(c.tier||'standard').slice(1) + ' · ' + (nextPts-pts > 0 ? (nextPts-pts)+' more pts → '+nextTier[c.tier||'standard'] : 'Max tier!') + '</div>' +
+      '</div>' +
+
+      // Allergy + Prefs
+      (c.allergy_notes ? '<div class="allergy-box"><i class="fa-solid fa-triangle-exclamation" style="color:var(--red)"></i> <strong>Allergy / Warning:</strong> ' + c.allergy_notes + '</div>' : '') +
+      (c.preferences ? '<div class="pref-box"><i class="fa-solid fa-heart" style="color:var(--blue)"></i> <strong>Preferences:</strong> ' + c.preferences + '</div>' : '') +
+    '</div>' + // end header
+
+    // Tabs
+    '<div style="display:flex;border-bottom:1px solid var(--border)">' +
+      '<button class="report-tab active" style="border-radius:0;border-bottom:none;padding:.6rem .9rem" onclick="showProfileTab(\'history\',this)">History</button>' +
+      '<button class="report-tab" style="border-radius:0;border-bottom:none;padding:.6rem .9rem" onclick="showProfileTab(\'emails\',this)">Emails</button>' +
+      '<button class="report-tab" style="border-radius:0;border-bottom:none;padding:.6rem .9rem" onclick="showProfileTab(\'photos\',this)">Photos</button>' +
+      '<button class="report-tab" style="border-radius:0;border-bottom:none;padding:.6rem .9rem" onclick="showProfileTab(\'edit\',this)">Edit</button>' +
+    '</div>' +
+
+    // History
+    '<div id="ptab-history" style="padding:1rem">' +
+      '<div class="table-wrap">' +
+        '<table class="data-table" id="client-hist-table">' +
+          '<thead><tr><th>Date</th><th>Service</th><th>Staff</th><th>Price</th><th>Payment</th><th>Rating</th></tr></thead>' +
+          '<tbody>' +
+          bks.slice(0,15).map(function(b) {
+            return '<tr><td class="td-muted" style="white-space:nowrap">'+Utils.fDate(b.booked_at)+'</td>' +
+              '<td class="tds">'+b.service_name+'</td>' +
+              '<td class="td-muted">'+b.staff_name+'</td>' +
+              '<td class="td-pos">CA$'+b.service_price+'</td>' +
+              '<td>'+(b.payment_status==='paid'?'<span class="badge badge-green">Paid</span>':'<span class="badge badge-amber">Unpaid</span>')+'</td>' +
+              '<td style="color:var(--amber)">⭐⭐⭐⭐⭐</td></tr>';
+          }).join('') +
+          (bks.length===0?'<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--text3)">No visits yet</td></tr>':'') +
+          '</tbody>' +
+        '</table>' +
+      '</div>' +
+    '</div>' +
+
+    // Emails
+    '<div id="ptab-emails" style="padding:1rem;display:none">' +
+      (emails.length > 0 ? emails.map(function(e) {
+        var iconMap = {receipt:'fa-receipt',confirmation:'fa-calendar-check',birthday:'fa-cake-candles',reminder:'fa-bell',winback:'fa-rotate-left'};
+        return '<div class="email-item" style="display:flex;align-items:flex-start;gap:.65rem;padding:.65rem .85rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:.4rem">' +
+          '<div style="width:28px;height:28px;border-radius:50%;background:var(--pink-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fa-solid '+(iconMap[e.type]||'fa-envelope')+'" style="color:var(--pink);font-size:.75rem"></i></div>' +
+          '<div style="flex:1"><div style="font-size:.8rem;font-weight:500">'+(e.subject||e.type)+'</div><div style="font-size:.68rem;color:var(--text2)">'+Utils.fDate(e.sent_at)+'</div></div>' +
+          '<span class="badge '+(e.status==='opened'?'badge-green':e.status==='clicked'?'badge-blue':'badge-gray')+'">'+e.status+'</span>' +
+          '</div>';
+      }).join('') : '<div class="empty-state" style="padding:1.5rem"><i class="fa-solid fa-envelope-open"></i><p>No emails sent yet</p></div>') +
+    '</div>' +
+
+    // Photos
+    '<div id="ptab-photos" style="padding:1rem;display:none">' +
+      '<div class="photo-grid">' +
+        '<div class="photo-thumb"><i class="fa-solid fa-camera" style="color:var(--pink);font-size:1rem"></i><div style="font-size:.58rem;color:var(--text3)">Before/After</div></div>' +
+        '<div class="photo-thumb"><i class="fa-solid fa-camera" style="color:var(--pink);font-size:1rem"></i><div style="font-size:.58rem;color:var(--text3)">Before/After</div></div>' +
+        '<div class="photo-thumb photo-add" onclick="Utils.toast(\'Upload feature coming soon\',\'info\')"><i class="fa-solid fa-plus" style="color:var(--text3);font-size:.9rem"></i><div style="font-size:.58rem;color:var(--text3)">Add Photo</div></div>' +
+      '</div>' +
+    '</div>' +
+
+    // Edit
+    '<div id="ptab-edit" style="padding:1rem;display:none">' +
+      '<div class="form-row">' +
+        '<div class="form-group"><label class="form-label">First Name</label><input class="form-input" id="ec-first" value="' + (c.first_name||'') + '"></div>' +
+        '<div class="form-group"><label class="form-label">Last Name</label><input class="form-input" id="ec-last" value="' + (c.last_name||'') + '"></div>' +
+      '</div>' +
+      '<div class="form-row">' +
+        '<div class="form-group"><label class="form-label">Email</label><input class="form-input" id="ec-email" value="' + (c.email||'') + '"></div>' +
+        '<div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="ec-phone" value="' + (c.phone||'') + '"></div>' +
+      '</div>' +
+      '<div class="form-row">' +
+        '<div class="form-group"><label class="form-label">Birthday</label><input class="form-input" id="ec-bd" type="date" value="' + (c.birthday||'') + '"></div>' +
+        '<div class="form-group"><label class="form-label">Tier</label><select class="form-select" id="ec-tier"><option value="standard"' + (c.tier==='standard'?' selected':'') + '>Standard</option><option value="silver"' + (c.tier==='silver'?' selected':'') + '>Silver</option><option value="gold"' + (c.tier==='gold'?' selected':'') + '>Gold</option><option value="platinum"' + (c.tier==='platinum'?' selected':'') + '>Platinum</option></select></div>' +
+      '</div>' +
+      '<div class="form-group" style="margin-bottom:.75rem"><label class="form-label">Allergy Notes</label><textarea class="form-input" id="ec-allergy" style="height:55px;resize:none">' + (c.allergy_notes||'') + '</textarea></div>' +
+      '<div class="form-group" style="margin-bottom:.85rem"><label class="form-label">Preferences</label><textarea class="form-input" id="ec-pref" style="height:55px;resize:none">' + (c.preferences||'') + '</textarea></div>' +
+      '<div style="display:flex;gap:.4rem">' +
+        '<button class="btn btn-primary btn-sm" onclick="saveClientEdit(\'' + c.id + '\')"><i class="fa-solid fa-check"></i>Save Changes</button>' +
+        '<button class="btn btn-danger btn-sm" onclick="Utils.toast(\'Client deactivated\',\'info\')"><i class="fa-solid fa-user-slash"></i>Deactivate</button>' +
+      '</div>' +
+    '</div>' +
+
+    '</div>'; // end client-card
+
+  document.getElementById('client-profile').innerHTML = profileHTML;
+  Utils.makeSortable(document.getElementById('client-hist-table'));
 }
 
-function showStaffTab(tab, btn) {
-  var tabs = ['schedule','kpi','history','earnings'];
+function showProfileTab(tab, btn) {
+  var tabs = ['history','emails','photos','edit'];
   tabs.forEach(function(t) {
-    var el = document.getElementById('stab-'+t);
-    if(el) el.style.display = t===tab ? '' : 'none';
+    var el = document.getElementById('ptab-' + t);
+    if (el) el.style.display = t === tab ? '' : 'none';
   });
-  document.querySelectorAll('#staff-detail .report-tab').forEach(function(b){b.classList.remove('active');});
-  if(btn) btn.classList.add('active');
-  if(tab==='kpi' && SELECTED_STAFF) {
-    setTimeout(function() { renderKPIBars(SELECTED_STAFF, [], []); }, 100);
-  }
+  document.querySelectorAll('#client-profile .report-tab').forEach(function(b) { b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
 }
 
-function openLeave(name) {
-  document.getElementById('lv-staff').value = name;
-  var today = new Date().toISOString().split('T')[0];
-  document.getElementById('lv-from').value = today;
-  document.getElementById('lv-to').value = today;
-  document.getElementById('leave-modal').style.display = 'flex';
+function saveClientEdit(id) {
+  var updates = {
+    first_name:    document.getElementById('ec-first').value,
+    last_name:     document.getElementById('ec-last').value,
+    email:         document.getElementById('ec-email').value,
+    phone:         document.getElementById('ec-phone').value,
+    birthday:      document.getElementById('ec-bd').value || null,
+    tier:          document.getElementById('ec-tier').value,
+    allergy_notes: document.getElementById('ec-allergy').value,
+    preferences:   document.getElementById('ec-pref').value
+  };
+  SB.update('clients', id, updates).then(function() {
+    var c = SB.CACHE.clients.find(function(x){return x.id===id;});
+    if (c) Object.assign(c, updates);
+    SELECTED_CLIENT = c;
+    Utils.toast('Client updated!', 'success');
+    renderClientList();
+    renderClientProfile(c);
+  }).catch(function(e) { Utils.toast('Error: '+e.message,'error'); });
 }
 
-function saveLeave() {
-  var staff = document.getElementById('lv-staff').value;
-  var from  = document.getElementById('lv-from').value;
-  var to    = document.getElementById('lv-to').value;
-  document.getElementById('leave-modal').style.display = 'none';
-  Utils.toast('Leave request saved for ' + staff + ' (' + from + ' → ' + to + ')', 'success');
+function bookForClient(clientId) {
+  sessionStorage.setItem('book_client_id', clientId);
+  window.location.href = 'appointments.html';
 }
 
-function exportStaff() {
-  var range = getPeriodRange();
-  var FP = SB.CACHE.payments.filter(function(p){return Utils.inRange(p.paid_at,range);});
-  var FB = Utils.filterBookings(SB.CACHE.bookings,{range:range});
-  var headers = ['Staff','Role','Bookings','Completed','No-shows','Revenue','Commission','Net','Avg Ticket'];
-  var rows = STAFF_CONFIG.map(function(s) {
-    var bks  = FB.filter(function(b){return b.staff_name===s.name;});
-    var pays = FP.filter(function(p){return p.staff_name===s.name;});
-    var rev  = Utils.sumRevenue(pays);
-    var comm = Utils.sumCommission(pays);
-    var comp = bks.filter(function(b){return b.status==='completed';}).length;
-    var nosh = bks.filter(function(b){return b.status==='no-show';}).length;
-    return [s.name,s.role,bks.length,comp,nosh,Utils.fCurrency(rev),Utils.fCurrency(comm),Utils.fCurrency(rev-comm),Utils.fCurrency(pays.length?rev/pays.length:0)];
-  });
-  Export.downloadExcel(rows, headers, 'staff-performance');
-}
+function openNewClient() { document.getElementById('new-client-modal').style.display = 'flex'; }
 
-function exportStaffPDF() {
-  var range = getPeriodRange();
-  var FP = SB.CACHE.payments.filter(function(p){return Utils.inRange(p.paid_at,range);});
-  var FB = Utils.filterBookings(SB.CACHE.bookings,{range:range});
-  var rows = STAFF_CONFIG.map(function(s) {
-    var bks  = FB.filter(function(b){return b.staff_name===s.name;});
-    var pays = FP.filter(function(p){return p.staff_name===s.name;});
-    var rev  = Utils.sumRevenue(pays);
-    var comm = Utils.sumCommission(pays);
-    return '<tr><td>'+s.name+'</td><td>'+bks.length+'</td><td class="pos">'+Utils.fCurrency(rev)+'</td><td class="pos">'+Utils.fCurrency(comm)+'</td><td class="pos">'+Utils.fCurrency(rev-comm)+'</td></tr>';
-  }).join('');
-  Export.downloadPDF('Staff Report — March Nails',
-    '<h1>Staff Performance Report</h1><div class="subtitle">'+new Date().toLocaleDateString('en-CA',{month:'long',year:'numeric'})+'</div>' +
-    '<table><thead><tr><th>Staff</th><th>Bookings</th><th>Revenue</th><th>Commission</th><th>Net</th></tr></thead><tbody>'+rows+'</tbody></table>');
+function saveNewClient() {
+  var first = document.getElementById('nc-first').value.trim();
+  var last  = document.getElementById('nc-last').value.trim();
+  if (!first || !last) { Utils.toast('Name required', 'warning'); return; }
+
+  var client = {
+    first_name:    first,
+    last_name:     last,
+    email:         document.getElementById('nc-email').value,
+    phone:         document.getElementById('nc-phone').value,
+    birthday:      document.getElementById('nc-birthday').value || null,
+    tier:          document.getElementById('nc-tier').value,
+    allergy_notes: document.getElementById('nc-allergy').value,
+    preferences:   document.getElementById('nc-pref').value,
+    loyalty_points: 0,
+    no_show_count:  0
+  };
+
+  SB.insert('clients', client).then(function(data) {
+    if (Array.isArray(data) && data[0]) SB.CACHE.clients.unshift(data[0]);
+    document.getElementById('new-client-modal').style.display = 'none';
+    Utils.toast('Client added: ' + first + ' ' + last, 'success');
+    renderKPIs();
+    renderClientList();
+  }).catch(function(e) { Utils.toast('Error: '+e.message,'error'); });
 }
 </script>
 </body>
