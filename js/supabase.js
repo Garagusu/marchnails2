@@ -248,7 +248,7 @@ var SB = (function() {
       {id:'e2', client_id:'c1', client_name:'Olivia Chen',     client_email:'olivia@email.com',  type:'confirmation', subject:'Appointment Confirmed — Today at 11:30',    status:'opened',  sent_at:today(8,0)},
       {id:'e3', client_id:'c3', client_name:'Sophie Tremblay', client_email:'sophie@email.com',  type:'reminder',     subject:'Reminder: Your appointment is tomorrow',    status:'opened',  sent_at:daysAgo(1,9,0)},
       {id:'e4', client_id:'c8', client_name:'Natalie Anderson',client_email:'natalie@email.com', type:'receipt',      subject:'Your Pedicure Shellac Receipt — CA$55',     status:'opened',  sent_at:today(15,46)},
-      {id:'e5', client_id:'c9', client_name:'Victoria Taylor', client_email:'victoria@email.com',type:'winback',      subject:'We miss you! It's been a while…',          status:'clicked', sent_at:daysAgo(5,9,0)},
+      {id:'e5', client_id:'c9', client_name:'Victoria Taylor', client_email:'victoria@email.com',type:'winback',      subject:'We miss you! Its been a while...',          status:'clicked', sent_at:daysAgo(5,9,0)},
       {id:'e6', client_id:'c7', client_name:'Rose Williams',   client_email:'rose@email.com',    type:'birthday',     subject:'Happy Birthday! 10% off your next visit 🎂', status:'opened',  sent_at:daysAgo(14,9,0)},
       {id:'e7', client_id:'c6', client_name:'Grace Davis',     client_email:'grace@email.com',   type:'receipt',      subject:'Your Acrylic Full Set Receipt — CA$60',     status:'sent',    sent_at:daysAgo(10,13,46)},
       {id:'e8', client_id:'c2', client_name:'Emma Johnson',    client_email:'emma@email.com',    type:'review',       subject:'How was your visit? Leave a review!',       status:'clicked', sent_at:daysAgo(1,12,0)}
