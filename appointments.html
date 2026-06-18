@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="css/core.css">
 <link rel="stylesheet" href="css/components.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
 <style>
 /* ── CALENDAR ── */
 .calendar-wrap { overflow-x: auto; }
@@ -57,6 +57,11 @@
 .qs-val { font-family: var(--fontd); font-size: 1.25rem; font-weight: 700; color: var(--text); }
 .qs-lbl { font-size: .65rem; color: var(--text2); margin-top: 2px; }
 </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/export.js"></script>
 </head>
 <body>
 <div class="app-layout">
@@ -270,10 +275,6 @@
 </div>
 
 <div id="toast-container"></div>
-
-<script src="js/supabase.js"></script>
-<script src="js/utils.js"></script>
-<script src="js/export.js"></script>
 <script>
 'use strict';
 
@@ -292,9 +293,10 @@ var STAFF_COLORS = {
 };
 var HOURS = ['9am','10am','11am','12pm','1pm','2pm','3pm','4pm','5pm'];
 
-Utils.startClock(null, document.getElementById('tb-date'));
+// clock in DOMContentLoaded
 
 window.addEventListener('DOMContentLoaded', function() {
+  Utils.startClock(null, document.getElementById('tb-date'));
   setupFilters();
   setNavDate();
   // Load demo data immediately

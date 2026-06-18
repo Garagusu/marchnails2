@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="css/core.css">
 <link rel="stylesheet" href="css/components.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
 <style>
 /* Dashboard specific */
 .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: .85rem; margin-bottom: 1rem; }
@@ -40,6 +40,11 @@
 @media (max-width: 980px)  { .kpi-grid { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 600px)  { .kpi-grid { grid-template-columns: 1fr; } }
 </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/export.js"></script>
 </head>
 <body>
 
@@ -311,11 +316,6 @@
 </div><!-- /app-layout -->
 
 <div id="toast-container"></div>
-
-<script src="js/supabase.js"></script>
-<script src="js/utils.js"></script>
-<script src="js/charts.js"></script>
-<script src="js/export.js"></script>
 <script>
 'use strict';
 
@@ -342,14 +342,11 @@ var COMPARE_PAYMENTS  = [];
 if (!localStorage.getItem('mn_auth')) { window.location.href = 'index.html'; }
 function logout() { localStorage.removeItem('mn_auth'); window.location.href = 'index.html'; }
 
-// ── Clock ──
-Utils.startClock(
-  document.getElementById('dash-greeting'),
-  document.getElementById('tb-date')
-);
+// Clock started in DOMContentLoaded
 
 // ── Init ──
 window.addEventListener('DOMContentLoaded', function() {
+  Utils.startClock(document.getElementById('dash-greeting'), document.getElementById('tb-date'));
   setupFilterListeners();
   
   // Load demo data IMMEDIATELY so UI is never blank

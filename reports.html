@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="css/core.css">
 <link rel="stylesheet" href="css/components.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
 <style>
 .report-tabs { display: flex; gap: .3rem; background: var(--s1); border-radius: 50px; padding: .2rem; margin-bottom: 1rem; }
 .report-tab  { padding: .35rem .9rem; border-radius: 50px; font-size: .75rem; font-weight: 500; cursor: pointer; color: var(--text2); border: none; background: transparent; font-family: var(--font); transition: all .15s; }
@@ -28,6 +28,11 @@
 .bar-mini { height: 6px; background: var(--s1); border-radius: 3px; overflow: hidden; flex: 1; }
 .bar-mini-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--pink), var(--violet)); }
 </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/export.js"></script>
 </head>
 <body>
 
@@ -265,11 +270,6 @@
 </div>
 
 <div id="toast-container"></div>
-
-<script src="js/supabase.js"></script>
-<script src="js/utils.js"></script>
-<script src="js/charts.js"></script>
-<script src="js/export.js"></script>
 <script>
 'use strict';
 
@@ -279,9 +279,10 @@ function logout() { localStorage.removeItem('mn_auth'); window.location.href = '
 var STATE = { period: 'this_month', customStart: null, customEnd: null, staff: 'all', service: 'all' };
 var FP = [], FB = [], CP = [], CB = [];
 
-Utils.startClock(null, document.getElementById('tb-date'));
+// clock in DOMContentLoaded
 
 window.addEventListener('DOMContentLoaded', function() {
+  Utils.startClock(null, document.getElementById('tb-date'));
   setupFilters();
     // Load demo data immediately - never show blank UI
   if (SB.DEMO) {
