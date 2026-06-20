@@ -550,9 +550,8 @@ function localDt(b){
 function hasConflictLocal(bookings, staffName, newDt, durationMin, excludeId){
   var INACTIVE=['cancelled','no-show','no_show'];
   var dur=Math.max(15, parseInt(durationMin)||60);
-  var BUFFER=5; // 5 min buffer between appointments
   var newStart=newDt.getHours()*60+newDt.getMinutes();
-  var newEnd=newStart+dur+BUFFER;
+  var newEnd=newStart+dur; // no buffer on newEnd — exact duration
   var newDateStr=lds(newDt);
 
   return bookings.some(function(b){
@@ -560,14 +559,14 @@ function hasConflictLocal(bookings, staffName, newDt, durationMin, excludeId){
     if(b.staff_name!==staffName) return false;
     if(INACTIVE.indexOf(b.status)!==-1) return false;
     if(!b.booked_at) return false;
-    // Only check same day
     if(bDate(b)!==newDateStr) return false;
     var bDt=localDt(b);
     var bStart=bDt.getHours()*60+bDt.getMinutes();
     var bDur=Math.max(15,parseInt(b.duration_minutes)||60);
-    var bEnd=bStart+bDur+BUFFER;
-    // Overlap: new starts before existing ends AND new ends after existing starts
-    return (newStart-BUFFER)<bEnd && newEnd>bStart;
+    var bEnd=bStart+bDur; // exact end, no buffer
+    // True overlap: new starts before existing ends AND new ends after existing starts
+    // Example: existing 10:45 + 90min = 12:15. New at 11:45 → 11:45 < 12:15 AND 12:45 > 10:45 → CONFLICT ✓
+    return newStart < bEnd && newEnd > bStart;
   });
 }
 
