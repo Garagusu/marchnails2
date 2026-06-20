@@ -20,66 +20,43 @@ var SB = (function() {
 
   var LS_KEY = 'mn_cache_v2';
 
-  // Save ONLY changes/deltas to localStorage (not full demo data)
+  // Save full cache to localStorage (source of truth)
   function saveCache() {
     try {
-      // Save bookings with modified status/payment (changed from demo)
-      var demoBookingMap = {};
-      if (SB.DEMO) SB.DEMO.bookings.forEach(function(b){ demoBookingMap[b.id] = b; });
-
-      // Include: all cache bookings (modified demo + new user-created)
-      var toSaveBookings = CACHE.bookings.map(function(b) {
-        return {
-          id: b.id,
-          client_id: b.client_id,
-          client_name: b.client_name,
-          client_email: b.client_email,
-          staff_name: b.staff_name,
-          service_name: b.service_name,
-          service_price: b.service_price,
-          duration_minutes: b.duration_minutes,
-          status: b.status,
-          payment_status: b.payment_status,
-          payment_method: b.payment_method,
-          booked_at: b.booked_at,
-          notes: b.notes
-        };
-      });
-
-      // New payments (not in demo)
-      var demoPayIds = SB.DEMO ? SB.DEMO.payments.map(function(p){return p.id;}) : [];
-      var newPayments = CACHE.payments.filter(function(p){ return demoPayIds.indexOf(p.id) === -1; });
-
-      // New clients (not in demo)
-      var demoCliIds = SB.DEMO ? SB.DEMO.clients.map(function(c){return c.id;}) : [];
-      var newClients = CACHE.clients.filter(function(c){ return demoCliIds.indexOf(c.id) === -1; });
-
       var data = {
-        bookings: toSaveBookings,
-        payments: newPayments,
-        clients:  newClients,
-        savedAt:  new Date().toISOString()
+        bookings:  CACHE.bookings,
+        payments:  CACHE.payments,
+        clients:   CACHE.clients,
+        email_log: CACHE.email_log,
+        savedAt:   new Date().toISOString()
       };
       localStorage.setItem(LS_KEY, JSON.stringify(data));
-    } catch(e) { /* quota exceeded or private mode */ }
+    } catch(e) {
+      // Storage full - try saving just bookings and payments
+      try {
+        var small = {
+          bookings: CACHE.bookings,
+          payments: CACHE.payments,
+          clients:  CACHE.clients,
+          savedAt:  new Date().toISOString()
+        };
+        localStorage.setItem(LS_KEY, JSON.stringify(small));
+      } catch(e2) {}
+    }
   }
 
-  // Load cache from localStorage
+  // Load full cache from localStorage
   function loadCacheFromStorage() {
     try {
       var raw = localStorage.getItem(LS_KEY);
       if (!raw) return false;
       var data = JSON.parse(raw);
-      if (!data.bookings || data.bookings.length < 50) {
-        // Too few bookings - stale/partial data, clear and reload demo
-        localStorage.removeItem(LS_KEY);
-        return false;
-      }
-      CACHE.bookings  = data.bookings;
+      if (!data || !data.bookings) return false;
+      CACHE.bookings  = data.bookings  || [];
       CACHE.clients   = data.clients   || [];
       CACHE.payments  = data.payments  || [];
       CACHE.email_log = data.email_log || [];
-      return true;
+      return CACHE.bookings.length > 0;
     } catch(e) {
       localStorage.removeItem(LS_KEY);
       return false;
@@ -128,37 +105,47 @@ var SB = (function() {
   }
 
   function insert(table, data) {
-    // Always save to localStorage immediately
-    if (CACHE[table]) {
-      var exists = CACHE[table].find(function(r) { return r.id === data.id; });
-      if (!exists) CACHE[table].unshift(data);
-      saveCache();
-    }
+    // Save to localStorage immediately (optimistic)
+    saveCache();
+    // Always try Supabase - get back real UUID
     return request(table, { method: 'POST', body: JSON.stringify(data) })
-      .then(function(res) { saveCache(); return res; })
-      .catch(function(e) { saveCache(); return [data]; });
+      .then(function(res) {
+        if (Array.isArray(res) && res[0] && res[0].id) {
+          // Update cache with real UUID from Supabase
+          if (CACHE[table]) {
+            var local = CACHE[table].find(function(r) { return r.id === data.id; });
+            if (local) local.id = res[0].id;
+          }
+          saveCache();
+        }
+        return res;
+      })
+      .catch(function(e) { return [data]; });
+  }
+
+  // Check if ID is a real UUID (Supabase) or demo/local ID
+  function isUUID(id) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(id));
   }
 
   function update(table, id, data) {
-    // Update in-memory cache immediately
+    // Update cache immediately
     if (CACHE[table]) {
       var item = CACHE[table].find(function(r) { return r.id === id; });
       if (item) { Object.assign(item, data); }
       saveCache();
     }
     return request(table + '?id=eq.' + id, { method: 'PATCH', body: JSON.stringify(data) })
-      .then(function(res) { saveCache(); return res; })
-      .catch(function(e) { saveCache(); return []; });
+      .catch(function(e) { return []; });
   }
 
   function remove(table, id) {
-    // Remove from cache immediately
     if (CACHE[table]) {
       CACHE[table] = CACHE[table].filter(function(r) { return r.id !== id; });
       saveCache();
     }
     return request(table + '?id=eq.' + id, { method: 'DELETE' })
-      .catch(function(e) { saveCache(); return []; });
+      .catch(function(e) { return []; });
   }
 
   function rpc(fn, params) {
@@ -168,37 +155,30 @@ var SB = (function() {
   // ── Load all data into cache ──
   function loadAll() {
     return Promise.all([
-      get('bookings', 'order=booked_at.desc&limit=500').then(function(d) {
+      get('bookings', 'order=booked_at.desc&limit=1000').then(function(d) {
         if (Array.isArray(d) && d.length > 0) {
-          // Merge: keep demo data + add real DB bookings
-          var demoIds = (SB.DEMO ? SB.DEMO.bookings : []).map(function(b){return b.id;});
-          var newBks  = d.filter(function(b){ return demoIds.indexOf(b.id)===-1; });
-          CACHE.bookings = (SB.DEMO ? SB.DEMO.bookings : []).concat(newBks);
+          CACHE.bookings = d;
           CACHE.loaded.bookings = true;
         }
       }),
       get('clients', 'order=created_at.desc&limit=500').then(function(d) {
         if (Array.isArray(d) && d.length > 0) {
-          var demoIds = (SB.DEMO ? SB.DEMO.clients : []).map(function(c){return c.id;});
-          var newCs   = d.filter(function(c){ return demoIds.indexOf(c.id)===-1; });
-          CACHE.clients = (SB.DEMO ? SB.DEMO.clients : []).concat(newCs);
+          CACHE.clients = d;
           CACHE.loaded.clients = true;
         }
       }),
-      get('payments', 'order=paid_at.desc&limit=500').then(function(d) {
+      get('payments', 'order=paid_at.desc&limit=1000').then(function(d) {
         if (Array.isArray(d) && d.length > 0) {
-          var demoIds = (SB.DEMO ? SB.DEMO.payments : []).map(function(p){return p.id;});
-          var newPs   = d.filter(function(p){ return demoIds.indexOf(p.id)===-1; });
-          CACHE.payments = (SB.DEMO ? SB.DEMO.payments : []).concat(newPs);
+          CACHE.payments = d;
           CACHE.loaded.payments = true;
         }
       }),
-      get('email_log', 'order=sent_at.desc&limit=200').then(function(d) {
-        if (Array.isArray(d) && d.length > 0) {
-          CACHE.email_log = d;
-        }
+      get('email_log', 'order=sent_at.desc&limit=500').then(function(d) {
+        if (Array.isArray(d)) { CACHE.email_log = d; }
       })
-    ]).catch(function(e) {
+    ]).then(function() {
+      saveCache(); // Persist Supabase data to localStorage
+    }).catch(function(e) {
       if (String(e.message).indexOf('FILE_PROTOCOL') === -1) {
         console.warn('Supabase load error:', e.message);
       }
