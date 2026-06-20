@@ -472,7 +472,7 @@ var SM = {
   'no-show':  {lbl:'No-show',    bg:'#FEF2F2',color:'#991B1B',bd:'#FECACA'},
   no_show:    {lbl:'No-show',    bg:'#FEF2F2',color:'#991B1B',bd:'#FECACA'},
 };
-var HOURS = [9,10,11,12,13,14,15,16,17,18,19];
+var HOURS = [9,10,11,12,13,14,15,16,17,18,19,20];
 var HH = 60; // px per hour
 
 var STATE = {view:'day',date:new Date(),staff:'all',status:'all',svc:'all',rpTab:'upcoming',payMethod:'cash',newStatus:'confirmed',selectedId:null};
@@ -545,6 +545,32 @@ function localDt(b){
   var s=b.booked_at.replace('T',' ').replace(/\+\d{2}:\d{2}$/,'').replace(/Z$/,'').trim();
   return new Date(s);
 }
+
+// Conflict check using LOCAL times (avoids UTC vs local mismatch)
+function hasConflictLocal(bookings, staffName, newDt, durationMin, excludeId){
+  var INACTIVE=['cancelled','no-show','no_show'];
+  var dur=Math.max(15, parseInt(durationMin)||60);
+  var BUFFER=5; // 5 min buffer between appointments
+  var newStart=newDt.getHours()*60+newDt.getMinutes();
+  var newEnd=newStart+dur+BUFFER;
+  var newDateStr=lds(newDt);
+
+  return bookings.some(function(b){
+    if(b.id===excludeId) return false;
+    if(b.staff_name!==staffName) return false;
+    if(INACTIVE.indexOf(b.status)!==-1) return false;
+    if(!b.booked_at) return false;
+    // Only check same day
+    if(bDate(b)!==newDateStr) return false;
+    var bDt=localDt(b);
+    var bStart=bDt.getHours()*60+bDt.getMinutes();
+    var bDur=Math.max(15,parseInt(b.duration_minutes)||60);
+    var bEnd=bStart+bDur+BUFFER;
+    // Overlap: new starts before existing ends AND new ends after existing starts
+    return (newStart-BUFFER)<bEnd && newEnd>bStart;
+  });
+}
+
 
 /* ── UNIFIED DAY FILTER ── */
 function getDayBookings(dateStr){
@@ -908,6 +934,7 @@ function openNewAt(staffName,hour){
   var d=new Date(STATE.date);d.setHours(hour,0,0,0);
   var pad=function(n){return String(n).padStart(2,'0');};
   document.getElementById('n-dt').value=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(hour)+':00';
+  checkConflict();
 }
 
 function clientSearch(q){
@@ -982,7 +1009,7 @@ function checkConflict(){
     banner.style.display='flex';return;
   }
   // Conflict check
-  if(Utils.hasConflict(SB.CACHE.bookings,staff,d,dur,STATE.selectedId)){
+  if(hasConflictLocal(SB.CACHE.bookings,staff,d,dur,STATE.selectedId)){
     document.getElementById('conflict-msg').textContent=staff+' already has an appointment at this time';
     banner.style.display='flex';return;
   }
@@ -1013,9 +1040,12 @@ function saveNew(){
   var wh=Utils.getWorkHours(d);
   if(d.getHours()<wh[0]||d.getHours()>=wh[1]){Utils.toast('Outside working hours ('+wh[0]+':00–'+wh[1]+':00)','error');return;}
 
-  // Conflict check
-  if(Utils.hasConflict(SB.CACHE.bookings,staff,d,dur,null)){
-    if(!confirm(staff+' already has a booking at this time. Create anyway?'))return;
+  // Conflict check — HARD BLOCK, no override allowed
+  if(hasConflictLocal(SB.CACHE.bookings,staff,d,dur,null)){
+    Utils.toast(staff+' already has a booking that overlaps this time. Please choose a different slot.','error');
+    document.getElementById('conflict-banner').style.display='flex';
+    document.getElementById('conflict-msg').textContent=staff+' is busy at this time (overlap with existing booking)';
+    return;
   }
 
   var client=SB.CACHE.clients.find(function(c){return c.id===cid;});
