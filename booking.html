@@ -1,725 +1,363 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>March Nails — Booking</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script src="js/supabase.js"></script>
 <script src="js/utils.js"></script>
 <style>
-/* ─── RESET & TOKENS ──────────────────────────────── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#F4F5F7;
-  --white:#FFFFFF;
-  --s1:#F0F1F4;
-  --s2:#E8EAF0;
-  --border:#E0E3ED;
-  --border2:#CDD1E0;
-  --text:#111827;
-  --text2:#6B7280;
-  --text3:#9CA3AF;
-
-  --pink:#E91E8C;
-  --pink2:#C9184A;
-  --pink-bg:#FDF2F8;
-  --pink-bd:#F9A8D4;
-
-  /* Status colors */
-  --s-pending-bg:#FFF7ED;   --s-pending:#C2410C;   --s-pending-bd:#FED7AA;
-  --s-confirmed-bg:#EFF6FF; --s-confirmed:#1D4ED8; --s-confirmed-bd:#BFDBFE;
-  --s-arrived-bg:#F0FDF4;   --s-arrived:#15803D;   --s-arrived-bd:#BBF7D0;
-  --s-inprog-bg:#FAF5FF;    --s-inprog:#7C3AED;    --s-inprog-bd:#DDD6FE;
-  --s-done-bg:#ECFDF5;      --s-done:#065F46;      --s-done-bd:#6EE7B7;
-  --s-cancelled-bg:#F9FAFB; --s-cancelled:#6B7280; --s-cancelled-bd:#D1D5DB;
-  --s-noshow-bg:#FEF2F2;    --s-noshow:#991B1B;    --s-noshow-bd:#FECACA;
-
-  --font:'Inter',system-ui,sans-serif;
-  --fontd:'Syne',system-ui,sans-serif;
-  --r:10px; --rsm:7px; --rxs:5px; --rlg:14px;
-  --sh:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
-  --sh-md:0 4px 12px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.04);
-  --sh-lg:0 10px 30px rgba(0,0,0,.1),0 4px 8px rgba(0,0,0,.06);
-  --sh-xl:0 20px 50px rgba(0,0,0,.15),0 8px 16px rgba(0,0,0,.08);
-
-  --staff-happy:#E91E8C;
-  --staff-flower:#7C3AED;
-  --staff-daisy:#0891B2;
-  --staff-hannah:#D97706;
+  --bg:#F4F5F7;--white:#fff;--s1:#F0F1F4;--s2:#E8EAF0;
+  --border:#E0E3ED;--border2:#CDD1E0;--text:#111827;--text2:#6B7280;--text3:#9CA3AF;
+  --pink:#E91E8C;--pink2:#C9184A;--pink-bg:#FDF2F8;--pink-bd:#F9A8D4;
+  --green:#059669;--green-bg:#ECFDF5;--red:#DC2626;--red-bg:#FEF2F2;
+  --amber:#D97706;--amber-bg:#FFFBEB;--blue:#2563EB;--blue-bg:#EFF6FF;--violet:#7C3AED;--violet-bg:#F5F3FF;
+  --sp:#E91E8C;--sf:#7C3AED;--sd:#0891B2;--sh:#D97706;
+  --font:'Inter',system-ui,sans-serif;--fontd:'Syne',system-ui,sans-serif;
+  --r:10px;--rsm:7px;--rlg:14px;
+  --sh-sm:0 1px 3px rgba(0,0,0,.06);--sh-md:0 4px 12px rgba(0,0,0,.08);--sh-lg:0 10px 30px rgba(0,0,0,.12);--sh-xl:0 20px 50px rgba(0,0,0,.18);
 }
 html{font-size:14px;-webkit-font-smoothing:antialiased}
 body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh;overflow:hidden;display:flex;flex-direction:column}
 button{font-family:var(--font);cursor:pointer;border:none;outline:none}
-input,select,textarea{font-family:var(--font)}
-::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+input,select,textarea{font-family:var(--font);outline:none}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
 
-/* ─── TOP CHROME ──────────────────────────────────── */
-.top-chrome{
-  height:52px;flex-shrink:0;
-  background:var(--white);border-bottom:1px solid var(--border);
-  display:flex;align-items:center;padding:0 1rem;gap:.75rem;
-  position:relative;z-index:100;
-}
-.chrome-back{
-  display:flex;align-items:center;gap:.4rem;
-  font-size:.78rem;color:var(--text2);cursor:pointer;
-  padding:.3rem .6rem;border-radius:var(--rsm);
-  transition:all .15s;border:1.5px solid transparent;
-}
-.chrome-back:hover{background:var(--s1);color:var(--text);border-color:var(--border)}
-.chrome-logo{font-family:var(--fontd);font-size:.95rem;font-weight:700;color:var(--text)}
-.chrome-logo span{color:var(--pink)}
-.chrome-divider{width:1px;height:20px;background:var(--border)}
-.chrome-title{font-size:.85rem;font-weight:600;color:var(--text)}
+/* ── TOP CHROME ── */
+.chrome{height:52px;flex-shrink:0;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 1rem;gap:.6rem;z-index:100}
+.chrome-logo{font-family:var(--fontd);font-size:.95rem;font-weight:700}.chrome-logo span{color:var(--pink)}
+.chrome-div{width:1px;height:18px;background:var(--border)}
 .chrome-right{margin-left:auto;display:flex;align-items:center;gap:.5rem}
-.chrome-date{font-size:.75rem;color:var(--text2);white-space:nowrap}
-
-/* ─── TOOLBAR ─────────────────────────────────────── */
-.toolbar{
-  height:48px;flex-shrink:0;
-  background:var(--white);border-bottom:1px solid var(--border);
-  display:flex;align-items:center;padding:0 1rem;gap:.5rem;
-  position:relative;z-index:90;
-}
-.toolbar-left{display:flex;align-items:center;gap:.4rem;flex:1}
-.toolbar-center{display:flex;align-items:center;gap:.3rem}
-.toolbar-right{display:flex;align-items:center;gap:.4rem;margin-left:auto}
-
-/* View switcher */
-.view-switcher{display:flex;background:var(--s1);border-radius:var(--rsm);padding:2px;gap:1px}
-.view-btn{
-  display:flex;align-items:center;gap:.3rem;
-  padding:.25rem .6rem;border-radius:5px;
-  font-size:.73rem;font-weight:500;color:var(--text2);
-  cursor:pointer;border:none;background:transparent;
-  font-family:var(--font);transition:all .15s;white-space:nowrap;
-}
-.view-btn.active{background:var(--white);color:var(--text);font-weight:600;box-shadow:var(--sh)}
-.view-btn i{font-size:.75rem}
-
-/* Date nav */
-.date-nav{display:flex;align-items:center;gap:.25rem}
-.nav-btn{
-  width:28px;height:28px;border-radius:var(--rsm);
-  border:1.5px solid var(--border);background:var(--white);
-  color:var(--text2);cursor:pointer;display:flex;
-  align-items:center;justify-content:center;
-  font-size:.75rem;transition:all .15s;
-}
-.nav-btn:hover{border-color:var(--pink);color:var(--pink);background:var(--pink-bg)}
-.nav-date-label{
-  padding:.25rem .75rem;border-radius:var(--rsm);
-  border:1.5px solid var(--border);background:var(--white);
-  font-size:.8rem;font-weight:600;color:var(--text);
-  cursor:pointer;min-width:140px;text-align:center;
-  transition:all .15s;
-}
-.nav-date-label:hover{border-color:var(--pink);color:var(--pink)}
-.today-btn{
-  padding:.25rem .65rem;border-radius:var(--rsm);
-  border:1.5px solid var(--border);background:var(--white);
-  font-size:.73rem;font-weight:500;color:var(--text2);
-  cursor:pointer;transition:all .15s;
-}
-.today-btn:hover{border-color:var(--pink);color:var(--pink);background:var(--pink-bg)}
-
-/* Filter chips */
-.filter-chip{
-  display:flex;align-items:center;gap:.3rem;
-  padding:.22rem .6rem;border-radius:50px;
-  border:1.5px solid var(--border);background:var(--white);
-  font-size:.72rem;font-weight:500;color:var(--text2);
-  cursor:pointer;transition:all .15s;
-}
-.filter-chip:hover{border-color:var(--pink);color:var(--pink)}
-.filter-chip.active{border-color:var(--pink);color:var(--pink);background:var(--pink-bg)}
-.filter-chip select{
-  border:none;outline:none;background:transparent;
-  font-size:.72rem;font-weight:500;color:inherit;
-  font-family:var(--font);cursor:pointer;
-}
-
-/* New appt button */
-.new-appt-btn{
-  display:flex;align-items:center;gap:.35rem;
-  padding:.35rem .85rem;
-  background:linear-gradient(135deg,var(--pink),#C9184A);
-  color:#fff;border-radius:50px;
-  font-size:.78rem;font-weight:600;
-  cursor:pointer;transition:all .15s;
-  border:none;box-shadow:0 2px 8px rgba(233,30,140,.3);
-}
-.new-appt-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(233,30,140,.4)}
-
-/* Stats strip */
-.stats-strip{
-  display:flex;align-items:center;gap:.4rem;
-  padding:.28rem .65rem;background:var(--s1);
-  border-radius:50px;font-size:.7rem;color:var(--text2);
-}
-.stat-pill{display:flex;align-items:center;gap:.25rem}
+.chrome-date{font-size:.72rem;color:var(--text2)}
+.stat-strip{display:flex;align-items:center;gap:.35rem;background:var(--s1);border-radius:50px;padding:.22rem .6rem;font-size:.68rem;color:var(--text2)}
 .stat-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 
-/* ─── MAIN LAYOUT ─────────────────────────────────── */
-.booking-body{
-  flex:1;display:flex;overflow:hidden;min-height:0;
-}
+/* ── TOOLBAR ── */
+.toolbar{height:46px;flex-shrink:0;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 1rem;gap:.5rem;z-index:90}
+.view-sw{display:flex;background:var(--s1);border-radius:var(--rsm);padding:2px;gap:1px}
+.vbtn{display:flex;align-items:center;gap:.3rem;padding:.22rem .6rem;border-radius:5px;font-size:.72rem;font-weight:500;color:var(--text2);cursor:pointer;border:none;background:transparent;font-family:var(--font);transition:all .12s;white-space:nowrap}
+.vbtn.active{background:var(--white);color:var(--text);font-weight:600;box-shadow:var(--sh-sm)}
+.date-nav{display:flex;align-items:center;gap:.25rem}
+.nav-btn{width:26px;height:26px;border-radius:var(--rsm);border:1.5px solid var(--border);background:var(--white);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.7rem;transition:all .12s}
+.nav-btn:hover{border-color:var(--pink);color:var(--pink)}
+.date-lbl{padding:.22rem .7rem;border-radius:var(--rsm);border:1.5px solid var(--border);background:var(--white);font-size:.78rem;font-weight:600;cursor:pointer;min-width:150px;text-align:center;position:relative;transition:all .12s}
+.date-lbl:hover{border-color:var(--pink);color:var(--pink)}
+.date-lbl input[type=date]{position:absolute;opacity:0;inset:0;cursor:pointer;border:none;background:transparent}
+.today-btn{padding:.22rem .6rem;border-radius:var(--rsm);border:1.5px solid var(--border);background:var(--white);font-size:.7rem;font-weight:500;color:var(--text2);cursor:pointer;transition:all .12s}
+.today-btn:hover{border-color:var(--pink);color:var(--pink);background:var(--pink-bg)}
+.fc{display:flex;align-items:center;gap:.3rem;padding:.2rem .55rem;border-radius:50px;border:1.5px solid var(--border);background:var(--white);font-size:.7rem;font-weight:500;color:var(--text2);cursor:pointer;transition:all .12s}
+.fc:hover,.fc.active{border-color:var(--pink);color:var(--pink)}
+.fc select{border:none;background:transparent;font-size:.7rem;font-weight:500;color:inherit;font-family:var(--font);cursor:pointer}
+.new-btn{display:flex;align-items:center;gap:.35rem;padding:.32rem .85rem;background:linear-gradient(135deg,var(--pink),#C9184A);color:#fff;border-radius:50px;font-size:.76rem;font-weight:600;cursor:pointer;border:none;box-shadow:0 2px 8px rgba(233,30,140,.3);transition:all .15s}
+.new-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(233,30,140,.4)}
+.reset-btn{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--border);background:var(--white);color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.7rem;transition:all .12s}
+.reset-btn:hover{border-color:var(--border2);color:var(--text2)}
+.tbar-r{margin-left:auto;display:flex;align-items:center;gap:.4rem}
 
-/* ─── MAIN NAV (icon + label sidebar) ────────────── */
-.main-nav{
-  width:72px;flex-shrink:0;
-  background:var(--white);border-right:1px solid var(--border);
-  display:flex;flex-direction:column;align-items:center;
-  padding:.5rem 0;gap:.15rem;overflow:hidden;
-}
-.mn-item{
-  display:flex;flex-direction:column;align-items:center;gap:3px;
-  padding:.5rem .25rem;border-radius:var(--rsm);
-  color:var(--text3);text-decoration:none;
-  transition:all .15s;cursor:pointer;width:60px;
-}
-.mn-item:hover{background:var(--s1);color:var(--text2)}
-.mn-item.mn-active{background:var(--pink-bg);color:var(--pink)}
-.mn-item i{font-size:.95rem}
-.mn-item span{font-size:.6rem;font-weight:500;letter-spacing:.02em;text-align:center}
-.mn-sep{height:1px;background:var(--border);width:40px;margin:.3rem 0}
+/* ── BODY LAYOUT ── */
+.bdy{flex:1;display:flex;overflow:hidden;min-height:0}
 
-/* ─── STAFF COLUMN (left) ─────────────────────────── */
-.staff-rail{
-  width:180px;flex-shrink:0;
-  background:var(--white);border-right:1px solid var(--border);
-  overflow-y:auto;
-}
-.staff-rail-header{
-  padding:.6rem .85rem;border-bottom:1px solid var(--border);
-  font-size:.6rem;font-weight:700;text-transform:uppercase;
-  letter-spacing:.1em;color:var(--text3);
-  position:sticky;top:0;background:var(--white);z-index:5;
-  display:flex;align-items:center;justify-content:space-between;
-}
-.staff-item{
-  display:flex;align-items:center;gap:.55rem;
-  padding:.6rem .85rem;border-bottom:1px solid var(--s1);
-  cursor:pointer;transition:all .12s;
-}
-.staff-item:hover{background:var(--s1)}
-.staff-item.active{background:var(--pink-bg)}
-.staff-av{
-  width:30px;height:30px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:.75rem;font-weight:700;color:#fff;flex-shrink:0;
-}
-.staff-info{flex:1;min-width:0}
-.staff-name{font-size:.8rem;font-weight:600;color:var(--text)}
-.staff-meta{font-size:.65rem;color:var(--text2);margin-top:1px}
-.staff-load{
-  height:3px;background:var(--s1);border-radius:3px;
-  overflow:hidden;margin-top:3px;
-}
-.staff-load-fill{height:100%;border-radius:3px;transition:width .4s}
-.staff-badge{
-  font-size:.6rem;font-weight:700;padding:.1rem .35rem;
-  border-radius:50px;background:var(--s1);color:var(--text2);
-  white-space:nowrap;
-}
+/* ── SIDE NAV ── */
+.snav{width:64px;flex-shrink:0;background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:.5rem 0;gap:.1rem}
+.sni{display:flex;flex-direction:column;align-items:center;gap:2px;padding:.45rem .2rem;border-radius:var(--rsm);color:var(--text3);text-decoration:none;transition:all .12s;cursor:pointer;width:52px}
+.sni:hover{background:var(--s1);color:var(--text2)}
+.sni.active{background:var(--pink-bg);color:var(--pink)}
+.sni i{font-size:.9rem}
+.sni span{font-size:.58rem;font-weight:500;text-align:center;line-height:1.2}
+.sni-sep{height:1px;background:var(--border);width:36px;margin:.25rem 0}
 
-/* ─── CALENDAR AREA ───────────────────────────────── */
-.cal-area{flex:1;overflow:auto;min-width:0;position:relative}
+/* ── STAFF RAIL ── */
+.srail{width:172px;flex-shrink:0;background:var(--white);border-right:1px solid var(--border);overflow-y:auto}
+.srail-hd{padding:.55rem .75rem;border-bottom:1px solid var(--border);font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);position:sticky;top:0;background:var(--white);z-index:5;display:flex;justify-content:space-between;align-items:center}
+.srail-item{display:flex;align-items:center;gap:.45rem;padding:.5rem .75rem;border-bottom:1px solid var(--s1);cursor:pointer;transition:all .1s}
+.srail-item:hover{background:var(--s1)}
+.srail-item.active{background:var(--pink-bg)}
+.sav{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:#fff;flex-shrink:0}
+.sinfo{flex:1;min-width:0}
+.sname{font-size:.76rem;font-weight:600}
+.smeta{font-size:.62rem;color:var(--text2);margin-top:1px}
+.sload{height:3px;background:var(--s1);border-radius:3px;overflow:hidden;margin-top:3px}
+.sload-fill{height:100%;border-radius:3px}
+.sbadge{font-size:.58rem;font-weight:700;padding:.08rem .3rem;border-radius:50px;background:var(--s1);color:var(--text2)}
 
-/* ── DAY VIEW ── */
-.day-view{min-width:600px}
-.day-view-header{
-  display:grid;gap:0;
-  position:sticky;top:0;z-index:20;background:var(--white);
-  border-bottom:2px solid var(--border);
-}
-.dv-corner{
-  width:60px;flex-shrink:0;
-  background:var(--white);border-right:1px solid var(--border);
-}
-.dv-staff-head{
-  padding:.5rem .5rem;border-right:1px solid var(--border);
-  display:flex;flex-direction:column;align-items:center;gap:3px;
-}
-.dv-staff-av{
-  width:28px;height:28px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:.7rem;font-weight:700;color:#fff;
-}
-.dv-staff-name{font-size:.72rem;font-weight:600;color:var(--text)}
-.dv-staff-count{font-size:.6rem;color:var(--text2)}
+/* ── CALENDAR ── */
+.cal{flex:1;overflow:auto;min-width:0;position:relative}
 
-.dv-time-grid{display:flex}
-.dv-times{width:60px;flex-shrink:0}
-.dv-time-slot{
-  height:56px;display:flex;align-items:flex-start;
-  padding-top:3px;padding-right:6px;justify-content:flex-end;
-  border-right:1px solid var(--border);
-  font-size:.65rem;color:var(--text3);
-  border-bottom:1px solid var(--s1);
-}
+/* DAY VIEW */
+.dv{min-width:500px}
+.dv-hd{display:grid;position:sticky;top:0;z-index:20;background:var(--white);border-bottom:2px solid var(--border)}
+.dv-corner{background:var(--white);border-right:1px solid var(--border)}
+.dv-sh{padding:.45rem .4rem;border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;gap:2px}
+.dv-sav{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:#fff}
+.dv-sname{font-size:.68rem;font-weight:600}
+.dv-scnt{font-size:.58rem;color:var(--text2)}
+.dv-grid{display:flex}
+.dv-times{width:56px;flex-shrink:0}
+.dv-ts{height:60px;display:flex;align-items:flex-start;padding-top:3px;padding-right:6px;justify-content:flex-end;border-right:1px solid var(--border);border-bottom:1px solid var(--s1);font-size:.62rem;color:var(--text3)}
 .dv-cols{flex:1;display:grid}
 .dv-col{border-right:1px solid var(--border);position:relative}
 .dv-col:last-child{border-right:none}
-.dv-cell{
-  height:56px;border-bottom:1px solid var(--s1);
-  position:relative;cursor:pointer;transition:background .1s;
-}
+.dv-cell{height:60px;border-bottom:1px solid var(--s1);position:relative;cursor:pointer;transition:background .08s}
 .dv-cell:hover{background:var(--pink-bg)}
-.dv-cell-half{
-  position:absolute;top:50%;left:0;right:0;
-  border-top:1px dashed var(--border);pointer-events:none;
-}
+.dv-cell-half{position:absolute;top:50%;left:0;right:0;border-top:1px dashed var(--border);pointer-events:none}
+.dv-cell-closed{height:60px;border-bottom:1px solid var(--s1);background:repeating-linear-gradient(45deg,var(--s1),var(--s1) 3px,var(--white) 3px,var(--white) 9px);cursor:default}
+.add-hint{position:absolute;inset:2px;border-radius:4px;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .12s;background:var(--pink-bg);border:1.5px dashed var(--pink-bd);color:var(--pink);font-size:.62rem;gap:2px}
+.dv-cell:hover .add-hint{opacity:1}
 
-/* Appointment block */
-.appt-block{
-  position:absolute;left:3px;right:3px;
-  border-radius:var(--rsm);padding:4px 6px;
-  cursor:pointer;overflow:hidden;
-  transition:transform .1s,box-shadow .1s;
-  border-left:3px solid;
-  z-index:10;
-}
-.appt-block:hover{transform:scale(1.02);box-shadow:var(--sh-md);z-index:15}
-.appt-client{font-size:.72rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.appt-svc{font-size:.62rem;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.appt-meta{font-size:.6rem;opacity:.7;margin-top:1px}
-.appt-status-dot{
-  position:absolute;top:4px;right:4px;
-  width:6px;height:6px;border-radius:50%;
-}
+/* APPT BLOCK */
+.ab{position:absolute;left:3px;right:3px;border-radius:6px;padding:3px 5px;cursor:pointer;overflow:hidden;transition:transform .1s,box-shadow .1s;border-left:3px solid;z-index:10}
+.ab:hover{transform:scale(1.02);box-shadow:var(--sh-md);z-index:15}
+.ab-name{font-size:.68rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ab-svc{font-size:.6rem;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ab-meta{font-size:.58rem;opacity:.7;margin-top:1px}
+.ab-dot{position:absolute;top:3px;right:3px;width:5px;height:5px;border-radius:50%}
+/* status colors */
+.st-pending{background:#FFF7ED;border-left-color:#C2410C;color:#C2410C}
+.st-confirmed{background:#EFF6FF;border-left-color:#1D4ED8;color:#1D4ED8}
+.st-arrived{background:#F0FDF4;border-left-color:#15803D;color:#15803D}
+.st-in_progress{background:#FAF5FF;border-left-color:#7C3AED;color:#7C3AED}
+.st-completed{background:#ECFDF5;border-left-color:#065F46;color:#065F46}
+.st-cancelled{background:#F9FAFB;border-left-color:#9CA3AF;color:#9CA3AF;opacity:.7}
+.st-no-show,.st-no_show{background:#FEF2F2;border-left-color:#991B1B;color:#991B1B}
 
-/* Status color mapping */
-.status-pending    {background:var(--s-pending-bg);border-left-color:var(--s-pending);color:var(--s-pending)}
-.status-confirmed  {background:var(--s-confirmed-bg);border-left-color:var(--s-confirmed);color:var(--s-confirmed)}
-.status-arrived    {background:var(--s-arrived-bg);border-left-color:var(--s-arrived);color:var(--s-arrived)}
-.status-in_progress{background:var(--s-inprog-bg);border-left-color:var(--s-inprog);color:var(--s-inprog)}
-.status-completed  {background:var(--s-done-bg);border-left-color:var(--s-done);color:var(--s-done)}
-.status-cancelled  {background:var(--s-cancelled-bg);border-left-color:var(--s-cancelled);color:var(--s-cancelled);opacity:.6}
-.status-no_show    {background:var(--s-noshow-bg);border-left-color:var(--s-noshow);color:var(--s-noshow)}
+/* WEEK VIEW */
+.wv-hd{display:grid;background:var(--white);border-bottom:2px solid var(--border);position:sticky;top:0;z-index:20}
+.wv-dh{padding:.38rem .4rem;border-right:1px solid var(--border);text-align:center;cursor:pointer;transition:background .1s}
+.wv-dh:hover,.wv-dh.today{background:var(--pink-bg)}
+.wv-dn{font-size:.62rem;color:var(--text2);text-transform:uppercase;letter-spacing:.05em}
+.wv-dd{font-family:var(--fontd);font-size:1rem;font-weight:700;color:var(--text)}
+.wv-dh.today .wv-dd{color:var(--pink)}
+.wv-cnt{font-size:.58rem;color:var(--pink);font-weight:600}
 
-/* ── WEEK VIEW ── */
-.week-view-header{
-  display:grid;background:var(--white);
-  border-bottom:2px solid var(--border);
-  position:sticky;top:0;z-index:20;
-}
-.wv-day-head{
-  padding:.4rem .5rem;border-right:1px solid var(--border);
-  text-align:center;cursor:pointer;transition:background .15s;
-}
-.wv-day-head:hover{background:var(--pink-bg)}
-.wv-day-head.today{background:var(--pink-bg)}
-.wv-day-num{font-family:var(--fontd);font-size:1.1rem;font-weight:700;color:var(--text)}
-.wv-day-name{font-size:.65rem;color:var(--text2);text-transform:uppercase;letter-spacing:.06em}
-.wv-day-head.today .wv-day-num{color:var(--pink)}
+/* MONTH VIEW */
+.mv{margin:.75rem}
+.mv-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.mv-hd{background:var(--s1);padding:.3rem;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);text-align:center}
+.mv-day{background:var(--white);padding:.35rem .4rem;min-height:80px;cursor:pointer;transition:background .08s}
+.mv-day:hover{background:var(--pink-bg)}
+.mv-day.other{background:var(--bg);opacity:.6}
+.mv-day.today .mv-num{background:var(--pink);color:#fff;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700}
+.mv-num{font-size:.74rem;font-weight:500;margin-bottom:2px}
+.mv-pill{font-size:.58rem;padding:.08rem .3rem;border-radius:3px;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.mv-rev{font-size:.58rem;color:var(--pink);font-weight:600;margin-top:2px}
 
-/* ── MONTH VIEW ── */
-.month-grid{
-  display:grid;grid-template-columns:repeat(7,1fr);
-  gap:1px;background:var(--border);
-  border:1px solid var(--border);border-radius:var(--r);
-  overflow:hidden;margin:1rem;
-}
-.month-head{
-  background:var(--s1);padding:.35rem;
-  font-size:.65rem;font-weight:700;text-transform:uppercase;
-  letter-spacing:.07em;color:var(--text3);text-align:center;
-}
-.month-day{
-  background:var(--white);padding:.4rem .5rem;
-  min-height:90px;cursor:pointer;transition:background .1s;
-}
-.month-day:hover{background:var(--pink-bg)}
-.month-day.other-month{background:var(--bg);opacity:.6}
-.month-day.today .month-day-num{
-  background:var(--pink);color:#fff;
-  width:22px;height:22px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-weight:700;
-}
-.month-day-num{font-size:.78rem;font-weight:500;color:var(--text);margin-bottom:3px}
-.month-appt-pill{
-  font-size:.6rem;padding:.1rem .35rem;border-radius:3px;
-  margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  cursor:pointer;
-}
+/* LIST VIEW */
+.lv{padding:.75rem 1rem}
+.lv-dg{margin-bottom:.85rem}
+.lv-dl{font-size:.68rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;padding:.35rem 0;margin-bottom:.35rem;border-bottom:1.5px solid var(--border);display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.lv-row{display:grid;grid-template-columns:64px 1fr 130px 90px 80px 80px auto;align-items:center;gap:.5rem;padding:.45rem .65rem;background:var(--white);border:1px solid var(--border);border-radius:var(--rsm);margin-bottom:.25rem;cursor:pointer;transition:all .1s;font-size:.77rem}
+.lv-row:hover{border-color:var(--pink);background:var(--pink-bg);transform:translateX(2px)}
+.lv-time{font-weight:600;font-size:.8rem}
+.lv-price{font-weight:600;color:var(--green)}
+.lv-acts{display:flex;gap:.25rem}
 
-/* ── LIST VIEW ── */
-.list-view{padding:1rem}
-.list-date-group{margin-bottom:1rem}
-.list-date-label{
-  font-size:.72rem;font-weight:700;color:var(--text2);
-  text-transform:uppercase;letter-spacing:.08em;
-  padding:.4rem 0;margin-bottom:.4rem;
-  border-bottom:1.5px solid var(--border);
-  display:flex;align-items:center;gap:.5rem;
-}
-.list-appt-row{
-  display:grid;grid-template-columns:70px 180px 140px 100px 90px 90px 1fr;
-  align-items:center;gap:.5rem;
-  padding:.5rem .75rem;background:var(--white);
-  border:1px solid var(--border);border-radius:var(--rsm);
-  margin-bottom:.3rem;cursor:pointer;transition:all .12s;
-  font-size:.8rem;
-}
-.list-appt-row:hover{border-color:var(--pink);background:var(--pink-bg);transform:translateX(2px)}
-.list-time{font-weight:600;font-size:.82rem;color:var(--text)}
-.list-client{font-weight:500}
-.list-svc{color:var(--text2)}
-.list-staff-pill{
-  display:flex;align-items:center;gap:.3rem;
-  font-size:.72rem;font-weight:500;
-}
-.list-price{font-weight:600;color:#059669}
-.list-actions{display:flex;gap:.3rem;justify-content:flex-end}
-
-/* ─── RIGHT PANEL ─────────────────────────────────── */
-.right-panel{
-  width:280px;flex-shrink:0;
-  background:var(--white);border-left:1px solid var(--border);
-  display:flex;flex-direction:column;overflow:hidden;
-}
-.rp-header{
-  padding:.75rem .9rem;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;
-  flex-shrink:0;
-}
-.rp-title{font-size:.8rem;font-weight:700;color:var(--text)}
+/* RIGHT PANEL */
+.rp{width:260px;flex-shrink:0;background:var(--white);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.rp-hd{padding:.65rem .85rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.rp-title{font-size:.78rem;font-weight:700}
 .rp-tabs{display:flex;gap:2px;background:var(--s1);border-radius:6px;padding:2px}
-.rp-tab{
-  padding:.2rem .55rem;border-radius:5px;font-size:.68rem;
-  font-weight:500;color:var(--text2);cursor:pointer;border:none;
-  background:transparent;font-family:var(--font);transition:all .15s;
-}
-.rp-tab.active{background:var(--white);color:var(--text);font-weight:600;box-shadow:var(--sh)}
-.rp-body{flex:1;overflow-y:auto;padding:.75rem .9rem}
+.rp-tab{padding:.18rem .5rem;border-radius:5px;font-size:.65rem;font-weight:500;color:var(--text2);cursor:pointer;border:none;background:transparent;font-family:var(--font);transition:all .12s}
+.rp-tab.active{background:var(--white);color:var(--text);font-weight:600;box-shadow:var(--sh-sm)}
+.rp-body{flex:1;overflow-y:auto;padding:.65rem .85rem}
+.occ-bar{margin-bottom:.7rem}
+.occ-lbl{display:flex;justify-content:space-between;font-size:.68rem;margin-bottom:3px}
+.occ-track{height:5px;background:var(--s1);border-radius:4px;overflow:hidden}
+.occ-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--pink),#7C3AED);transition:width .5s}
+.up-item{display:flex;gap:.4rem;padding:.4rem 0;border-bottom:1px solid var(--s1);align-items:flex-start;cursor:pointer}
+.up-item:last-child{border-bottom:none}
+.up-time{font-size:.66rem;font-weight:600;white-space:nowrap;min-width:34px;padding-top:1px}
+.up-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.up-name{font-size:.74rem;font-weight:500;margin-bottom:1px}
+.up-svc{font-size:.62rem;color:var(--text2)}
 
-/* Occupancy bar */
-.occ-bar{margin-bottom:.85rem}
-.occ-label{display:flex;justify-content:space-between;font-size:.72rem;margin-bottom:4px}
-.occ-label span:first-child{color:var(--text2)}
-.occ-label span:last-child{font-weight:600;color:var(--text)}
-.occ-track{height:6px;background:var(--s1);border-radius:4px;overflow:hidden}
-.occ-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--pink),#7C3AED);transition:width .6s}
-
-/* Upcoming list */
-.upcoming-item{
-  display:flex;gap:.5rem;padding:.5rem 0;
-  border-bottom:1px solid var(--s1);align-items:flex-start;
-}
-.upcoming-item:last-child{border-bottom:none}
-.upcoming-time{
-  font-size:.7rem;font-weight:600;color:var(--text);
-  white-space:nowrap;min-width:36px;padding-top:1px;
-}
-.upcoming-dot{
-  width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;
-}
-.upcoming-name{font-size:.78rem;font-weight:500;color:var(--text);margin-bottom:1px}
-.upcoming-svc{font-size:.65rem;color:var(--text2)}
-
-/* Waitlist */
-.waitlist-item{
-  background:var(--s1);border-radius:var(--rsm);
-  padding:.5rem .65rem;margin-bottom:.35rem;
-  display:flex;align-items:center;gap:.5rem;
-}
-.waitlist-name{font-size:.78rem;font-weight:500;flex:1}
-.waitlist-meta{font-size:.65rem;color:var(--text2)}
-
-/* ─── MODAL ───────────────────────────────────────── */
-.modal-overlay{
-  position:fixed;inset:0;background:rgba(17,24,39,.5);
-  backdrop-filter:blur(3px);z-index:1000;
-  display:flex;align-items:center;justify-content:center;
-  padding:1rem;
-}
-.modal{
-  background:var(--white);border-radius:var(--rlg);
-  width:100%;max-width:500px;
-  max-height:90vh;overflow:hidden;
-  box-shadow:var(--sh-xl);
-  display:flex;flex-direction:column;
-}
-.modal-lg{max-width:620px}
-.modal-head{
-  padding:1.1rem 1.25rem;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;gap:.75rem;flex-shrink:0;
-}
-.modal-head-title{font-family:var(--fontd);font-size:.95rem;font-weight:700;flex:1}
-.modal-close{
-  width:28px;height:28px;border-radius:50%;border:none;
-  background:var(--s1);color:var(--text2);cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  font-size:.95rem;transition:all .15s;
-}
-.modal-close:hover{background:var(--s-noshow-bg);color:var(--s-noshow)}
-.modal-body{padding:1.1rem 1.25rem;overflow-y:auto;flex:1}
-.modal-footer{
-  padding:.85rem 1.25rem;border-top:1px solid var(--border);
-  display:flex;gap:.5rem;justify-content:flex-end;flex-shrink:0;
-}
-
-/* Form elements */
-.fg{display:flex;flex-direction:column;gap:.3rem;margin-bottom:.75rem}
-.fl{font-size:.63rem;font-weight:700;color:var(--text2);letter-spacing:.08em;text-transform:uppercase}
-.fi{
-  padding:.6rem .8rem;border:1.5px solid var(--border);border-radius:var(--rsm);
-  font-size:.83rem;color:var(--text);background:var(--white);outline:none;
-  font-family:var(--font);transition:border-color .15s,box-shadow .15s;width:100%;
-}
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(17,24,39,.45);backdrop-filter:blur(3px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem}
+.modal{background:var(--white);border-radius:var(--rlg);width:100%;max-width:520px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--sh-xl)}
+.mhd{padding:1rem 1.2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.65rem;flex-shrink:0}
+.mhd-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;color:#fff;flex-shrink:0}
+.mhd-title{font-family:var(--fontd);font-size:.9rem;font-weight:700;flex:1}
+.mclose{width:26px;height:26px;border-radius:50%;border:none;background:var(--s1);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.9rem;transition:all .12s}
+.mclose:hover{background:var(--red-bg);color:var(--red)}
+.mbdy{padding:1rem 1.2rem;overflow-y:auto;flex:1}
+.mfoot{padding:.75rem 1.2rem;border-top:1px solid var(--border);display:flex;gap:.4rem;justify-content:flex-end;flex-shrink:0}
+.fg{display:flex;flex-direction:column;gap:.28rem;margin-bottom:.65rem}
+.fl{font-size:.6rem;font-weight:700;color:var(--text2);letter-spacing:.08em;text-transform:uppercase}
+.fi{padding:.55rem .75rem;border:1.5px solid var(--border);border-radius:var(--rsm);font-size:.8rem;color:var(--text);background:var(--white);transition:border-color .12s;width:100%}
 .fi:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(233,30,140,.08)}
-.frow{display:grid;grid-template-columns:1fr 1fr;gap:.65rem}
-
-/* Status selector */
-.status-selector{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
-.status-opt{
-  padding:.35rem .4rem;border-radius:var(--rxs);
-  border:1.5px solid var(--border);background:var(--white);
-  font-size:.65rem;font-weight:600;cursor:pointer;
-  text-align:center;transition:all .15s;font-family:var(--font);
-}
-.status-opt:hover{border-color:var(--pink)}
-.status-opt.selected{font-weight:700}
-
-/* Payment methods */
-.pay-methods{display:grid;grid-template-columns:repeat(2,1fr);gap:5px;margin-bottom:.75rem}
-.pay-m{
-  padding:.5rem;border:1.5px solid var(--border);border-radius:var(--rsm);
-  display:flex;align-items:center;gap:.4rem;cursor:pointer;
-  font-size:.75rem;font-weight:500;background:var(--white);
-  transition:all .15s;font-family:var(--font);
-}
-.pay-m:hover,.pay-m.selected{border-color:var(--pink);background:var(--pink-bg);color:var(--pink)}
-
-/* Buttons */
-.btn{
-  display:inline-flex;align-items:center;gap:.35rem;
-  padding:.45rem .95rem;border-radius:50px;
-  font-size:.78rem;font-weight:500;cursor:pointer;
-  border:1.5px solid var(--border);background:var(--white);
-  color:var(--text);font-family:var(--font);transition:all .15s;
-}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.status-sel{display:grid;grid-template-columns:repeat(4,1fr);gap:3px}
+.sopt{padding:.32rem .35rem;border-radius:5px;border:1.5px solid var(--border);background:var(--white);font-size:.62rem;font-weight:600;cursor:pointer;text-align:center;transition:all .12s;font-family:var(--font)}
+.sopt.sel{outline:2px solid currentColor;outline-offset:1px}
+.pay-m{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:.65rem}
+.pm{padding:.45rem;border:1.5px solid var(--border);border-radius:var(--rsm);display:flex;align-items:center;gap:.35rem;cursor:pointer;font-size:.72rem;font-weight:500;background:var(--white);transition:all .12s;font-family:var(--font)}
+.pm:hover,.pm.sel{border-color:var(--pink);background:var(--pink-bg);color:var(--pink)}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.75rem}
+.info-box{background:var(--s1);border-radius:var(--rsm);padding:.45rem .6rem}
+.info-box-lbl{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:1px}
+.info-box-val{font-size:.8rem;font-weight:500}
+.comm-box{background:var(--s1);border-radius:var(--rsm);padding:.55rem .7rem;display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.65rem;font-size:.75rem}
+.comm-lbl{color:var(--text2);font-size:.62rem;margin-bottom:1px}
+.comm-val{font-weight:700}
+.qa-row{display:flex;gap:.3rem;margin-bottom:.75rem;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:.3rem;padding:.38rem .8rem;border-radius:50px;font-size:.74rem;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:var(--white);color:var(--text);font-family:var(--font);transition:all .12s}
 .btn:hover{border-color:var(--pink);color:var(--pink);background:var(--pink-bg)}
+.btn-sm{padding:.25rem .6rem;font-size:.68rem}
 .btn-primary{background:var(--pink);border-color:var(--pink);color:#fff;font-weight:600}
-.btn-primary:hover{background:var(--pink2);border-color:var(--pink2);color:#fff;transform:translateY(-1px)}
-.btn-sm{padding:.28rem .65rem;font-size:.72rem}
+.btn-primary:hover{background:#C9184A;border-color:#C9184A;color:#fff;transform:translateY(-1px)}
+.btn-success{background:var(--green);border-color:var(--green);color:#fff}
+.btn-success:hover{background:#065F46;color:#fff}
+.btn-danger{color:var(--red);border-color:#FECACA;background:var(--red-bg)}
+.btn-danger:hover{background:var(--red);color:#fff}
 .btn-ghost{border-color:transparent;background:transparent}
 .btn-ghost:hover{background:var(--s1);border-color:var(--border)}
-.btn-danger{color:#991B1B;border-color:#FECACA;background:#FEF2F2}
-.btn-danger:hover{background:#991B1B;color:#fff;border-color:#991B1B}
-.btn-success{background:#059669;border-color:#059669;color:#fff}
-.btn-success:hover{background:#065F46;border-color:#065F46}
-
-/* Badge */
-.badge{
-  display:inline-flex;align-items:center;font-size:.63rem;font-weight:600;
-  padding:.12rem .45rem;border-radius:50px;border:1px solid;white-space:nowrap;
-}
-.badge-pending  {background:var(--s-pending-bg);color:var(--s-pending);border-color:var(--s-pending-bd)}
-.badge-confirmed{background:var(--s-confirmed-bg);color:var(--s-confirmed);border-color:var(--s-confirmed-bd)}
-.badge-arrived  {background:var(--s-arrived-bg);color:var(--s-arrived);border-color:var(--s-arrived-bd)}
-.badge-in_progress{background:var(--s-inprog-bg);color:var(--s-inprog);border-color:var(--s-inprog-bd)}
-.badge-completed{background:var(--s-done-bg);color:var(--s-done);border-color:var(--s-done-bd)}
-.badge-cancelled{background:var(--s-cancelled-bg);color:var(--s-cancelled);border-color:var(--s-cancelled-bd)}
-.badge-no_show  {background:var(--s-noshow-bg);color:var(--s-noshow);border-color:var(--s-noshow-bd)}
-
-/* Toast */
-#toasts{position:fixed;bottom:1rem;right:1rem;z-index:9999;display:flex;flex-direction:column;gap:.35rem}
-.toast-item{
-  background:var(--white);border:1px solid var(--border);border-radius:var(--r);
-  padding:.65rem .9rem;font-size:.78rem;display:flex;align-items:center;gap:.5rem;
-  box-shadow:var(--sh-lg);animation:toastIn .2s ease;max-width:280px;color:var(--text);
-}
-.toast-ok  {border-color:#6EE7B7;background:#ECFDF5}
-.toast-err {border-color:#FECACA;background:#FEF2F2}
-.toast-info{border-color:#BFDBFE;background:#EFF6FF}
-@keyframes toastIn{from{transform:translateX(110%);opacity:0}to{transform:none;opacity:1}}
-
-/* Empty slot add button */
-.slot-add-hint{
-  position:absolute;inset:2px;border-radius:var(--rxs);
-  display:flex;align-items:center;justify-content:center;
-  opacity:0;transition:opacity .15s;
-  background:var(--pink-bg);border:1.5px dashed var(--pink-bd);
-  color:var(--pink);font-size:.68rem;gap:3px;
-}
-.dv-cell:hover .slot-add-hint{opacity:1}
+.badge{display:inline-flex;align-items:center;font-size:.6rem;font-weight:600;padding:.1rem .4rem;border-radius:50px;border:1px solid;white-space:nowrap}
+/* conflict banner */
+.conflict-banner{background:var(--red-bg);border:1.5px solid #FECACA;border-radius:var(--rsm);padding:.5rem .7rem;font-size:.75rem;color:var(--red);display:none;align-items:center;gap:.4rem;margin-bottom:.65rem}
+#toast-container{pointer-events:none}
 </style>
 </head>
 <body>
-
-<!-- TOP CHROME -->
-<div class="top-chrome">
-  <div class="chrome-back" onclick="window.location.href='dashboard.html'">
-    <i class="fa-solid fa-arrow-left" style="font-size:.7rem"></i>
-    <span>March Nails</span>
-  </div>
-  <div class="chrome-divider"></div>
+<!-- CHROME -->
+<div class="chrome">
+  <a href="dashboard.html" style="display:flex;align-items:center;gap:.35rem;font-size:.72rem;color:var(--text2);text-decoration:none;padding:.28rem .55rem;border-radius:var(--rsm);border:1.5px solid transparent;transition:all .12s" onmouseover="this.style.background='var(--s1)';this.style.borderColor='var(--border)'" onmouseout="this.style.background='';this.style.borderColor='transparent'">
+    <i class="fa-solid fa-arrow-left" style="font-size:.65rem"></i>Back
+  </a>
+  <div class="chrome-div"></div>
   <div class="chrome-logo">March <span>Nails</span></div>
-  <div class="chrome-divider"></div>
-  <div class="chrome-title"><i class="fa-solid fa-calendar-check" style="color:var(--pink);margin-right:.35rem"></i>Booking</div>
+  <div class="chrome-div"></div>
+  <div style="font-size:.82rem;font-weight:600"><i class="fa-solid fa-calendar-check" style="color:var(--pink);margin-right:.3rem"></i>Booking</div>
   <div class="chrome-right">
     <div class="chrome-date" id="chrome-date"></div>
-    <div class="stats-strip" id="stats-strip">
-      <div class="stat-pill"><div class="stat-dot" style="background:var(--pink)"></div><span id="stat-today">—</span> today</div>
-      <div class="chrome-divider"></div>
-      <div class="stat-pill"><div class="stat-dot" style="background:#D97706"></div><span id="stat-pending">—</span> pending</div>
-      <div class="chrome-divider"></div>
-      <div class="stat-pill"><div class="stat-dot" style="background:#059669"></div><span id="stat-rev">—</span></div>
+    <div class="stat-strip">
+      <div class="stat-dot" style="background:var(--pink)"></div><span id="st-today">—</span>&nbsp;today
+      <div style="width:1px;height:12px;background:var(--border);margin:0 .2rem"></div>
+      <div class="stat-dot" style="background:var(--amber)"></div><span id="st-pending">—</span>&nbsp;pending
+      <div style="width:1px;height:12px;background:var(--border);margin:0 .2rem"></div>
+      <div class="stat-dot" style="background:var(--green)"></div><span id="st-rev">CA$0</span>
     </div>
   </div>
 </div>
 
 <!-- TOOLBAR -->
 <div class="toolbar">
-  <div class="toolbar-left">
-    <!-- View switcher -->
-    <div class="view-switcher">
-      <button class="view-btn active" data-view="day" onclick="switchView('day',this)"><i class="fa-solid fa-calendar-day"></i>Day</button>
-      <button class="view-btn" data-view="week" onclick="switchView('week',this)"><i class="fa-solid fa-calendar-week"></i>Week</button>
-      <button class="view-btn" data-view="month" onclick="switchView('month',this)"><i class="fa-solid fa-calendar"></i>Month</button>
-      <button class="view-btn" data-view="list" onclick="switchView('list',this)"><i class="fa-solid fa-list"></i>List</button>
-    </div>
-
-    <div class="chrome-divider"></div>
-
-    <!-- Date navigation -->
-    <div class="date-nav">
-      <button class="nav-btn" onclick="navigate(-1)"><i class="fa-solid fa-chevron-left"></i></button>
-      <div class="nav-date-label" id="nav-label" onclick="openDatePicker()" style="position:relative;cursor:pointer">
-        <span id="nav-label-text">Today</span>
-        <input type="date" id="nav-datepicker" style="position:absolute;opacity:0;width:100%;height:100%;top:0;left:0;cursor:pointer;border:none;background:transparent" onchange="goToDate(this.value)">
-      </div>
-      <button class="nav-btn" onclick="navigate(1)"><i class="fa-solid fa-chevron-right"></i></button>
-      <button class="today-btn" onclick="goToday()">Today</button>
-    </div>
+  <div class="view-sw">
+    <button class="vbtn active" data-view="day" onclick="switchView('day',this)"><i class="fa-solid fa-calendar-day"></i>Day</button>
+    <button class="vbtn" data-view="week" onclick="switchView('week',this)"><i class="fa-solid fa-calendar-week"></i>Week</button>
+    <button class="vbtn" data-view="month" onclick="switchView('month',this)"><i class="fa-solid fa-calendar"></i>Month</button>
+    <button class="vbtn" data-view="list" onclick="switchView('list',this)"><i class="fa-solid fa-list"></i>List</button>
   </div>
-
-  <div class="toolbar-right">
-    <!-- Filters -->
-    <div class="filter-chip" id="fc-staff">
-      <i class="fa-solid fa-id-badge" style="font-size:.7rem"></i>
-      <select onchange="STATE.staffFilter=this.value;render()" style="min-width:70px">
-        <option value="all">All Staff</option>
-        <option value="Happy">Happy</option>
-        <option value="Flower">Flower</option>
-        <option value="Daisy">Daisy</option>
-        <option value="Hannah">Hannah</option>
+  <div class="chrome-div"></div>
+  <div class="date-nav">
+    <button class="nav-btn" onclick="navigate(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+    <div class="date-lbl" id="date-lbl">
+      <span id="date-lbl-txt">Today</span>
+      <input type="date" id="date-picker" onchange="goDate(this.value)">
+    </div>
+    <button class="nav-btn" onclick="navigate(1)"><i class="fa-solid fa-chevron-right"></i></button>
+    <button class="today-btn" onclick="goToday()">Today</button>
+  </div>
+  <div class="tbar-r">
+    <div class="fc"><i class="fa-solid fa-id-badge" style="font-size:.65rem"></i>
+      <select id="f-staff" onchange="STATE.staff=this.value;render()">
+        <option value="all">All Staff</option><option>Happy</option><option>Flower</option><option>Daisy</option><option>Hannah</option>
       </select>
     </div>
-    <div class="filter-chip" id="fc-status">
-      <i class="fa-solid fa-circle-dot" style="font-size:.7rem"></i>
-      <select onchange="STATE.statusFilter=this.value;render()" style="min-width:80px">
-        <option value="all">All Status</option>
-        <option value="pending">Pending</option>
-        <option value="confirmed">Confirmed</option>
-        <option value="arrived">Arrived</option>
-        <option value="in_progress">In Progress</option>
-        <option value="completed">Completed</option>
-        <option value="cancelled">Cancelled</option>
-        <option value="no_show">No-show</option>
+    <div class="fc"><i class="fa-solid fa-circle-dot" style="font-size:.65rem"></i>
+      <select id="f-status" onchange="STATE.status=this.value;render()">
+        <option value="all">All Status</option><option value="pending">Pending</option><option value="confirmed">Confirmed</option>
+        <option value="arrived">Arrived</option><option value="in_progress">In Progress</option>
+        <option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="no-show">No-show</option>
       </select>
     </div>
-    <div class="filter-chip" id="fc-svc">
-      <i class="fa-solid fa-scissors" style="font-size:.7rem"></i>
-      <select onchange="STATE.svcFilter=this.value;render()" style="min-width:90px">
-        <option value="all">All Services</option>
-        <option>Acrylic Full Set</option>
-        <option>Acrylic Refill</option>
-        <option>Gel-X Extensions</option>
-        <option>Pedicure Shellac</option>
-        <option>Manicure Shellac</option>
-        <option>Lash Extensions</option>
-        <option>Nail Art</option>
+    <div class="fc"><i class="fa-solid fa-scissors" style="font-size:.65rem"></i>
+      <select id="f-svc" onchange="STATE.svc=this.value;render()">
+        <option value="all">All Services</option><option>Acrylic Full Set</option><option>Acrylic Refill</option>
+        <option>Gel-X Extensions</option><option>Pedicure Shellac</option><option>Manicure Shellac</option>
+        <option>Lash Extensions</option><option>Nail Art</option><option>Acrylic Removal</option>
       </select>
     </div>
-
-    <div class="chrome-divider"></div>
-
-    <button class="btn btn-ghost btn-sm" onclick="resetToDemo()" title="Reset to demo data" style="color:var(--text3);font-size:.7rem"><i class="fa-solid fa-rotate-left"></i></button>
-    <button class="new-appt-btn" onclick="openNewAppt()">
-      <i class="fa-solid fa-plus"></i>New Appointment
-    </button>
+    <div class="chrome-div"></div>
+    <button class="reset-btn" onclick="resetDemo()" title="Reset to demo data"><i class="fa-solid fa-rotate-left"></i></button>
+    <button class="new-btn" onclick="openNew()"><i class="fa-solid fa-plus"></i>New Appointment</button>
   </div>
 </div>
 
-<!-- BOOKING BODY -->
-<div class="booking-body">
-
-  <!-- MAIN NAV (compact) -->
-  <div class="main-nav" id="main-nav">
-    <a class="mn-item" href="dashboard.html" title="Dashboard"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></a>
-    <a class="mn-item mn-active" href="booking.html" title="Booking"><i class="fa-solid fa-calendar-check"></i><span>Booking</span></a>
-    <a class="mn-item" href="clients.html" title="Clients"><i class="fa-solid fa-users"></i><span>Clients</span></a>
-    <a class="mn-item" href="staff.html" title="Staff"><i class="fa-solid fa-id-badge"></i><span>Staff</span></a>
-    <a class="mn-item" href="reports.html" title="Reports"><i class="fa-solid fa-chart-column"></i><span>Reports</span></a>
-    <a class="mn-item" href="appointments.html" title="Appointments"><i class="fa-solid fa-calendar-days"></i><span>Appts</span></a>
-    <div class="mn-sep"></div>
-    <a class="mn-item" href="index.html" title="Sign Out" onclick="localStorage.removeItem('mn_auth')" style="margin-top:auto"><i class="fa-solid fa-right-from-bracket"></i><span>Out</span></a>
+<!-- BODY -->
+<div class="bdy">
+  <!-- SIDE NAV -->
+  <div class="snav">
+    <a class="sni" href="dashboard.html"><i class="fa-solid fa-gauge-high"></i><span>Dash</span></a>
+    <a class="sni active" href="booking.html"><i class="fa-solid fa-calendar-check"></i><span>Book</span></a>
+    <a class="sni" href="clients.html"><i class="fa-solid fa-users"></i><span>Clients</span></a>
+    <a class="sni" href="staff.html"><i class="fa-solid fa-id-badge"></i><span>Staff</span></a>
+    <a class="sni" href="reports.html"><i class="fa-solid fa-chart-column"></i><span>Reports</span></a>
+    <div class="sni-sep"></div>
+    <a class="sni" href="index.html" onclick="localStorage.removeItem('mn_auth')" style="margin-top:auto"><i class="fa-solid fa-right-from-bracket"></i><span>Out</span></a>
   </div>
 
   <!-- STAFF RAIL -->
-  <div class="staff-rail" id="staff-rail">
-    <div class="staff-rail-header">
-      <span>Staff</span>
-      <span id="rail-date-sm" style="font-size:.6rem;color:var(--text2)"></span>
-    </div>
-    <div id="staff-rail-body"></div>
+  <div class="srail" id="srail">
+    <div class="srail-hd"><span>Staff</span><span id="srail-date" style="font-size:.58rem;color:var(--text2)"></span></div>
+    <div id="srail-body"></div>
   </div>
 
-  <!-- CALENDAR AREA -->
-  <div class="cal-area" id="cal-area">
-    <div id="view-container"></div>
-  </div>
+  <!-- CALENDAR -->
+  <div class="cal" id="cal"><div id="view-cont"></div></div>
 
   <!-- RIGHT PANEL -->
-  <div class="right-panel">
-    <div class="rp-header">
+  <div class="rp">
+    <div class="rp-hd">
       <div class="rp-title">Overview</div>
       <div class="rp-tabs">
         <button class="rp-tab active" onclick="rpTab('upcoming',this)">Upcoming</button>
-        <button class="rp-tab" onclick="rpTab('waitlist',this)">Waitlist</button>
         <button class="rp-tab" onclick="rpTab('stats',this)">Stats</button>
       </div>
     </div>
     <div class="rp-body" id="rp-body"></div>
   </div>
-
 </div>
 
 <!-- NEW APPOINTMENT MODAL -->
-<div class="modal-overlay" id="new-appt-modal" style="display:none" onclick="if(event.target===this)closeModal('new-appt-modal')">
-  <div class="modal modal-lg">
-    <div class="modal-head">
-      <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--pink),#7C3AED);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fa-solid fa-calendar-plus" style="color:#fff;font-size:.8rem"></i></div>
-      <div class="modal-head-title">New Appointment</div>
-      <button class="modal-close" onclick="closeModal('new-appt-modal')">×</button>
+<div class="overlay" id="new-modal" style="display:none" onclick="if(event.target===this)closeModal('new-modal')">
+  <div class="modal">
+    <div class="mhd">
+      <div class="mhd-av" style="background:linear-gradient(135deg,var(--pink),#7C3AED)"><i class="fa-solid fa-calendar-plus" style="font-size:.75rem"></i></div>
+      <div class="mhd-title">New Appointment</div>
+      <button class="mclose" onclick="closeModal('new-modal')">×</button>
     </div>
-    <div class="modal-body">
+    <div class="mbdy">
+      <div id="conflict-banner" class="conflict-banner"><i class="fa-solid fa-triangle-exclamation"></i><span id="conflict-msg">Conflict detected</span></div>
+      <!-- Client search -->
+      <div class="fg" style="position:relative">
+        <label class="fl">Client</label>
+        <input class="fi" id="n-client-search" placeholder="Search client or type new name…" autocomplete="off" oninput="clientSearch(this.value)" onfocus="clientSearch(this.value)">
+        <input type="hidden" id="n-client-id">
+        <div id="n-client-dd" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:300;background:var(--white);border:1.5px solid var(--pink);border-radius:var(--rsm);box-shadow:var(--sh-lg);max-height:160px;overflow-y:auto;margin-top:2px"></div>
+        <div style="font-size:.62rem;color:var(--text3);margin-top:2px">Leave blank for walk-in</div>
+      </div>
       <div class="frow">
-        <div class="fg" style="position:relative">
-          <label class="fl">Client</label>
-          <input class="fi" id="m-client-search" placeholder="Search existing client or type new name…" autocomplete="off" oninput="clientSearch(this.value)" onfocus="clientSearch(this.value)">
-          <input type="hidden" id="m-client-id">
-          <div id="m-client-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:200;background:var(--white);border:1.5px solid var(--pink);border-radius:var(--rsm);box-shadow:var(--sh-lg);max-height:180px;overflow-y:auto;margin-top:2px"></div>
-          <div style="font-size:.65rem;color:var(--text2);margin-top:3px">Type to search · Leave blank to add as Walk-in</div>
-        </div>
         <div class="fg">
           <label class="fl">Phone</label>
-          <input class="fi" id="m-phone" placeholder="Auto-filled or enter manually">
+          <input class="fi" id="n-phone" placeholder="Auto-filled">
+        </div>
+        <div class="fg">
+          <label class="fl">Staff</label>
+          <select class="fi" id="n-staff" onchange="checkConflict()">
+            <option value="Happy">Happy — Acrylic & Nail Art</option>
+            <option value="Flower">Flower — Gel Extensions</option>
+            <option value="Daisy">Daisy — Shellac & Chrome</option>
+            <option value="Hannah">Hannah — Pedicure</option>
+          </select>
         </div>
       </div>
       <div class="frow">
         <div class="fg">
           <label class="fl">Service</label>
-          <select class="fi" id="m-service" onchange="updateServicePrice()">
-            <option value="">Select service…</option>
+          <select class="fi" id="n-svc" onchange="svcChanged()">
+            <option value="">Select…</option>
             <option value="Acrylic Full Set|75|90">Acrylic Full Set — CA$75</option>
             <option value="Acrylic Refill|60|60">Acrylic Refill — CA$60</option>
             <option value="Gel-X Extensions|80|90">Gel-X Extensions — CA$80</option>
@@ -729,1204 +367,769 @@ input,select,textarea{font-family:var(--font)}
             <option value="Nail Art|45|60">Nail Art — CA$45</option>
             <option value="Acrylic Removal|25|30">Acrylic Removal — CA$25</option>
             <option value="Gel Overlay|65|75">Gel Overlay — CA$65</option>
-            <option value="Chrome Powder|20|15">Chrome Powder Add-on — CA$20</option>
-            <option value="Paraffin Treatment|30|20">Paraffin Treatment — CA$30</option>
-            <option value="Other|0|60">Other / Custom</option>
+            <option value="Other|0|60">Other / Custom…</option>
           </select>
         </div>
         <div class="fg">
-          <label class="fl">Staff</label>
-          <select class="fi" id="m-staff">
-            <option value="Happy">Happy — Acrylic & Nail Art</option>
-            <option value="Flower">Flower — Gel Extensions & Ombré</option>
-            <option value="Daisy">Daisy — Shellac & Chrome</option>
-            <option value="Hannah">Hannah — Pedicure Specialist</option>
-          </select>
+          <label class="fl">Price (CA$)</label>
+          <input type="number" class="fi" id="n-price" value="" placeholder="0">
         </div>
       </div>
       <div class="frow">
         <div class="fg">
           <label class="fl">Date & Time</label>
-          <input type="datetime-local" class="fi" id="m-datetime">
+          <input type="datetime-local" class="fi" id="n-dt" onchange="checkConflict()">
         </div>
         <div class="fg">
           <label class="fl">Duration (min)</label>
-          <input type="number" class="fi" id="m-duration" value="60" min="15" step="15">
-        </div>
-      </div>
-      <div class="frow">
-        <div class="fg">
-          <label class="fl">Price (CA$)</label>
-          <input type="number" class="fi" id="m-price" value="0">
-        </div>
-        <div class="fg">
-          <label class="fl">Repeat</label>
-          <select class="fi" id="m-repeat">
-            <option value="none">Does not repeat</option>
-            <option value="weekly">Every week</option>
-            <option value="2weeks">Every 2 weeks</option>
-            <option value="monthly">Every month</option>
-          </select>
+          <input type="number" class="fi" id="n-dur" value="60" min="15" step="15" onchange="checkConflict()">
         </div>
       </div>
       <div class="fg">
         <label class="fl">Status</label>
-        <div class="status-selector" id="new-status-selector">
-          <button class="status-opt selected" style="background:var(--s-confirmed-bg);color:var(--s-confirmed);border-color:var(--s-confirmed-bd)" data-s="confirmed">Confirmed</button>
-          <button class="status-opt" data-s="pending" style="background:var(--s-pending-bg);color:var(--s-pending);border-color:var(--s-pending-bd)">Pending</button>
-          <button class="status-opt" data-s="arrived" style="background:var(--s-arrived-bg);color:var(--s-arrived);border-color:var(--s-arrived-bd)">Arrived</button>
-          <button class="status-opt" data-s="in_progress" style="background:var(--s-inprog-bg);color:var(--s-inprog);border-color:var(--s-inprog-bd)">In Progress</button>
+        <div class="status-sel" id="n-status-sel">
+          <button class="sopt sel" data-s="confirmed" style="background:#EFF6FF;color:#1D4ED8;border-color:#BFDBFE" onclick="selStatus(this,'n-status-sel')">Confirmed</button>
+          <button class="sopt" data-s="pending" style="background:#FFF7ED;color:#C2410C;border-color:#FED7AA" onclick="selStatus(this,'n-status-sel')">Pending</button>
+          <button class="sopt" data-s="arrived" style="background:#F0FDF4;color:#15803D;border-color:#BBF7D0" onclick="selStatus(this,'n-status-sel')">Arrived</button>
+          <button class="sopt" data-s="in_progress" style="background:#FAF5FF;color:#7C3AED;border-color:#DDD6FE" onclick="selStatus(this,'n-status-sel')">In Progress</button>
         </div>
       </div>
       <div class="fg">
-        <label class="fl">Notes / Allergy Warning</label>
-        <textarea class="fi" id="m-notes" placeholder="Preferences, allergy notes, special requests…" style="height:60px;resize:none"></textarea>
+        <label class="fl">Notes</label>
+        <textarea class="fi" id="n-notes" style="height:52px;resize:none" placeholder="Preferences, allergies, special requests…"></textarea>
       </div>
-      <!-- Commission preview -->
-      <div id="m-comm-preview" style="background:var(--s1);border-radius:var(--rsm);padding:.6rem .75rem;font-size:.78rem;color:var(--text2)">
-        Select a service to see commission preview
-      </div>
+      <div id="n-comm-prev" style="background:var(--s1);border-radius:var(--rsm);padding:.5rem .65rem;font-size:.75rem;color:var(--text2)">Select a service to preview commission</div>
     </div>
-    <div class="modal-footer">
-      <button class="btn" onclick="closeModal('new-appt-modal')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveNewAppt()"><i class="fa-solid fa-check"></i>Create Appointment</button>
+    <div class="mfoot">
+      <button class="btn" onclick="closeModal('new-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNew()"><i class="fa-solid fa-check"></i>Create</button>
     </div>
   </div>
 </div>
 
-<!-- APPOINTMENT DETAIL MODAL -->
-<div class="modal-overlay" id="detail-modal" style="display:none" onclick="if(event.target===this)closeModal('detail-modal')">
-  <div class="modal modal-lg">
-    <div class="modal-head">
-      <div id="dm-staff-av" style="width:32px;height:32px;border-radius:50%;background:var(--pink);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;flex-shrink:0"></div>
+<!-- DETAIL MODAL -->
+<div class="overlay" id="det-modal" style="display:none" onclick="if(event.target===this)closeModal('det-modal')">
+  <div class="modal">
+    <div class="mhd">
+      <div class="mhd-av" id="dm-av" style="background:var(--pink)">?</div>
       <div>
-        <div class="modal-head-title" id="dm-client-name">Appointment</div>
-        <div id="dm-subtitle" style="font-size:.72rem;color:var(--text2)"></div>
+        <div class="mhd-title" id="dm-name">Appointment</div>
+        <div id="dm-sub" style="font-size:.68rem;color:var(--text2)"></div>
       </div>
-      <div id="dm-status-badge" style="margin-left:auto;margin-right:.5rem"></div>
-      <button class="modal-close" onclick="closeModal('detail-modal')">×</button>
+      <div id="dm-badge" style="margin-left:auto;margin-right:.4rem"></div>
+      <button class="mclose" onclick="closeModal('det-modal')">×</button>
     </div>
-    <div class="modal-body">
-      <!-- Quick actions -->
-      <div style="display:flex;gap:.35rem;margin-bottom:1rem;flex-wrap:wrap" id="dm-quick-actions"></div>
-
-      <!-- Info grid -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-bottom:1rem" id="dm-info-grid"></div>
-
-      <!-- Status change -->
+    <div class="mbdy">
+      <div class="qa-row" id="dm-qa"></div>
+      <div class="info-grid" id="dm-info"></div>
       <div class="fg">
         <label class="fl">Change Status</label>
-        <div class="status-selector" id="dm-status-selector"></div>
+        <div class="status-sel" id="dm-status-sel"></div>
       </div>
-
-      <!-- Payment section -->
-      <div id="dm-payment-section" style="margin-top:.85rem">
-        <label class="fl" style="display:block;margin-bottom:.5rem">Record Payment</label>
-        <div class="pay-methods" id="dm-pay-methods">
-          <button class="pay-m selected" data-m="cash" onclick="selPayMethod(this)"><i class="fa-solid fa-money-bill-wave" style="color:#059669"></i>Cash</button>
-          <button class="pay-m" data-m="credit_card" onclick="selPayMethod(this)"><i class="fa-solid fa-credit-card" style="color:#1D4ED8"></i>Card</button>
-          <button class="pay-m" data-m="debit" onclick="selPayMethod(this)"><i class="fa-solid fa-credit-card" style="color:#7C3AED"></i>Debit</button>
-          <button class="pay-m" data-m="online" onclick="selPayMethod(this)"><i class="fa-solid fa-mobile-alt" style="color:#D97706"></i>Online</button>
+      <div id="dm-pay-section">
+        <label class="fl" style="display:block;margin-bottom:.45rem">Record Payment</label>
+        <div class="pay-m">
+          <button class="pm sel" data-m="cash" onclick="selPay(this)"><i class="fa-solid fa-money-bill-wave" style="color:#059669"></i>Cash</button>
+          <button class="pm" data-m="credit_card" onclick="selPay(this)"><i class="fa-solid fa-credit-card" style="color:#2563EB"></i>Card</button>
+          <button class="pm" data-m="debit" onclick="selPay(this)"><i class="fa-solid fa-credit-card" style="color:#7C3AED"></i>Debit</button>
+          <button class="pm" data-m="online" onclick="selPay(this)"><i class="fa-solid fa-mobile-alt" style="color:#D97706"></i>Online</button>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;font-size:.8rem;background:var(--s1);border-radius:var(--rsm);padding:.65rem" id="dm-comm-info"></div>
+        <div class="comm-box" id="dm-comm"></div>
       </div>
-
-      <!-- Notes -->
-      <div class="fg" style="margin-top:.75rem">
+      <div class="fg" style="margin-top:.5rem">
         <label class="fl">Notes</label>
-        <div id="dm-notes" style="font-size:.82rem;color:var(--text2);background:var(--s1);border-radius:var(--rsm);padding:.5rem .7rem;min-height:36px"></div>
+        <div id="dm-notes" style="font-size:.78rem;color:var(--text2);background:var(--s1);border-radius:var(--rsm);padding:.45rem .6rem;min-height:32px"></div>
       </div>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-danger btn-sm" id="dm-delete-btn">Delete</button>
+    <div class="mfoot">
+      <button class="btn btn-danger btn-sm" id="dm-del">Delete</button>
       <div style="flex:1"></div>
-      <button class="btn btn-sm" onclick="closeModal('detail-modal')">Close</button>
+      <button class="btn btn-sm" onclick="closeModal('det-modal')">Close</button>
       <button class="btn btn-success btn-sm" id="dm-pay-btn" onclick="savePayment()"><i class="fa-solid fa-dollar-sign"></i>Save Payment</button>
     </div>
   </div>
 </div>
 
-<div id="toasts"></div>
+<div id="toast-container" style="position:fixed;bottom:1.25rem;right:1.25rem;z-index:9999;display:flex;flex-direction:column;gap:.4rem;pointer-events:none"></div>
 
 <script>
 'use strict';
+if (!localStorage.getItem('mn_auth')) location.href='index.html';
 
-if (!localStorage.getItem('mn_auth')) { window.location.href = 'index.html'; }
-
-/* ─── STATE ─────────────────────────────────────── */
-var STATE = {
-  view: 'day',
-  date: new Date(),
-  staffFilter: 'all',
-  statusFilter: 'all',
-  svcFilter: 'all',
-  rpTab: 'upcoming',
-  selectedApptId: null,
-  selectedPayMethod: 'cash',
-  selectedNewStatus: 'confirmed'
-};
-
-var STAFF_CONFIG = [
-  { name:'Happy',  role:'Acrylic & Nail Art',    color:'#E91E8C', grad:'linear-gradient(135deg,#E91E8C,#C9184A)' },
-  { name:'Flower', role:'Gel Extensions & Ombré', color:'#7C3AED', grad:'linear-gradient(135deg,#7C3AED,#4F46E5)' },
-  { name:'Daisy',  role:'Shellac & Chrome',       color:'#0891B2', grad:'linear-gradient(135deg,#06B6D4,#0284C7)' },
-  { name:'Hannah', role:'Pedicure Specialist',    color:'#D97706', grad:'linear-gradient(135deg,#D97706,#B45309)' }
+var STAFF = [
+  {name:'Happy', role:'Acrylic & Nail Art',   color:'#E91E8C', grad:'linear-gradient(135deg,#E91E8C,#C9184A)'},
+  {name:'Flower',role:'Gel Extensions & Ombré',color:'#7C3AED', grad:'linear-gradient(135deg,#7C3AED,#4F46E5)'},
+  {name:'Daisy', role:'Shellac & Chrome',      color:'#0891B2', grad:'linear-gradient(135deg,#06B6D4,#0284C7)'},
+  {name:'Hannah',role:'Pedicure Specialist',   color:'#D97706', grad:'linear-gradient(135deg,#D97706,#B45309)'},
 ];
-
-var STATUS_META = {
-  pending:     { label:'Pending',     bg:'var(--s-pending-bg)',   color:'var(--s-pending)',   bd:'var(--s-pending-bd)' },
-  confirmed:   { label:'Confirmed',   bg:'var(--s-confirmed-bg)', color:'var(--s-confirmed)', bd:'var(--s-confirmed-bd)' },
-  arrived:     { label:'Arrived',     bg:'var(--s-arrived-bg)',   color:'var(--s-arrived)',   bd:'var(--s-arrived-bd)' },
-  in_progress: { label:'In Progress', bg:'var(--s-inprog-bg)',    color:'var(--s-inprog)',    bd:'var(--s-inprog-bd)' },
-  completed:   { label:'Completed',   bg:'var(--s-done-bg)',      color:'var(--s-done)',      bd:'var(--s-done-bd)' },
-  cancelled:   { label:'Cancelled',   bg:'var(--s-cancelled-bg)', color:'var(--s-cancelled)', bd:'var(--s-cancelled-bd)' },
-  no_show:     { label:'No-show',     bg:'var(--s-noshow-bg)',    color:'var(--s-noshow)',    bd:'var(--s-noshow-bd)' }
+var SM = {
+  pending:    {lbl:'Pending',    bg:'#FFF7ED',color:'#C2410C',bd:'#FED7AA'},
+  confirmed:  {lbl:'Confirmed',  bg:'#EFF6FF',color:'#1D4ED8',bd:'#BFDBFE'},
+  arrived:    {lbl:'Arrived',    bg:'#F0FDF4',color:'#15803D',bd:'#BBF7D0'},
+  in_progress:{lbl:'In Progress',bg:'#FAF5FF',color:'#7C3AED',bd:'#DDD6FE'},
+  completed:  {lbl:'Completed',  bg:'#ECFDF5',color:'#065F46',bd:'#6EE7B7'},
+  cancelled:  {lbl:'Cancelled',  bg:'#F9FAFB',color:'#6B7280',bd:'#D1D5DB'},
+  'no-show':  {lbl:'No-show',    bg:'#FEF2F2',color:'#991B1B',bd:'#FECACA'},
+  no_show:    {lbl:'No-show',    bg:'#FEF2F2',color:'#991B1B',bd:'#FECACA'},
 };
-
 var HOURS = [9,10,11,12,13,14,15,16,17,18,19];
-var HOUR_H = 56; // px per hour
+var HH = 60; // px per hour
 
-/* ─── INIT ──────────────────────────────────────── */
+var STATE = {view:'day',date:new Date(),staff:'all',status:'all',svc:'all',rpTab:'upcoming',payMethod:'cash',newStatus:'confirmed',selectedId:null};
+
+/* ── INIT ── */
 window.addEventListener('DOMContentLoaded', function() {
-  // Clock
-  setInterval(function() {
-    var n = new Date();
-    var el = document.getElementById('chrome-date');
-    if (el) el.textContent = n.toLocaleDateString('en-CA',{weekday:'short',month:'short',day:'numeric'}) +
-      ' · ' + n.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
-  }, 1000);
+  setInterval(function(){
+    var n=new Date();
+    var el=document.getElementById('chrome-date');
+    if(el)el.textContent=n.toLocaleDateString('en-CA',{weekday:'short',month:'short',day:'numeric'})+' · '+n.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
+  },1000);
 
-  // Data loading: localStorage = source of truth, demo = first-time fallback
+  // Load: localStorage first, then demo
   if (!SB.loadCacheFromStorage()) {
-    // First time ever - load demo data and save to localStorage
     if (SB.DEMO) {
       SB.CACHE.clients   = JSON.parse(JSON.stringify(SB.DEMO.clients));
       SB.CACHE.payments  = JSON.parse(JSON.stringify(SB.DEMO.payments));
       SB.CACHE.bookings  = JSON.parse(JSON.stringify(SB.DEMO.bookings));
       SB.CACHE.email_log = JSON.parse(JSON.stringify(SB.DEMO.email_log));
-      SB.saveCache(); // Persist demo data so next load uses localStorage
+      SB.saveCache();
     }
   }
-  // localStorage is now the single source of truth - all changes persist here
 
-  // Populate client select
-  populateClientSelect();
+  // Set default datetime
+  var now=new Date(); now.setMinutes(0,0,0);
+  var pad=function(n){return String(n).padStart(2,'0');};
+  document.getElementById('n-dt').value=now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate())+'T'+pad(now.getHours())+':00';
 
-  // Default datetime
-  var now = new Date(); now.setMinutes(0,0,0);
-  var dtEl = document.getElementById('m-datetime');
-  if (dtEl) dtEl.value = now.toISOString().slice(0,16);
-
-  // Status selector for new appt
-  document.getElementById('new-status-selector').addEventListener('click', function(e) {
-    var btn = e.target.closest('.status-opt');
-    if (!btn) return;
-    document.querySelectorAll('#new-status-selector .status-opt').forEach(function(b) { b.classList.remove('selected'); });
-    btn.classList.add('selected');
-    STATE.selectedNewStatus = btn.dataset.s;
+  // Close dropdowns on outside click
+  document.addEventListener('click',function(e){
+    if(!e.target.closest('#n-client-search')&&!e.target.closest('#n-client-dd')){
+      var dd=document.getElementById('n-client-dd');
+      if(dd)dd.style.display='none';
+    }
   });
 
-  // Client autofill handled by clientSearch
-
-  // Try Supabase
+  // Try Supabase in background
   if (window.location.protocol !== 'file:') {
-    SB.loadAll().then(function() { populateClientSelect(); render(); }).catch(function(){});
+    SB.loadAll().then(function(){ SB.saveCache(); render(); }).catch(function(){});
   }
 
   render();
 });
 
-/* ─── NAVIGATION ────────────────────────────────── */
-function switchView(v, btn) {
-  STATE.view = v;
-  document.querySelectorAll('.view-btn').forEach(function(b) { b.classList.remove('active'); });
-  btn.classList.add('active');
+/* ── NAV ── */
+function switchView(v,btn){
+  STATE.view=v;
+  document.querySelectorAll('.vbtn').forEach(function(b){b.classList.toggle('active',b.dataset.view===v);});
   render();
 }
-
-function navigate(d) {
-  var dt = new Date(STATE.date);
-  if (STATE.view === 'day')   dt.setDate(dt.getDate() + d);
-  else if (STATE.view === 'week') dt.setDate(dt.getDate() + d*7);
-  else if (STATE.view === 'month') dt.setMonth(dt.getMonth() + d);
-  else dt.setDate(dt.getDate() + d);
-  STATE.date = dt;
-  render();
+function navigate(d){
+  var dt=new Date(STATE.date);
+  if(STATE.view==='day') dt.setDate(dt.getDate()+d);
+  else if(STATE.view==='week') dt.setDate(dt.getDate()+d*7);
+  else if(STATE.view==='month') dt.setMonth(dt.getMonth()+d);
+  else dt.setDate(dt.getDate()+d*7);
+  STATE.date=dt; render();
 }
+function goToday(){STATE.date=new Date();render();}
+function goDate(ds){if(ds){STATE.date=new Date(ds+'T12:00:00');render();}}
+function resetDemo(){if(confirm('Reset all changes and reload demo data?')){localStorage.removeItem('mn_cache_v2');location.reload();}}
 
-function goToday() {
-  STATE.date = new Date();
-  render();
-}
+/* ── LOCAL DATE STR ── */
+function lds(d){var x=d instanceof Date?d:new Date(d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');}
+function bDate(b){return b.booked_at?lds(new Date(b.booked_at)):'';}
 
-function openDatePicker() {
-  var inp = document.getElementById('nav-datepicker');
-  if (inp) { inp.value = STATE.date.toISOString().split('T')[0]; inp.showPicker ? inp.showPicker() : inp.click(); }
-}
-
-function goToDate(ds) {
-  if (!ds) return;
-  STATE.date = new Date(ds + 'T12:00:00');
-  render();
-}
-
-/* ─── MAIN RENDER ───────────────────────────────── */
-function render() {
-  updateNavLabel();
-  updateStatsStrip();
-  renderStaffRail();
-  renderRightPanel();
-
-  if (STATE.view === 'day')   renderDayView();
-  else if (STATE.view === 'week') renderWeekView();
-  else if (STATE.view === 'month') renderMonthView();
-  else renderListView();
-}
-
-function updateNavLabel() {
-  var d = STATE.date;
-  var today = new Date();
-  var isToday = d.toDateString() === today.toDateString();
-  var label = '';
-  if (STATE.view === 'day') {
-    label = isToday ? 'Today, ' + d.toLocaleDateString('en-CA',{month:'long',day:'numeric'})
-                    : d.toLocaleDateString('en-CA',{weekday:'long',month:'long',day:'numeric'});
-  } else if (STATE.view === 'week') {
-    var weekStart = new Date(d); weekStart.setDate(d.getDate() - d.getDay() + 1);
-    var weekEnd   = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6);
-    label = weekStart.toLocaleDateString('en-CA',{month:'short',day:'numeric'}) + ' – ' +
-            weekEnd.toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric'});
-  } else if (STATE.view === 'month') {
-    label = d.toLocaleDateString('en-CA',{month:'long',year:'numeric'});
-  } else {
-    label = 'All Appointments';
-  }
-  var nl=document.getElementById('nav-label-text'); if(nl) nl.textContent=label; else document.getElementById('nav-label').textContent=label;
-  var sm = document.getElementById('rail-date-sm');
-  if (sm) sm.textContent = d.toLocaleDateString('en-CA',{month:'short',day:'numeric'});
-}
-
-function updateStatsStrip() {
-  // Use local date string to avoid UTC timezone shift
-  var _d = STATE.date;
-  var dateStr = _d.getFullYear() + '-' +
-    String(_d.getMonth()+1).padStart(2,'0') + '-' +
-    String(_d.getDate()).padStart(2,'0');
-  var todayBks = SB.CACHE.bookings.filter(function(b) {
+/* ── UNIFIED DAY FILTER ── */
+function getDayBookings(dateStr){
+  return SB.CACHE.bookings.filter(function(b){
     if(!b.booked_at) return false;
-    var _ds2=new Date(b.booked_at);
-    var _ss2=_ds2.getFullYear()+'-'+String(_ds2.getMonth()+1).padStart(2,'0')+'-'+String(_ds2.getDate()).padStart(2,'0');
-    return _ss2===dateStr;
-  });
-  var pending = SB.CACHE.bookings.filter(function(b) { return b.status === 'pending'; });
-  var todayPay = SB.CACHE.payments.filter(function(p) {
-    if(!p.paid_at) return false;
-    var _dp2=new Date(p.paid_at);
-    var _sp2=_dp2.getFullYear()+'-'+String(_dp2.getMonth()+1).padStart(2,'0')+'-'+String(_dp2.getDate()).padStart(2,'0');
-    return _sp2===dateStr;
-  });
-  var rev = todayPay.reduce(function(s,p) { return s+parseFloat(p.amount||0); }, 0);
-
-  var s1 = document.getElementById('stat-today');
-  var s2 = document.getElementById('stat-pending');
-  var s3 = document.getElementById('stat-rev');
-  if (s1) s1.textContent = todayBks.length;
-  if (s2) s2.textContent = pending.length;
-  if (s3) s3.textContent = 'CA$' + rev.toFixed(0) + ' today';
-}
-
-/* ─── STAFF RAIL ────────────────────────────────── */
-function renderStaffRail() {
-  // Use local date string to avoid UTC timezone shift
-  var _d = STATE.date;
-  var dateStr = _d.getFullYear() + '-' +
-    String(_d.getMonth()+1).padStart(2,'0') + '-' +
-    String(_d.getDate()).padStart(2,'0');
-  var html = '';
-  var filtered = STATE.staffFilter === 'all' ? STAFF_CONFIG : STAFF_CONFIG.filter(function(s) { return s.name === STATE.staffFilter; });
-
-  filtered.forEach(function(s) {
-    var bks = SB.CACHE.bookings.filter(function(b) {
-      if(b.staff_name !== s.name || !b.booked_at) return false;
-      var _dr=new Date(b.booked_at);
-      var _sr=_dr.getFullYear()+'-'+String(_dr.getMonth()+1).padStart(2,'0')+'-'+String(_dr.getDate()).padStart(2,'0');
-      return _sr===dateStr;
-    });
-    var done = bks.filter(function(b) { return b.status === 'completed'; }).length;
-    var rev  = SB.CACHE.payments.filter(function(p) {
-      if(p.staff_name!==s.name||!p.paid_at) return false;
-      var _drp=new Date(p.paid_at);
-      var _srp=_drp.getFullYear()+'-'+String(_drp.getMonth()+1).padStart(2,'0')+'-'+String(_drp.getDate()).padStart(2,'0');
-      return _srp===dateStr;
-    })
-                .reduce(function(sum,p) { return sum+parseFloat(p.amount||0); }, 0);
-    var pct = Math.min(100, Math.round((bks.length / 8) * 100));
-
-    html += '<div class="staff-item" onclick="filterByStaff(\'' + s.name + '\')">' +
-      '<div class="staff-av" style="background:' + s.grad + '">' + s.name[0] + '</div>' +
-      '<div class="staff-info">' +
-        '<div class="staff-name">' + s.name + '</div>' +
-        '<div class="staff-meta">' + bks.length + ' appts · CA$' + rev.toFixed(0) + '</div>' +
-        '<div class="staff-load"><div class="staff-load-fill" style="width:' + pct + '%;background:' + s.color + '"></div></div>' +
-      '</div>' +
-      '<div class="staff-badge">' + pct + '%</div>' +
-      '</div>';
-  });
-
-  document.getElementById('staff-rail-body').innerHTML = html;
-}
-
-function filterByStaff(name) {
-  STATE.staffFilter = STATE.staffFilter === name ? 'all' : name;
-  document.querySelector('#fc-staff select').value = STATE.staffFilter;
-  render();
-}
-
-/* ─── DAY VIEW ──────────────────────────────────── */
-function renderDayView() {
-  // Use local date string to avoid UTC timezone shift
-  var _d = STATE.date;
-  var dateStr = _d.getFullYear() + '-' +
-    String(_d.getMonth()+1).padStart(2,'0') + '-' +
-    String(_d.getDate()).padStart(2,'0');
-  var staffList = STATE.staffFilter === 'all' ? STAFF_CONFIG : STAFF_CONFIG.filter(function(s) { return s.name === STATE.staffFilter; });
-
-  var dayBks = SB.CACHE.bookings.filter(function(b) {
-    if (!b.booked_at) return false;
-    var bLocal = new Date(b.booked_at);
-    if (bLocal.getHours() < 9) return false; // skip before 9am
-    var bDs = bLocal.getFullYear()+'-'+String(bLocal.getMonth()+1).padStart(2,'0')+'-'+String(bLocal.getDate()).padStart(2,'0');
-    if (bDs !== dateStr) return false;
-    if (STATE.statusFilter !== 'all' && b.status !== STATE.statusFilter) return false;
-    if (STATE.svcFilter    !== 'all' && b.service_name !== STATE.svcFilter) return false;
+    var bh=new Date(b.booked_at).getHours();
+    if(bh<9) return false;
+    if(bDate(b)!==dateStr) return false;
+    if(STATE.staff!=='all'&&b.staff_name!==STATE.staff) return false;
+    if(STATE.status!=='all'&&b.status!==STATE.status) return false;
+    if(STATE.svc!=='all'&&b.service_name!==STATE.svc) return false;
     return true;
   });
-
-  var cols = staffList.length;
-  var totalWidth = Math.max(cols * 180, 100);
-
-  var html = '<div class="day-view">';
-
-  // Show working hours info
-  var dow2 = STATE.date.getDay(); // 0=Sun
-  var workStart = (dow2 === 0) ? 10 : 9;  // Sun: 10am, others: 9am
-  var workEnd   = (dow2 === 0) ? 18 : 20; // Sun: 6pm, others: 8pm
-
-  // Header
-  html += '<div class="day-view-header" style="grid-template-columns:60px repeat(' + cols + ',1fr)">';
-  html += '<div class="dv-corner"></div>';
-  staffList.forEach(function(s) {
-    var bks = dayBks.filter(function(b) { return b.staff_name === s.name; });
-    html += '<div class="dv-staff-head">' +
-      '<div class="dv-staff-av" style="background:' + s.grad + '">' + s.name[0] + '</div>' +
-      '<div class="dv-staff-name">' + s.name + '</div>' +
-      '<div class="dv-staff-count">' + bks.length + ' appts</div>' +
-      '</div>';
-  });
-  html += '</div>';
-
-  // Time grid
-  html += '<div class="dv-time-grid">';
-  html += '<div class="dv-times">';
-  HOURS.forEach(function(h) {
-    var lbl = h < 12 ? h + 'am' : h === 12 ? '12pm' : (h-12) + 'pm';
-    html += '<div class="dv-time-slot">' + lbl + '</div>';
-  });
-  html += '</div>';
-
-  html += '<div class="dv-cols" style="grid-template-columns:repeat(' + cols + ',1fr)">';
-
-  staffList.forEach(function(s) {
-    var col_bks = dayBks.filter(function(b) { return b.staff_name === s.name; });
-
-    html += '<div class="dv-col">';
-
-    // Empty cells (with closed-hour indicator)
-    HOURS.forEach(function(h) {
-      var isClosed = h < workStart || h >= workEnd;
-      if (isClosed) {
-        html += '<div class="dv-cell" style="background:repeating-linear-gradient(45deg,var(--s1),var(--s1) 3px,var(--white) 3px,var(--white) 8px);cursor:default">' +
-          '<div class="dv-cell-half"></div></div>';
-      } else {
-        html += '<div class="dv-cell" onclick="openNewApptAt(\'' + s.name + '\',' + h + ')">' +
-          '<div class="dv-cell-half"></div>' +
-          '<div class="slot-add-hint"><i class="fa-solid fa-plus" style="font-size:.65rem"></i>Book</div>' +
-          '</div>';
-      }
-    });
-
-    // Appointment blocks - simple rendering, all bookings shown
-    var dow3 = STATE.date.getDay();
-    var wStart = (dow3 === 0) ? 10 : 9;
-    var wEnd   = (dow3 === 0) ? 18 : 20;
-
-    col_bks.forEach(function(b) {
-      if (!b.booked_at) return;
-      var dt  = new Date(b.booked_at);
-      var bh  = dt.getHours();
-      if (bh < 9) return; // never show before 9am
-      var dur = parseInt(b.duration_minutes || 60);
-      var top = Math.max(0, ((bh - HOURS[0]) + dt.getMinutes()/60) * HOUR_H);
-      var ht  = Math.max(28, (dur / 60) * HOUR_H - 2);
-      var stCls = 'status-' + (b.status || 'pending');
-      var stM  = STATUS_META[b.status] || STATUS_META.pending;
-      var timeStr = dt.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
-
-      html += '<div class="appt-block ' + stCls + '" ' +
-        'style="top:' + top + 'px;height:' + ht + 'px;left:3px;right:3px" ' +
-        'onclick="event.stopPropagation();openDetail(\'' + b.id + '\')">' +
-        '<div class="appt-client">' + (b.client_name || '?') + '</div>';
-      if (ht > 36) html += '<div class="appt-svc">' + (b.service_name || '') + '</div>';
-      if (ht > 52) html += '<div class="appt-meta">' + timeStr + ' · CA$' + (b.service_price || 0) + '</div>';
-      html += '<div class="appt-status-dot" style="background:' + stM.color + '"></div>';
-      html += '</div>';
-    });
-
-    html += '</div>'; // dv-col
-  });
-
-  html += '</div>'; // dv-cols
-  html += '</div>'; // dv-time-grid
-  html += '</div>'; // day-view
-
-  document.getElementById('view-container').innerHTML = html;
 }
 
-/* ─── WEEK VIEW ─────────────────────────────────── */
-function renderWeekView() {
-  var weekStart = new Date(STATE.date);
-  weekStart.setDate(STATE.date.getDate() - STATE.date.getDay() + 1);
-  var today = new Date().toDateString();
-  var days = [];
-  for (var i=0; i<7; i++) {
-    var d = new Date(weekStart); d.setDate(weekStart.getDate() + i);
-    days.push(d);
-  }
-
-  var html = '<div style="min-width:700px">';
-
-  // Header
-  html += '<div class="week-view-header" style="grid-template-columns:60px repeat(7,1fr)">';
-  html += '<div class="dv-corner"></div>';
-  var dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  days.forEach(function(d, i) {
-    var isToday = d.toDateString() === today;
-    var ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-    var cnt = SB.CACHE.bookings.filter(function(b) {
-      if(!b.booked_at) return false;
-      var _d2=new Date(b.booked_at);
-      var _s2=_d2.getFullYear()+'-'+String(_d2.getMonth()+1).padStart(2,'0')+'-'+String(_d2.getDate()).padStart(2,'0');
-      return _s2===ds;
-    }).length;
-    html += '<div class="wv-day-head' + (isToday?' today':'') + '" onclick="goDay(\'' + ds + '\')">' +
-      '<div class="wv-day-num">' + d.getDate() + '</div>' +
-      '<div class="wv-day-name">' + dayNames[i] + '</div>' +
-      (cnt > 0 ? '<div style="font-size:.6rem;color:var(--pink);font-weight:600">' + cnt + ' appts</div>' : '') +
-      '</div>';
-  });
-  html += '</div>';
-
-  // Time grid
-  html += '<div style="display:flex">';
-  html += '<div class="dv-times">';
-  HOURS.forEach(function(h) {
-    var lbl = h < 12 ? h + 'am' : h === 12 ? '12pm' : (h-12) + 'pm';
-    html += '<div class="dv-time-slot">' + lbl + '</div>';
-  });
-  html += '</div>';
-
-  html += '<div style="flex:1;display:grid;grid-template-columns:repeat(7,1fr)">';
-  days.forEach(function(d) {
-    var ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-    var dayBks = SB.CACHE.bookings.filter(function(b) {
-      if (!b.booked_at) return false;
-      var _bd=new Date(b.booked_at);
-      var _bds=_bd.getFullYear()+'-'+String(_bd.getMonth()+1).padStart(2,'0')+'-'+String(_bd.getDate()).padStart(2,'0');
-      return _bds===ds;
-    });
-    html += '<div class="dv-col">';
-    HOURS.forEach(function(h) {
-      html += '<div class="dv-cell" onclick="goDay(\'' + ds + '\')">' +
-        '<div class="dv-cell-half"></div></div>';
-    });
-    dayBks.forEach(function(bk) {
-      if (!bk.booked_at) return;
-      var dt  = new Date(bk.booked_at);
-      var hh  = dt.getHours(); var mm = dt.getMinutes();
-      var dur = parseInt(bk.duration_minutes || 60);
-      var top = Math.max(0, ((hh - HOURS[0]) + mm/60) * HOUR_H);
-      var ht  = Math.max(20, (dur/60) * HOUR_H - 2);
-      var stCls = 'status-' + (bk.status || 'pending');
-      var sc = STAFF_CONFIG.find(function(s) { return s.name === bk.staff_name; }) || STAFF_CONFIG[0];
-      html += '<div class="appt-block ' + stCls + '" style="top:' + top + 'px;height:' + ht + 'px;left:2px;right:2px" onclick="event.stopPropagation();openDetail(\'' + bk.id + '\')">' +
-        '<div class="appt-client" style="font-size:.65rem">' + (bk.client_name||'?').split(' ')[0] + '</div>' +
-        (ht>34?'<div class="appt-svc" style="font-size:.58rem">' + (bk.service_name||'').split(' ')[0] + '</div>':'') +
-        '</div>';
-    });
-    html += '</div>';
-  });
-  html += '</div>';
-  html += '</div>';
-  html += '</div>';
-
-  document.getElementById('view-container').innerHTML = html;
-}
-
-function goDay(ds) {
-  STATE.date = new Date(ds + 'T12:00:00');
-  STATE.view = 'day';
-  document.querySelectorAll('.view-btn').forEach(function(b) { b.classList.toggle('active', b.dataset.view==='day'); });
-  render();
-}
-
-/* ─── MONTH VIEW ────────────────────────────────── */
-function renderMonthView() {
-  var year  = STATE.date.getFullYear();
-  var month = STATE.date.getMonth();
-  var first = new Date(year, month, 1);
-  var last  = new Date(year, month+1, 0);
-  var startDow = (first.getDay() + 6) % 7; // Mon=0
-  var today = new Date().toDateString();
-
-  var days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  var html = '<div class="month-grid">';
-  days.forEach(function(d) { html += '<div class="month-head">' + d + '</div>'; });
-
-  // Blanks before
-  for (var i=0; i<startDow; i++) {
-    var pd = new Date(year, month, 1-startDow+i);
-    html += '<div class="month-day other-month"><div class="month-day-num" style="color:var(--text3)">' + pd.getDate() + '</div></div>';
-  }
-
-  // Days
-  for (var d2=1; d2<=last.getDate(); d2++) {
-    var dt2 = new Date(year, month, d2);
-    var ds = dt2.getFullYear()+'-'+String(dt2.getMonth()+1).padStart(2,'0')+'-'+String(dt2.getDate()).padStart(2,'0');
-    var isTd = dt2.toDateString() === today;
-    var dayBks = SB.CACHE.bookings.filter(function(b) {
-      if (!b.booked_at) return false;
-      var _bd=new Date(b.booked_at);
-      var _bds=_bd.getFullYear()+'-'+String(_bd.getMonth()+1).padStart(2,'0')+'-'+String(_bd.getDate()).padStart(2,'0');
-      return _bds===ds;
-    });
-    var rev = SB.CACHE.payments.filter(function(p) {
-      if(!p.paid_at) return false;
-      var _dp=new Date(p.paid_at);
-      var _sp=_dp.getFullYear()+'-'+String(_dp.getMonth()+1).padStart(2,'0')+'-'+String(_dp.getDate()).padStart(2,'0');
-      return _sp===ds;
-    })
-              .reduce(function(s,p) { return s+parseFloat(p.amount||0); }, 0);
-
-    html += '<div class="month-day' + (isTd?' today':'') + '" onclick="goDay(\'' + ds + '\')">' +
-      '<div class="month-day-num">' + d2 + '</div>';
-
-    dayBks.slice(0,3).forEach(function(bk) {
-      var sc = STAFF_CONFIG.find(function(s) { return s.name === bk.staff_name; }) || STAFF_CONFIG[0];
-      var stM = STATUS_META[bk.status] || STATUS_META.pending;
-      html += '<div class="month-appt-pill" style="background:' + stM.bg + ';color:' + stM.color + '">' +
-        (bk.client_name||'?').split(' ')[0] + '</div>';
-    });
-    if (dayBks.length > 3) {
-      html += '<div style="font-size:.6rem;color:var(--text3)">+' + (dayBks.length-3) + ' more</div>';
-    }
-    if (rev > 0) {
-      html += '<div style="font-size:.6rem;color:var(--pink);font-weight:600;margin-top:2px">CA$' + rev.toFixed(0) + '</div>';
-    }
-    html += '</div>';
-  }
-
-  // Blanks after
-  var endDow = (last.getDay() + 6) % 7;
-  for (var j=endDow+1; j<7; j++) {
-    var nd = new Date(year, month+1, j-endDow);
-    html += '<div class="month-day other-month"><div class="month-day-num" style="color:var(--text3)">' + nd.getDate() + '</div></div>';
-  }
-
-  html += '</div>';
-  document.getElementById('view-container').innerHTML = html;
-}
-
-/* ─── LIST VIEW ─────────────────────────────────── */
-function renderListView() {
-  // Show all upcoming 30 days
-  var all = SB.CACHE.bookings.filter(function(b) {
-    if (!b.booked_at) return false;
-    // Filter out bookings before 9am (bad data cleanup)
-    var bHour = new Date(b.booked_at).getHours();
-    if (bHour < 9) return false;
-    if (STATE.staffFilter  !== 'all' && b.staff_name   !== STATE.staffFilter)  return false;
-    if (STATE.statusFilter !== 'all' && b.status        !== STATE.statusFilter) return false;
-    if (STATE.svcFilter    !== 'all' && b.service_name  !== STATE.svcFilter)    return false;
-    return true;
-  }).sort(function(a,b) { return new Date(a.booked_at) - new Date(b.booked_at); });
-
-  // Group by date
-  var groups = {};
-  all.forEach(function(b) {
-    if (!b.booked_at) return;
-    var _ld = new Date(b.booked_at);
-    var ds = _ld.getFullYear()+'-'+String(_ld.getMonth()+1).padStart(2,'0')+'-'+String(_ld.getDate()).padStart(2,'0');
-    if (!groups[ds]) groups[ds] = [];
-    groups[ds].push(b);
-  });
-
-  var _td = new Date();
-  var today = _td.getFullYear()+'-'+String(_td.getMonth()+1).padStart(2,'0')+'-'+String(_td.getDate()).padStart(2,'0');
-  var html = '<div class="list-view">';
-  var sortedDates = Object.keys(groups).sort();
-
-  if (sortedDates.length === 0) {
-    html += '<div style="text-align:center;padding:3rem;color:var(--text3)"><i class="fa-solid fa-calendar-xmark" style="font-size:2rem;display:block;margin-bottom:.75rem;opacity:.4"></i>No appointments found</div>';
-  }
-
-  sortedDates.forEach(function(ds) {
-    var d     = new Date(ds + 'T12:00:00');
-    var isTd  = ds === today;
-    var bks   = groups[ds];
-    var dayRev = bks.filter(function(b){return b.status==='completed';})
-                    .reduce(function(s,b){return s+parseFloat(b.service_price||0);},0);
-
-    html += '<div class="list-date-group">';
-    html += '<div class="list-date-label">' +
-      (isTd ? '<span style="background:var(--pink);color:#fff;padding:.1rem .4rem;border-radius:4px;font-size:.62rem">TODAY</span> ' : '') +
-      d.toLocaleDateString('en-CA',{weekday:'long',month:'long',day:'numeric'}) +
-      ' <span style="color:var(--text3);font-weight:400">·</span> ' +
-      bks.length + ' appts' +
-      (dayRev>0?' <span style="color:var(--pink);font-weight:600">· CA$'+dayRev.toFixed(0)+'</span>':'') +
-      '</div>';
-
-    bks.forEach(function(bk) {
-      var sc  = STAFF_CONFIG.find(function(s) { return s.name === bk.staff_name; }) || STAFF_CONFIG[0];
-      var stM = STATUS_META[bk.status] || STATUS_META.pending;
-      var dt2 = new Date(bk.booked_at);
-      var timeStr = dt2.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
-
-      html += '<div class="list-appt-row" onclick="openDetail(\'' + bk.id + '\')">' +
-        '<div class="list-time">' + timeStr + '</div>' +
-        '<div class="list-client" style="font-weight:500">' + (bk.client_name||'—') + '</div>' +
-        '<div class="list-svc" style="color:var(--text2);font-size:.78rem">' + (bk.service_name||'—') + '</div>' +
-        '<div class="list-staff-pill"><div style="width:14px;height:14px;border-radius:50%;background:' + sc.grad + ';display:flex;align-items:center;justify-content:center;color:#fff;font-size:.55rem;font-weight:700">' + sc.name[0] + '</div>' + bk.staff_name + '</div>' +
-        '<div style="font-size:.75rem"><span class="badge badge-' + (bk.status||'pending') + '">' + stM.label + '</span></div>' +
-        '<div class="list-price">CA$' + (bk.service_price||0) + '</div>' +
-        '<div class="list-actions">' +
-          (bk.status==='pending'?'<button class="btn btn-sm" style="color:#059669;border-color:#6EE7B7" onclick="event.stopPropagation();quickStatus(\'' + bk.id + '\',\'confirmed\')">Confirm</button>':'') +
-          (bk.status==='confirmed'||bk.status==='arrived'?'<button class="btn btn-sm" style="color:#7C3AED;border-color:#DDD6FE" onclick="event.stopPropagation();quickStatus(\'' + bk.id + '\',\'in_progress\')">Start</button>':'') +
-          (bk.status==='in_progress'?'<button class="btn btn-sm btn-success" onclick="event.stopPropagation();quickStatus(\'' + bk.id + '\',\'completed\')">Done</button>':'') +
-        '</div>' +
-        '</div>';
-    });
-
-    html += '</div>';
-  });
-
-  html += '</div>';
-  document.getElementById('view-container').innerHTML = html;
-}
-
-/* ─── RIGHT PANEL ───────────────────────────────── */
-function rpTab(tab, btn) {
-  STATE.rpTab = tab;
-  document.querySelectorAll('.rp-tab').forEach(function(b) { b.classList.remove('active'); });
-  btn.classList.add('active');
+/* ── MAIN RENDER ── */
+function render(){
+  updateLabel();
+  updateStats();
+  renderRail();
   renderRightPanel();
+  if(STATE.view==='day') renderDay();
+  else if(STATE.view==='week') renderWeek();
+  else if(STATE.view==='month') renderMonth();
+  else renderList();
 }
 
-function renderRightPanel() {
-  var body = document.getElementById('rp-body');
-  if (!body) return;
-
-  if (STATE.rpTab === 'upcoming') {
-    var now  = new Date();
-    var upcoming = SB.CACHE.bookings
-      .filter(function(b) { return b.booked_at && new Date(b.booked_at) >= now && b.status !== 'cancelled'; })
-      .sort(function(a,b) { return new Date(a.booked_at)-new Date(b.booked_at); })
-      .slice(0, 20);
-
-    // Occupancy for today
-    // Use local date string to avoid UTC timezone shift
-  var _d = STATE.date;
-  var dateStr = _d.getFullYear() + '-' +
-    String(_d.getMonth()+1).padStart(2,'0') + '-' +
-    String(_d.getDate()).padStart(2,'0');
-    var todayBks = SB.CACHE.bookings.filter(function(b) {
-      if(!b.booked_at) return false;
-      var _do=new Date(b.booked_at);
-      var _so=_do.getFullYear()+'-'+String(_do.getMonth()+1).padStart(2,'0')+'-'+String(_do.getDate()).padStart(2,'0');
-      return _so===dateStr;
-    });
-    var maxSlots = 4 * HOURS.length; // 4 staff × hours
-    var occ = maxSlots > 0 ? Math.round((todayBks.length / maxSlots) * 100) : 0;
-
-    var html = '<div style="margin-bottom:1rem">';
-    html += '<div class="occ-bar"><div class="occ-label"><span>Today Occupancy</span><span>' + occ + '%</span></div><div class="occ-track"><div class="occ-fill" style="width:' + occ + '%"></div></div></div>';
-
-    // Per staff
-    STAFF_CONFIG.forEach(function(s) {
-      var sBks = todayBks.filter(function(b) { return b.staff_name === s.name; });
-      var sPct = Math.round((sBks.length / HOURS.length) * 100);
-      html += '<div class="occ-bar"><div class="occ-label"><span>' + s.name + '</span><span>' + sBks.length + ' appts</span></div><div class="occ-track"><div class="occ-fill" style="width:' + sPct + '%;background:' + s.color + '"></div></div></div>';
-    });
-    html += '</div>';
-
-    html += '<div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:.5rem">Upcoming</div>';
-
-    if (upcoming.length === 0) {
-      html += '<div style="text-align:center;padding:1rem;color:var(--text3);font-size:.78rem">No upcoming appointments</div>';
-    }
-
-    upcoming.forEach(function(bk) {
-      var sc  = STAFF_CONFIG.find(function(s) { return s.name===bk.staff_name; }) || STAFF_CONFIG[0];
-      var stM = STATUS_META[bk.status] || STATUS_META.pending;
-      var dt2 = new Date(bk.booked_at);
-      var isToday2 = dt2.toDateString() === new Date().toDateString();
-      var timeStr = (isToday2?'':dt2.toLocaleDateString('en-CA',{month:'short',day:'numeric'})+' ') +
-                   dt2.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
-      html += '<div class="upcoming-item" onclick="openDetail(\'' + bk.id + '\')" style="cursor:pointer">' +
-        '<div class="upcoming-time">' + timeStr + '</div>' +
-        '<div class="upcoming-dot" style="background:' + sc.color + '"></div>' +
-        '<div><div class="upcoming-name">' + (bk.client_name||'?') + '</div>' +
-        '<div class="upcoming-svc">' + (bk.service_name||'') + ' · ' + bk.staff_name + '</div></div>' +
-        '</div>';
-    });
-
-    body.innerHTML = html;
-
-  } else if (STATE.rpTab === 'waitlist') {
-    body.innerHTML = '<div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:.5rem">Waitlist</div>' +
-      ['Grace Davis · Acrylic Full Set', 'Zoe Wilson · Gel-X Extensions', 'Mia Thompson · Pedicure Shellac'].map(function(w,i) {
-        var parts = w.split(' · ');
-        return '<div class="waitlist-item"><div style="flex:1"><div class="waitlist-name">'+parts[0]+'</div><div class="waitlist-meta">'+parts[1]+' · Waiting</div></div>' +
-          '<button class="btn btn-sm" style="font-size:.65rem" onclick="openNewAppt()">Book</button></div>';
-      }).join('') +
-      '<button class="btn btn-sm" style="width:100%;margin-top:.5rem;justify-content:center" onclick="openNewAppt()"><i class="fa-solid fa-plus"></i>Add to waitlist</button>';
-
-  } else {
-    var bks = SB.CACHE.bookings;
-    var pays = SB.CACHE.payments;
-    var totalRev = pays.reduce(function(s,p) { return s+parseFloat(p.amount||0); }, 0);
-    var pendingCnt = bks.filter(function(b) { return b.status==='pending'; }).length;
-    var noshowCnt  = bks.filter(function(b) { return b.status==='no_show'||b.status==='no-show'; }).length;
-
-    body.innerHTML = '<div style="display:flex;flex-direction:column;gap:.5rem;font-size:.8rem">' +
-      [['Total Revenue','CA$' + totalRev.toFixed(0),'#059669'],
-       ['Total Bookings', bks.length, 'var(--pink)'],
-       ['Pending',pendingCnt,'#D97706'],
-       ['Completed', bks.filter(function(b){return b.status==='completed';}).length, '#059669'],
-       ['No-shows',noshowCnt,'#991B1B'],
-       ['Clients', SB.CACHE.clients.length, '#7C3AED']
-      ].map(function(r) {
-        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid var(--s1)">' +
-          '<span style="color:var(--text2)">' + r[0] + '</span>' +
-          '<span style="font-weight:700;color:' + r[2] + '">' + r[1] + '</span></div>';
-      }).join('') + '</div>';
-  }
+function updateLabel(){
+  var d=STATE.date, today=new Date().toDateString(), isToday=d.toDateString()===today;
+  var lbl='';
+  if(STATE.view==='day') lbl=(isToday?'Today, ':'')+d.toLocaleDateString('en-CA',{weekday:'long',month:'long',day:'numeric'});
+  else if(STATE.view==='week'){var ws=new Date(d);ws.setDate(d.getDate()-((d.getDay()+6)%7));var we=new Date(ws);we.setDate(ws.getDate()+6);lbl=ws.toLocaleDateString('en-CA',{month:'short',day:'numeric'})+' – '+we.toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric'});}
+  else if(STATE.view==='month') lbl=d.toLocaleDateString('en-CA',{month:'long',year:'numeric'});
+  else lbl='All Appointments';
+  var span=document.getElementById('date-lbl-txt');
+  if(span)span.textContent=lbl;
+  var sm=document.getElementById('srail-date');
+  if(sm)sm.textContent=d.toLocaleDateString('en-CA',{month:'short',day:'numeric'});
+  var dp=document.getElementById('date-picker');
+  if(dp)dp.value=lds(d);
 }
 
-/* ─── NEW APPOINTMENT ───────────────────────────── */
-function populateClientSelect() {
-  // No-op: now using search autocomplete
+function updateStats(){
+  var ds=lds(STATE.date);
+  var todayBks=SB.CACHE.bookings.filter(function(b){return b.booked_at&&bDate(b)===ds&&new Date(b.booked_at).getHours()>=9;});
+  var pending=SB.CACHE.bookings.filter(function(b){return b.status==='pending';});
+  var todayPay=SB.CACHE.payments.filter(function(p){return p.paid_at&&lds(new Date(p.paid_at))===ds;});
+  var rev=todayPay.reduce(function(s,p){return s+parseFloat(p.amount||0);},0);
+  if(!rev){rev=todayBks.filter(function(b){return b.status==='completed';}).reduce(function(s,b){return s+parseFloat(b.service_price||0);},0);}
+  var s1=document.getElementById('st-today'),s2=document.getElementById('st-pending'),s3=document.getElementById('st-rev');
+  if(s1)s1.textContent=todayBks.length;
+  if(s2)s2.textContent=pending.length;
+  if(s3)s3.textContent='CA$'+Math.round(rev);
 }
 
-function clientSearch(q) {
-  var dd = document.getElementById('m-client-dropdown');
-  var idEl = document.getElementById('m-client-id');
-  
-  if (!q || q.length < 1) { dd.style.display = 'none'; return; }
-  
-  var ql = q.toLowerCase();
-  var matches = SB.CACHE.clients.filter(function(c) {
-    var name = ((c.first_name||'') + ' ' + (c.last_name||'')).toLowerCase();
-    return name.indexOf(ql) !== -1 || (c.phone||'').indexOf(q) !== -1 || (c.email||'').toLowerCase().indexOf(ql) !== -1;
-  }).slice(0, 8);
-  
-  var html2 = '';
-  
-  if (matches.length > 0) {
-    html2 += '<div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);padding:.4rem .7rem .2rem">Existing Clients</div>';
-    matches.forEach(function(c) {
-      var name = (c.first_name||'') + ' ' + (c.last_name||'');
-      var tierIcon = c.tier==='gold'||c.tier==='platinum' ? ' <span style="color:#D97706">★</span>' : '';
-      html2 += '<div class="client-dd-item" onclick="selectClient(' + JSON.stringify({id:c.id,name:name,phone:c.phone||''}) + ')" style="padding:.5rem .7rem;cursor:pointer;display:flex;align-items:center;gap:.5rem;font-size:.8rem;border-bottom:1px solid var(--s1)">' +
-        '<div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--pink),#7C3AED);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:#fff;flex-shrink:0">' + (c.first_name||'?')[0] + '</div>' +
-        '<div><div style="font-weight:500">' + name + tierIcon + '</div><div style="font-size:.65rem;color:var(--text2)">' + (c.phone||c.email||'') + '</div></div>' +
-        '</div>';
-    });
-  }
-  
-  // Option to add as new
-  html2 += '<div onclick="selectNewClient(' + JSON.stringify(q) + ')" style="padding:.5rem .7rem;cursor:pointer;display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:var(--pink);border-top:1px solid var(--border)">' +
-    '<div style="width:24px;height:24px;border-radius:50%;background:var(--pink-bg);border:1.5px dashed var(--pink-bd);display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--pink);flex-shrink:0">+</div>' +
-    '<div><div style="font-weight:500">Add "' + q + '" as new client</div><div style="font-size:.65rem;color:var(--text2)">Walk-in · will be saved</div></div>' +
-    '</div>';
-  
-  dd.innerHTML = html2;
-  dd.style.display = 'block';
-  
-  // Add hover styles
-  dd.querySelectorAll('.client-dd-item').forEach(function(el) {
-    el.addEventListener('mouseenter', function() { this.style.background = 'var(--pink-bg)'; });
-    el.addEventListener('mouseleave', function() { this.style.background = ''; });
+/* ── STAFF RAIL ── */
+function renderRail(){
+  var ds=lds(STATE.date);
+  var staffList=STATE.staff==='all'?STAFF:STAFF.filter(function(s){return s.name===STATE.staff;});
+  var html='';
+  staffList.forEach(function(s){
+    var bks=SB.CACHE.bookings.filter(function(b){return b.staff_name===s.name&&b.booked_at&&bDate(b)===ds&&new Date(b.booked_at).getHours()>=9;});
+    var pays=SB.CACHE.payments.filter(function(p){return p.staff_name===s.name&&p.paid_at&&lds(new Date(p.paid_at))===ds;});
+    var rev=pays.reduce(function(s,p){return s+parseFloat(p.amount||0);},0);
+    if(!rev)rev=bks.filter(function(b){return b.status==='completed';}).reduce(function(s,b){return s+parseFloat(b.service_price||0);},0);
+    var pct=Math.min(100,Math.round((bks.length/9)*100));
+    html+='<div class="srail-item" onclick="filterStaff(\''+s.name+'\')">'
+      +'<div class="sav" style="background:'+s.grad+'">'+s.name[0]+'</div>'
+      +'<div class="sinfo"><div class="sname">'+s.name+'</div>'
+      +'<div class="smeta">'+bks.length+' · CA$'+Math.round(rev)+'</div>'
+      +'<div class="sload"><div class="sload-fill" style="width:'+pct+'%;background:'+s.color+'"></div></div></div>'
+      +'<div class="sbadge">'+pct+'%</div></div>';
   });
+  document.getElementById('srail-body').innerHTML=html;
+}
+function filterStaff(name){STATE.staff=STATE.staff===name?'all':name;document.getElementById('f-staff').value=STATE.staff;render();}
+
+/* ── DAY VIEW ── */
+function renderDay(){
+  var ds=lds(STATE.date);
+  var staffList=STATE.staff==='all'?STAFF:STAFF.filter(function(s){return s.name===STATE.staff;});
+  var dayBks=getDayBookings(ds);
+  var dow=STATE.date.getDay();
+  var wh=Utils.getWorkHours(STATE.date);
+
+  var html='<div style="min-width:'+(staffList.length*180+56)+'px">';
+  // Header
+  html+='<div class="dv-hd" style="grid-template-columns:56px repeat('+staffList.length+',1fr)">';
+  html+='<div class="dv-corner" style="width:56px"></div>';
+  staffList.forEach(function(s){
+    var cnt=dayBks.filter(function(b){return b.staff_name===s.name;}).length;
+    html+='<div class="dv-sh"><div class="dv-sav" style="background:'+s.grad+'">'+s.name[0]+'</div>'
+      +'<div class="dv-sname">'+s.name+'</div><div class="dv-scnt">'+cnt+' appts</div></div>';
+  });
+  html+='</div>';
+  // Grid
+  html+='<div class="dv-grid">';
+  html+='<div class="dv-times" style="width:56px">';
+  HOURS.forEach(function(h){var lbl=h<12?h+'am':h===12?'12pm':(h-12)+'pm';html+='<div class="dv-ts">'+lbl+'</div>';});
+  html+='</div>';
+  html+='<div class="dv-cols" style="grid-template-columns:repeat('+staffList.length+',1fr)">';
+  staffList.forEach(function(s){
+    var colBks=dayBks.filter(function(b){return b.staff_name===s.name;});
+    html+='<div class="dv-col">';
+    HOURS.forEach(function(h){
+      var closed=h<wh[0]||h>=wh[1];
+      if(closed){html+='<div class="dv-cell-closed"></div>';}
+      else{html+='<div class="dv-cell" onclick="openNewAt(\''+s.name+'\','+h+')">'
+        +'<div class="dv-cell-half"></div>'
+        +'<div class="add-hint"><i class="fa-solid fa-plus" style="font-size:.58rem"></i>Book</div>'
+        +'</div>';}
+    });
+    // Render all bookings for this staff
+    colBks.forEach(function(b){
+      if(!b.booked_at) return;
+      var dt=new Date(b.booked_at);
+      var h=dt.getHours(),m=dt.getMinutes();
+      if(h<9) return;
+      var dur=parseInt(b.duration_minutes||60);
+      var top=Math.max(0,((h-HOURS[0])+m/60)*HH);
+      var ht=Math.max(28,(dur/60)*HH-2);
+      var stCls='st-'+(b.status||'pending').replace('_','-');
+      var stM=SM[b.status]||SM.pending;
+      var timeStr=dt.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
+      html+='<div class="ab '+stCls+'" style="top:'+top+'px;height:'+ht+'px" onclick="event.stopPropagation();openDetail(\''+b.id+'\')">'
+        +'<div class="ab-name">'+(b.client_name||'?')+'</div>';
+      if(ht>36)html+='<div class="ab-svc">'+(b.service_name||'')+'</div>';
+      if(ht>52)html+='<div class="ab-meta">'+timeStr+' · CA$'+(b.service_price||0)+'</div>';
+      html+='<div class="ab-dot" style="background:'+stM.color+'"></div></div>';
+    });
+    html+='</div>';
+  });
+  html+='</div></div></div>';
+  document.getElementById('view-cont').innerHTML=html;
 }
 
-function selectClient(data) {
-  document.getElementById('m-client-search').value = data.name;
-  document.getElementById('m-client-id').value = data.id;
-  document.getElementById('m-phone').value = data.phone || '';
-  document.getElementById('m-client-dropdown').style.display = 'none';
+/* ── WEEK VIEW ── */
+function renderWeek(){
+  var ws=new Date(STATE.date);
+  ws.setDate(STATE.date.getDate()-((STATE.date.getDay()+6)%7));
+  var today=new Date().toDateString();
+  var days=[]; for(var i=0;i<7;i++){var d=new Date(ws);d.setDate(ws.getDate()+i);days.push(d);}
+  var html='<div style="min-width:700px">';
+  html+='<div class="wv-hd" style="grid-template-columns:56px repeat(7,1fr)">';
+  html+='<div class="dv-corner" style="width:56px"></div>';
+  var dnames=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  days.forEach(function(d,i){
+    var ds=lds(d),isT=d.toDateString()===today;
+    var cnt=SB.CACHE.bookings.filter(function(b){return b.booked_at&&bDate(b)===ds&&new Date(b.booked_at).getHours()>=9;}).length;
+    html+='<div class="wv-dh'+(isT?' today':'')+'" onclick="goDayView(\''+ds+'\')">'
+      +'<div class="wv-dn">'+dnames[i]+'</div><div class="wv-dd">'+d.getDate()+'</div>'
+      +(cnt>0?'<div class="wv-cnt">'+cnt+' appts</div>':'')+' </div>';
+  });
+  html+='</div>';
+  html+='<div style="display:flex"><div class="dv-times" style="width:56px">';
+  HOURS.forEach(function(h){var lbl=h<12?h+'am':h===12?'12pm':(h-12)+'pm';html+='<div class="dv-ts">'+lbl+'</div>';});
+  html+='</div><div style="flex:1;display:grid;grid-template-columns:repeat(7,1fr)">';
+  days.forEach(function(d){
+    var ds=lds(d);
+    var wh=Utils.getWorkHours(d);
+    var dBks=SB.CACHE.bookings.filter(function(b){return b.booked_at&&bDate(b)===ds&&new Date(b.booked_at).getHours()>=9;});
+    html+='<div class="dv-col">';
+    HOURS.forEach(function(h){
+      var closed=h<wh[0]||h>=wh[1];
+      html+=closed?'<div class="dv-cell-closed"></div>':'<div class="dv-cell" onclick="goDayView(\''+ds+'\')"><div class="dv-cell-half"></div></div>';
+    });
+    dBks.forEach(function(b){
+      if(!b.booked_at)return;
+      var dt=new Date(b.booked_at),h=dt.getHours(),m=dt.getMinutes();
+      if(h<9)return;
+      var dur=parseInt(b.duration_minutes||60);
+      var top=Math.max(0,((h-HOURS[0])+m/60)*HH);
+      var ht=Math.max(20,(dur/60)*HH-2);
+      var stCls='st-'+(b.status||'pending');
+      html+='<div class="ab '+stCls+'" style="top:'+top+'px;height:'+ht+'px;left:2px;right:2px" onclick="event.stopPropagation();openDetail(\''+b.id+'\')">'
+        +'<div class="ab-name" style="font-size:.62rem">'+(b.client_name||'?').split(' ')[0]+'</div>'
+        +(ht>34?'<div class="ab-svc" style="font-size:.56rem">'+(b.service_name||'').split(' ')[0]+'</div>':'')
+        +'</div>';
+    });
+    html+='</div>';
+  });
+  html+='</div></div></div>';
+  document.getElementById('view-cont').innerHTML=html;
 }
+function goDayView(ds){STATE.date=new Date(ds+'T12:00:00');STATE.view='day';document.querySelectorAll('.vbtn').forEach(function(b){b.classList.toggle('active',b.dataset.view==='day');});render();}
 
-function selectNewClient(name) {
-  document.getElementById('m-client-search').value = name;
-  document.getElementById('m-client-id').value = '';
-  document.getElementById('m-client-dropdown').style.display = 'none';
-}
-
-// Close dropdown on outside click
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('#m-client-search') && !e.target.closest('#m-client-dropdown')) {
-    var dd = document.getElementById('m-client-dropdown');
-    if (dd) dd.style.display = 'none';
+/* ── MONTH VIEW ── */
+function renderMonth(){
+  var yr=STATE.date.getFullYear(),mo=STATE.date.getMonth();
+  var first=new Date(yr,mo,1),last=new Date(yr,mo+1,0);
+  var startDow=(first.getDay()+6)%7;
+  var today=new Date().toDateString();
+  var html='<div class="mv"><div class="mv-grid">';
+  ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach(function(d){html+='<div class="mv-hd">'+d+'</div>';});
+  for(var i=0;i<startDow;i++){var pd=new Date(yr,mo,1-startDow+i);html+='<div class="mv-day other"><div class="mv-num" style="color:var(--text3)">'+pd.getDate()+'</div></div>';}
+  for(var d2=1;d2<=last.getDate();d2++){
+    var dt2=new Date(yr,mo,d2),ds=lds(dt2),isT=dt2.toDateString()===today;
+    var dBks=SB.CACHE.bookings.filter(function(b){return b.booked_at&&bDate(b)===ds&&new Date(b.booked_at).getHours()>=9;});
+    var pays=SB.CACHE.payments.filter(function(p){return p.paid_at&&lds(new Date(p.paid_at))===ds;});
+    var rev=pays.reduce(function(s,p){return s+parseFloat(p.amount||0);},0);
+    if(!rev)rev=dBks.filter(function(b){return b.status==='completed';}).reduce(function(s,b){return s+parseFloat(b.service_price||0);},0);
+    html+='<div class="mv-day'+(isT?' today':'')+'" onclick="goDayView(\''+ds+'\')"><div class="mv-num">'+d2+'</div>';
+    dBks.slice(0,3).forEach(function(b){var m=SM[b.status]||SM.pending;html+='<div class="mv-pill" style="background:'+m.bg+';color:'+m.color+'">'+(b.client_name||'?').split(' ')[0]+'</div>';});
+    if(dBks.length>3)html+='<div style="font-size:.58rem;color:var(--text3)">+'+( dBks.length-3)+' more</div>';
+    if(rev>0)html+='<div class="mv-rev">CA$'+Math.round(rev)+'</div>';
+    html+='</div>';
   }
+  var endDow=(last.getDay()+6)%7;
+  for(var j=endDow+1;j<7;j++){var nd=new Date(yr,mo+1,j-endDow);html+='<div class="mv-day other"><div class="mv-num" style="color:var(--text3)">'+nd.getDate()+'</div></div>';}
+  html+='</div></div>';
+  document.getElementById('view-cont').innerHTML=html;
+}
+
+/* ── LIST VIEW ── */
+function renderList(){
+  var all=SB.CACHE.bookings.filter(function(b){
+    if(!b.booked_at) return false;
+    if(new Date(b.booked_at).getHours()<9) return false;
+    if(STATE.staff!=='all'&&b.staff_name!==STATE.staff) return false;
+    if(STATE.status!=='all'&&b.status!==STATE.status) return false;
+    if(STATE.svc!=='all'&&b.service_name!==STATE.svc) return false;
+    return true;
+  }).sort(function(a,b){return new Date(a.booked_at)-new Date(b.booked_at);});
+
+  var groups={};
+  all.forEach(function(b){var ds=bDate(b);if(!groups[ds])groups[ds]=[];groups[ds].push(b);});
+  var today=lds(new Date());
+  var html='<div class="lv">';
+  if(!Object.keys(groups).length)html+='<div style="text-align:center;padding:3rem;color:var(--text3)"><i class="fa-solid fa-calendar-xmark" style="font-size:2rem;display:block;margin-bottom:.75rem;opacity:.4"></i>No appointments</div>';
+  Object.keys(groups).sort().forEach(function(ds){
+    var d=new Date(ds+'T12:00:00'),bks=groups[ds];
+    var isT=ds===today;
+    var rev=bks.filter(function(b){return b.status==='completed';}).reduce(function(s,b){return s+parseFloat(b.service_price||0);},0);
+    html+='<div class="lv-dg"><div class="lv-dl">'
+      +(isT?'<span style="background:var(--pink);color:#fff;padding:.08rem .35rem;border-radius:4px;font-size:.6rem">TODAY</span>':'')
+      +d.toLocaleDateString('en-CA',{weekday:'long',month:'long',day:'numeric'})
+      +' <span style="color:var(--text3)">·</span> '+bks.length+' appts'
+      +(rev>0?' <span style="color:var(--pink);font-weight:600">· CA$'+Math.round(rev)+'</span>':'')
+      +'</div>';
+    bks.forEach(function(b){
+      var sc=STAFF.find(function(s){return s.name===b.staff_name;})||STAFF[0];
+      var stM=SM[b.status]||SM.pending;
+      var dt=new Date(b.booked_at);
+      var timeStr=dt.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
+      html+='<div class="lv-row" onclick="openDetail(\''+b.id+'\')">'
+        +'<div class="lv-time">'+timeStr+'</div>'
+        +'<div style="font-weight:500">'+(b.client_name||'Walk-in')+'</div>'
+        +'<div style="color:var(--text2);font-size:.74rem">'+(b.service_name||'—')+'</div>'
+        +'<div style="display:flex;align-items:center;gap:.3rem;font-size:.72rem">'
+          +'<div style="width:14px;height:14px;border-radius:50%;background:'+sc.grad+';display:flex;align-items:center;justify-content:center;color:#fff;font-size:.5rem;font-weight:700">'+sc.name[0]+'</div>'
+          +b.staff_name+'</div>'
+        +'<div><span style="font-size:.62rem;font-weight:600;padding:.1rem .4rem;border-radius:50px;border:1px solid;background:'+stM.bg+';color:'+stM.color+';border-color:'+stM.bd+'">'+stM.lbl+'</span></div>'
+        +'<div class="lv-price">CA$'+(b.service_price||0)+'</div>'
+        +'<div class="lv-acts">'
+          +(b.status==='pending'?'<button class="btn btn-sm" style="color:#059669;border-color:#6EE7B7;font-size:.65rem" onclick="event.stopPropagation();quickStatus(\''+b.id+'\',\'confirmed\')">Confirm</button>':'')
+          +(b.status==='in_progress'?'<button class="btn btn-sm" style="background:#059669;border-color:#059669;color:#fff;font-size:.65rem" onclick="event.stopPropagation();quickStatus(\''+b.id+'\',\'completed\')">Done</button>':'')
+        +'</div>'
+        +'</div>';
+    });
+    html+='</div>';
+  });
+  html+='</div>';
+  document.getElementById('view-cont').innerHTML=html;
+}
+
+/* ── RIGHT PANEL ── */
+function rpTab(tab,btn){STATE.rpTab=tab;document.querySelectorAll('.rp-tab').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');renderRightPanel();}
+function renderRightPanel(){
+  var body=document.getElementById('rp-body');
+  if(!body)return;
+  var ds=lds(STATE.date);
+  if(STATE.rpTab==='upcoming'){
+    var now=new Date();
+    var todayBks=SB.CACHE.bookings.filter(function(b){return b.booked_at&&bDate(b)===ds&&new Date(b.booked_at).getHours()>=9;});
+    var maxSlots=STAFF.length*(Utils.getWorkHours(STATE.date)[1]-Utils.getWorkHours(STATE.date)[0]);
+    var occ=maxSlots>0?Math.round((todayBks.length/maxSlots)*100):0;
+    var html='<div style="margin-bottom:.85rem"><div class="occ-bar"><div class="occ-lbl"><span style="color:var(--text2)">Occupancy</span><span style="font-weight:600">'+occ+'%</span></div><div class="occ-track"><div class="occ-fill" style="width:'+occ+'%"></div></div></div>';
+    STAFF.forEach(function(s){
+      var sBks=todayBks.filter(function(b){return b.staff_name===s.name;});
+      var wh=Utils.getWorkHours(STATE.date);
+      var sPct=Math.min(100,Math.round((sBks.length/(wh[1]-wh[0]))*100));
+      html+='<div class="occ-bar"><div class="occ-lbl"><span>'+s.name+'</span><span>'+sBks.length+' appts</span></div><div class="occ-track"><div class="occ-fill" style="width:'+sPct+'%;background:'+s.color+'"></div></div></div>';
+    });
+    html+='</div>';
+    var upcoming=SB.CACHE.bookings.filter(function(b){return b.booked_at&&new Date(b.booked_at)>=now&&b.status!=='cancelled';}).sort(function(a,b){return new Date(a.booked_at)-new Date(b.booked_at);}).slice(0,15);
+    html+='<div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:.45rem">Upcoming</div>';
+    if(!upcoming.length)html+='<div style="text-align:center;padding:1rem;color:var(--text3);font-size:.74rem">No upcoming appointments</div>';
+    upcoming.forEach(function(b){
+      var sc=STAFF.find(function(s){return s.name===b.staff_name;})||STAFF[0];
+      var dt=new Date(b.booked_at),isT=dt.toDateString()===now.toDateString();
+      var ts=(isT?'':dt.toLocaleDateString('en-CA',{month:'short',day:'numeric'})+' ')+dt.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
+      html+='<div class="up-item" onclick="openDetail(\''+b.id+'\')">'
+        +'<div class="up-time">'+ts+'</div>'
+        +'<div class="up-dot" style="background:'+sc.color+'"></div>'
+        +'<div><div class="up-name">'+(b.client_name||'?')+'</div><div class="up-svc">'+(b.service_name||'')+'</div></div></div>';
+    });
+    body.innerHTML=html;
+  } else {
+    var bks=SB.CACHE.bookings.filter(function(b){return b.booked_at&&new Date(b.booked_at).getHours()>=9;});
+    var pays=SB.CACHE.payments;
+    var rev=Math.max(pays.reduce(function(s,p){return s+parseFloat(p.amount||0);},0),bks.filter(function(b){return b.status==='completed';}).reduce(function(s,b){return s+parseFloat(b.service_price||0);},0));
+    body.innerHTML='<div style="display:flex;flex-direction:column;gap:.45rem;font-size:.77rem">'
+      +[['Total Revenue','CA$'+Math.round(rev),'var(--pink)'],
+        ['Total Bookings',bks.length,'var(--violet)'],
+        ['Completed',bks.filter(function(b){return b.status==='completed';}).length,'var(--green)'],
+        ['Pending',bks.filter(function(b){return b.status==='pending';}).length,'var(--amber)'],
+        ['No-shows',bks.filter(function(b){return b.status==='no-show'||b.status==='no_show';}).length,'var(--red)'],
+        ['Clients',SB.CACHE.clients.length,'var(--blue)']
+      ].map(function(r){return '<div style="display:flex;justify-content:space-between;align-items:center;padding:.35rem 0;border-bottom:1px solid var(--s1)"><span style="color:var(--text2)">'+r[0]+'</span><span style="font-weight:700;color:'+r[2]+'">'+r[1]+'</span></div>';}).join('')+'</div>';
+  }
+}
+
+/* ── NEW APPOINTMENT ── */
+function openNew(){
+  document.getElementById('n-client-search').value='';
+  document.getElementById('n-client-id').value='';
+  document.getElementById('n-phone').value='';
+  document.getElementById('n-notes').value='';
+  document.getElementById('n-svc').value='';
+  document.getElementById('n-price').value='';
+  document.getElementById('n-comm-prev').textContent='Select a service to preview commission';
+  document.getElementById('conflict-banner').style.display='none';
+  document.getElementById('new-modal').style.display='flex';
+}
+function openNewAt(staffName,hour){
+  openNew();
+  document.getElementById('n-staff').value=staffName;
+  var d=new Date(STATE.date);d.setHours(hour,0,0,0);
+  var pad=function(n){return String(n).padStart(2,'0');};
+  document.getElementById('n-dt').value=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(hour)+':00';
+}
+
+function clientSearch(q){
+  var dd=document.getElementById('n-client-dd');
+  if(!q||q.length<1){dd.style.display='none';return;}
+  var ql=q.toLowerCase();
+  var matches=SB.CACHE.clients.filter(function(c){
+    var name=((c.first_name||'')+' '+(c.last_name||'')).toLowerCase();
+    return name.indexOf(ql)!==-1||(c.phone||'').indexOf(q)!==-1;
+  }).slice(0,7);
+  var h='';
+  if(matches.length){
+    h+='<div style="font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);padding:.35rem .65rem .15rem">Existing Clients</div>';
+    matches.forEach(function(c){
+      var name=(c.first_name||'')+' '+(c.last_name||'');
+      var ti=c.tier==='gold'||c.tier==='platinum'?' ★':'';
+      h+='<div onclick="selectClient('+JSON.stringify({id:c.id,name:name,phone:c.phone||''})+';dd.style.display=\'none\'" style="padding:.45rem .65rem;cursor:pointer;display:flex;align-items:center;gap:.45rem;font-size:.77rem;border-bottom:1px solid var(--s1)" onmouseover="this.style.background=\'var(--pink-bg)\'" onmouseout="this.style.background=\'\'">'
+        +'<div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--pink),#7C3AED);display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;color:#fff">'+((c.first_name||'?')[0])+'</div>'
+        +'<div><div style="font-weight:500">'+name+ti+'</div><div style="font-size:.62rem;color:var(--text2)">'+(c.phone||c.email||'')+'</div></div></div>';
+    });
+  }
+  h+='<div onclick="selectNewClient(\''+q.replace(/'/g,"\\'")+'\')" style="padding:.45rem .65rem;cursor:pointer;display:flex;align-items:center;gap:.45rem;font-size:.77rem;color:var(--pink)" onmouseover="this.style.background=\'var(--pink-bg)\'" onmouseout="this.style.background=\'\'">'
+    +'<div style="width:22px;height:22px;border-radius:50%;background:var(--pink-bg);border:1.5px dashed var(--pink-bd);display:flex;align-items:center;justify-content:center;color:var(--pink);font-size:.8rem">+</div>'
+    +'<div><div style="font-weight:500">Add "'+q+'" as new client</div><div style="font-size:.62rem;color:var(--text2)">Walk-in</div></div></div>';
+  dd.innerHTML=h;dd.style.display='block';
+}
+function selectClient(data){
+  document.getElementById('n-client-search').value=data.name;
+  document.getElementById('n-client-id').value=data.id;
+  document.getElementById('n-phone').value=data.phone||'';
+  document.getElementById('n-client-dd').style.display='none';
+  checkConflict();
+}
+function selectNewClient(name){
+  document.getElementById('n-client-search').value=name;
+  document.getElementById('n-client-id').value='';
+  document.getElementById('n-client-dd').style.display='none';
+}
+
+function svcChanged(){
+  var v=document.getElementById('n-svc').value;
+  if(!v)return;
+  var parts=v.split('|');
+  var price=parseFloat(parts[1]||0),dur=parseInt(parts[2]||60);
+  if(parts[0]==='Other'){document.getElementById('n-price').value='';document.getElementById('n-price').focus();}
+  else document.getElementById('n-price').value=price;
+  document.getElementById('n-dur').value=dur;
+  updateCommPrev();
+  checkConflict();
+}
+function updateCommPrev(){
+  var price=parseFloat(document.getElementById('n-price').value||0);
+  if(!price){document.getElementById('n-comm-prev').textContent='Select a service to preview commission';return;}
+  document.getElementById('n-comm-prev').innerHTML='<i class="fa-solid fa-circle-check" style="color:var(--green)"></i> <strong>CA$'+price+'</strong> · Commission: <strong style="color:var(--pink)">CA$'+(price*.25).toFixed(2)+'</strong> · Net: <strong style="color:var(--green)">CA$'+(price*.75).toFixed(2)+'</strong>';
+}
+document.addEventListener('DOMContentLoaded',function(){
+  var pi=document.getElementById('n-price');
+  if(pi)pi.addEventListener('input',updateCommPrev);
 });
 
-function openNewAppt() {
-  var now = new Date(); now.setMinutes(0,0,0);
-  document.getElementById('m-datetime').value = now.toISOString().slice(0,16);
-  document.getElementById('m-notes').value = '';
-  document.getElementById('m-comm-preview').textContent = 'Select a service to see commission preview';
-  document.getElementById('new-appt-modal').style.display = 'flex';
-}
-
-function openNewApptAt(staffName, hour) {
-  var d = new Date(STATE.date);
-  d.setHours(hour, 0, 0, 0);
-  // Format as local datetime string (not UTC)
-  var pad = function(n){return String(n).padStart(2,'0');};
-  var localDT = d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':00';
-  document.getElementById('m-datetime').value = localDT;
-  document.getElementById('m-staff').value = staffName;
-  document.getElementById('new-appt-modal').style.display = 'flex';
-}
-
-function updateServicePrice() {
-  var v = document.getElementById('m-service').value;
-  if (!v) return;
-  var parts = v.split('|');
-  var name  = parts[0];
-  var price = parseFloat(parts[1]||0);
-  var dur   = parseInt(parts[2]||60);
-  document.getElementById('m-price').value    = price;
-  document.getElementById('m-duration').value = dur;
-  // If Other, make price editable and clear it
-  var priceEl = document.getElementById('m-price');
-  if (name === 'Other') {
-    priceEl.value = '';
-    priceEl.placeholder = 'Enter custom price…';
-    priceEl.style.borderColor = 'var(--pink)';
-    priceEl.focus();
-  } else {
-    priceEl.style.borderColor = '';
-    priceEl.placeholder = '';
+function checkConflict(){
+  var staff=document.getElementById('n-staff').value;
+  var dt=document.getElementById('n-dt').value;
+  var dur=parseInt(document.getElementById('n-dur').value||60);
+  var banner=document.getElementById('conflict-banner');
+  if(!staff||!dt){banner.style.display='none';return;}
+  // Working hours check
+  var d=new Date(dt);
+  var wh=Utils.getWorkHours(d);
+  if(d.getHours()<wh[0]||d.getHours()>=wh[1]){
+    document.getElementById('conflict-msg').textContent='Outside working hours ('+wh[0]+':00–'+wh[1]+':00)';
+    banner.style.display='flex';return;
   }
-  var comm = price * 0.25;
-  document.getElementById('m-comm-preview').innerHTML =
-    '<i class="fa-solid fa-circle-check" style="color:#059669"></i> ' +
-    '<strong>CA$' + price + '</strong> · Commission 25%: <strong style="color:var(--pink)">CA$' + comm.toFixed(2) + '</strong> · Net: <strong style="color:#059669">CA$' + (price-comm).toFixed(2) + '</strong>';
+  // Conflict check
+  if(Utils.hasConflict(SB.CACHE.bookings,staff,d,dur,STATE.selectedId)){
+    document.getElementById('conflict-msg').textContent=staff+' already has an appointment at this time';
+    banner.style.display='flex';return;
+  }
+  banner.style.display='none';
 }
 
-function saveNewAppt() {
-  var svcVal  = document.getElementById('m-service').value;
-  var clientId= document.getElementById('m-client-id').value;
-  var clientNameRaw = document.getElementById('m-client-search').value.trim();
-  var staff   = document.getElementById('m-staff').value;
-  var dt      = document.getElementById('m-datetime').value;
-  var price   = parseFloat(document.getElementById('m-price').value)||0;
-  var dur     = parseInt(document.getElementById('m-duration').value)||60;
-  var notes   = document.getElementById('m-notes').value;
-  var repeat  = document.getElementById('m-repeat').value;
+function selStatus(btn,containerId){
+  document.querySelectorAll('#'+containerId+' .sopt').forEach(function(b){b.classList.remove('sel');});
+  btn.classList.add('sel');
+  STATE.newStatus=btn.dataset.s;
+}
 
-  if (!svcVal || !dt) { toast('Select service and date/time', 'err'); return; }
+function saveNew(){
+  var svcVal=document.getElementById('n-svc').value;
+  var cid=document.getElementById('n-client-id').value;
+  var cname=document.getElementById('n-client-search').value.trim();
+  var staff=document.getElementById('n-staff').value;
+  var dt=document.getElementById('n-dt').value;
+  var price=parseFloat(document.getElementById('n-price').value)||0;
+  var dur=parseInt(document.getElementById('n-dur').value)||60;
+  var notes=document.getElementById('n-notes').value;
 
-  var svcName = svcVal.split('|')[0];
-  var client  = SB.CACHE.clients.find(function(c) { return c.id === clientId; });
-  var cName   = client ? (client.first_name + ' ' + client.last_name) : (clientNameRaw || 'Walk-in');
+  if(!dt){Utils.toast('Please select date and time','error');return;}
+  if(!staff){Utils.toast('Please select a staff member','error');return;}
 
-  // Local object for cache (with temp id)
-  var tempId = 'tmp_' + Date.now();
-  var bk = {
-    id:              tempId,
-    client_id:       clientId || null,
-    client_name:     cName,
-    client_email:    client ? client.email : null,
-    staff_name:      staff,
-    service_name:    svcName,
-    service_price:   price,
-    duration_minutes:dur,
-    status:          STATE.selectedNewStatus,
-    payment_status:  'unpaid',
-    payment_method:  'pending',
-    booked_at:       new Date(dt).toISOString(),
-    notes:           notes,
-    recurring:       repeat
-  };
+  // Working hours validation
+  var d=new Date(dt);
+  var wh=Utils.getWorkHours(d);
+  if(d.getHours()<wh[0]||d.getHours()>=wh[1]){Utils.toast('Outside working hours ('+wh[0]+':00–'+wh[1]+':00)','error');return;}
+
+  // Conflict check
+  if(Utils.hasConflict(SB.CACHE.bookings,staff,d,dur,null)){
+    if(!confirm(staff+' already has a booking at this time. Create anyway?'))return;
+  }
+
+  var client=SB.CACHE.clients.find(function(c){return c.id===cid;});
+  var fullName=client?(client.first_name+' '+client.last_name):(cname||'Walk-in');
+  var svcName=svcVal?svcVal.split('|')[0]:'';
+
+  var tempId='tmp_'+Date.now();
+  var bk={id:tempId,client_id:cid||null,client_name:fullName,client_email:client?client.email:null,
+    staff_name:staff,service_name:svcName,service_price:price,duration_minutes:dur,
+    status:STATE.newStatus,payment_status:'unpaid',payment_method:'pending',
+    booked_at:new Date(dt).toISOString(),notes:notes};
   SB.CACHE.bookings.unshift(bk);
   SB.saveCache();
 
-  // Supabase payload - only schema columns
-  var sbBk = {
-    client_id:       clientId || null,
-    client_name:     cName,
-    client_email:    client ? client.email : null,
-    staff_name:      staff,
-    service_name:    svcName,
-    service_price:   price,
-    duration_minutes:dur,
-    status:          STATE.selectedNewStatus,
-    payment_status:  'unpaid',
-    payment_method:  'pending',
-    booked_at:       new Date(dt).toISOString(),
-    notes:           notes,
-    recurring:       repeat
-  };
-  SB.insert('bookings', sbBk).then(function(data) {
-    if (Array.isArray(data) && data[0] && data[0].id) {
-      // Replace temp id with real UUID
-      bk.id = data[0].id;
-      SB.saveCache();
-    }
+  var sbPayload={client_id:cid||null,client_name:fullName,client_email:client?client.email:null,
+    staff_name:staff,service_name:svcName,service_price:price,duration_minutes:dur,
+    status:STATE.newStatus,payment_status:'unpaid',payment_method:'pending',
+    booked_at:new Date(dt).toISOString(),notes:notes};
+  SB.insert('bookings',sbPayload).then(function(data){
+    if(Array.isArray(data)&&data[0]&&data[0].id){bk.id=data[0].id;SB.saveCache();}
   }).catch(function(){});
 
-  closeModal('new-appt-modal');
-  toast('Appointment created for ' + cName, 'ok');
+  closeModal('new-modal');
+  Utils.toast('Appointment created for '+fullName,'success');
   render();
 }
 
-/* ─── APPOINTMENT DETAIL ────────────────────────── */
-function openDetail(id) {
-  STATE.selectedApptId = id;
-  var bk  = SB.CACHE.bookings.find(function(b) { return b.id === id; });
-  if (!bk) return;
-  var sc  = STAFF_CONFIG.find(function(s) { return s.name === bk.staff_name; }) || STAFF_CONFIG[0];
-  var stM = STATUS_META[bk.status] || STATUS_META.pending;
+/* ── DETAIL MODAL ── */
+function openDetail(id){
+  STATE.selectedId=id;
+  var b=SB.CACHE.bookings.find(function(x){return x.id===id;});
+  if(!b)return;
+  var sc=STAFF.find(function(s){return s.name===b.staff_name;})||STAFF[0];
+  var stM=SM[b.status]||SM.pending;
+  var dt=b.booked_at?new Date(b.booked_at):null;
 
-  // Header
-  var av = document.getElementById('dm-staff-av');
-  av.textContent  = sc.name[0];
-  av.style.background = sc.grad;
-  document.getElementById('dm-client-name').textContent = bk.client_name || 'Appointment';
-
-  var dt2 = bk.booked_at ? new Date(bk.booked_at) : null;
-  document.getElementById('dm-subtitle').textContent =
-    (dt2 ? dt2.toLocaleDateString('en-CA',{weekday:'short',month:'short',day:'numeric'}) + ' · ' +
-           dt2.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'}) : '') +
-    ' · ' + bk.staff_name;
-
-  document.getElementById('dm-status-badge').innerHTML =
-    '<span class="badge badge-' + (bk.status||'pending') + '">' + stM.label + '</span>';
+  var av=document.getElementById('dm-av');
+  av.textContent=sc.name[0];av.style.background=sc.grad;
+  document.getElementById('dm-name').textContent=b.client_name||'Appointment';
+  document.getElementById('dm-sub').textContent=(dt?dt.toLocaleDateString('en-CA',{weekday:'short',month:'short',day:'numeric'})+' · '+dt.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'})+' · ':'')+b.staff_name;
+  document.getElementById('dm-badge').innerHTML='<span style="font-size:.62rem;font-weight:600;padding:.12rem .45rem;border-radius:50px;border:1px solid;background:'+stM.bg+';color:'+stM.color+';border-color:'+stM.bd+'">'+stM.lbl+'</span>';
 
   // Quick actions
-  var qacts = '';
-  if (bk.status === 'pending')     qacts += '<button class="btn btn-sm" style="color:#1D4ED8;border-color:#BFDBFE" onclick="quickStatus(\'' + id + '\',\'confirmed\')"><i class="fa-solid fa-check"></i>Confirm</button>';
-  if (bk.status === 'confirmed')   qacts += '<button class="btn btn-sm" style="color:#15803D;border-color:#BBF7D0" onclick="quickStatus(\'' + id + '\',\'arrived\')"><i class="fa-solid fa-door-open"></i>Mark Arrived</button>';
-  if (bk.status === 'arrived')     qacts += '<button class="btn btn-sm" style="color:#7C3AED;border-color:#DDD6FE" onclick="quickStatus(\'' + id + '\',\'in_progress\')"><i class="fa-solid fa-play"></i>Start Service</button>';
-  if (bk.status === 'in_progress') qacts += '<button class="btn btn-sm btn-success" onclick="quickStatus(\'' + id + '\',\'completed\')"><i class="fa-solid fa-check-double"></i>Complete</button>';
-  if (bk.status !== 'cancelled' && bk.status !== 'completed')
-    qacts += '<button class="btn btn-sm" onclick="quickStatus(\'' + id + '\',\'no_show\')"><i class="fa-solid fa-user-slash"></i>No-show</button>';
-  if (bk.status !== 'cancelled' && bk.status !== 'completed')
-    qacts += '<button class="btn btn-danger btn-sm" onclick="quickStatus(\'' + id + '\',\'cancelled\')"><i class="fa-solid fa-xmark"></i>Cancel</button>';
-  document.getElementById('dm-quick-actions').innerHTML = qacts;
+  var qa='';
+  if(b.status==='pending')      qa+='<button class="btn btn-sm" style="color:#1D4ED8;border-color:#BFDBFE" onclick="quickStatus(\''+id+'\',\'confirmed\')"><i class="fa-solid fa-check"></i>Confirm</button>';
+  if(b.status==='confirmed')    qa+='<button class="btn btn-sm" style="color:#15803D;border-color:#BBF7D0" onclick="quickStatus(\''+id+'\',\'arrived\')"><i class="fa-solid fa-door-open"></i>Arrived</button>';
+  if(b.status==='arrived')      qa+='<button class="btn btn-sm" style="color:#7C3AED;border-color:#DDD6FE" onclick="quickStatus(\''+id+'\',\'in_progress\')"><i class="fa-solid fa-play"></i>Start</button>';
+  if(b.status==='in_progress')  qa+='<button class="btn btn-success btn-sm" onclick="quickStatus(\''+id+'\',\'completed\')"><i class="fa-solid fa-check-double"></i>Complete</button>';
+  if(b.status!=='cancelled'&&b.status!=='completed') qa+='<button class="btn btn-sm" onclick="quickStatus(\''+id+'\',\'no-show\')" style="color:#991B1B;border-color:#FECACA">No-show</button>';
+  if(b.status!=='cancelled'&&b.status!=='completed') qa+='<button class="btn btn-danger btn-sm" onclick="quickStatus(\''+id+'\',\'cancelled\')">Cancel</button>';
+  document.getElementById('dm-qa').innerHTML=qa;
 
   // Info grid
-  document.getElementById('dm-info-grid').innerHTML = [
-    ['Service',  bk.service_name || '—'],
-    ['Price',    'CA$' + (bk.service_price||0)],
-    ['Staff',    bk.staff_name || '—'],
-    ['Duration', (bk.duration_minutes||60) + ' min'],
-    ['Payment',  bk.payment_status === 'paid' ? ('Paid · ' + (bk.payment_method||'').replace('_',' ')) : 'Unpaid'],
-    ['Client',   bk.client_name || '—'],
-  ].map(function(r) {
-    return '<div style="background:var(--s1);border-radius:var(--rsm);padding:.5rem .65rem">' +
-      '<div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:2px">' + r[0] + '</div>' +
-      '<div style="font-size:.82rem;font-weight:500">' + r[1] + '</div></div>';
-  }).join('');
+  document.getElementById('dm-info').innerHTML=[
+    ['Service',b.service_name||'—'],['Price','CA$'+(b.service_price||0)],
+    ['Staff',b.staff_name||'—'],['Duration',(b.duration_minutes||60)+' min'],
+    ['Payment',b.payment_status==='paid'?'Paid · '+(b.payment_method||'').replace('_',' '):'Unpaid'],
+    ['Client',b.client_name||'—'],
+  ].map(function(r){return '<div class="info-box"><div class="info-box-lbl">'+r[0]+'</div><div class="info-box-val">'+r[1]+'</div></div>';}).join('');
 
   // Status selector
-  var allStatuses = ['pending','confirmed','arrived','in_progress','completed','cancelled','no_show'];
-  document.getElementById('dm-status-selector').innerHTML = allStatuses.map(function(s) {
-    var m = STATUS_META[s];
-    var sel = s === (bk.status||'pending') ? ' selected' : '';
-    return '<button class="status-opt' + sel + '" data-s="' + s + '" ' +
-      'style="background:' + m.bg + ';color:' + m.color + ';border-color:' + m.bd + (sel?';outline:2px solid ' + m.color:'') + '" ' +
-      'onclick="changeApptStatus(\'' + id + '\',\'' + s + '\')">' + m.label + '</button>';
+  var allS=['pending','confirmed','arrived','in_progress','completed','cancelled','no-show'];
+  document.getElementById('dm-status-sel').innerHTML=allS.map(function(s){
+    var m=SM[s]||SM.pending,sel=s===(b.status||'pending');
+    return '<button class="sopt'+(sel?' sel':'')+'" data-s="'+s+'" style="background:'+m.bg+';color:'+m.color+';border-color:'+m.bd+'"'+(sel?'':'')
+      +' onclick="changeStatus(\''+id+'\',\''+s+'\')">'+m.lbl+'</button>';
   }).join('');
 
-  // Commission info
-  var price2 = parseFloat(bk.service_price||0);
-  document.getElementById('dm-comm-info').innerHTML =
-    '<div><div style="font-size:.6rem;color:var(--text2);margin-bottom:1px">Amount</div><div style="font-weight:700">CA$' + price2 + '</div></div>' +
-    '<div><div style="font-size:.6rem;color:var(--text2);margin-bottom:1px">Commission 25%</div><div style="font-weight:700;color:var(--pink)">CA$' + (price2*0.25).toFixed(2) + '</div></div>' +
-    '<div><div style="font-size:.6rem;color:var(--text2);margin-bottom:1px">Net Revenue</div><div style="font-weight:700;color:#059669">CA$' + (price2*0.75).toFixed(2) + '</div></div>' +
-    '<div><div style="font-size:.6rem;color:var(--text2);margin-bottom:1px">Payment</div><div style="font-weight:700">' + (bk.payment_status==='paid'?'<span style="color:#059669">Paid ✓</span>':'Unpaid') + '</div></div>';
+  // Commission
+  var price=parseFloat(b.service_price||0);
+  document.getElementById('dm-comm').innerHTML=
+    '<div><div class="comm-lbl">Amount</div><div class="comm-val">CA$'+price+'</div></div>'
+    +'<div><div class="comm-lbl">Commission 25%</div><div class="comm-val" style="color:var(--pink)">CA$'+(price*.25).toFixed(2)+'</div></div>'
+    +'<div><div class="comm-lbl">Net Revenue</div><div class="comm-val" style="color:var(--green)">CA$'+(price*.75).toFixed(2)+'</div></div>'
+    +'<div><div class="comm-lbl">Payment</div><div class="comm-val">'+(b.payment_status==='paid'?'<span style="color:var(--green)">Paid ✓</span>':'Unpaid')+'</div></div>';
 
-  // Hide pay btn if already paid
-  var payBtn = document.getElementById('dm-pay-btn');
-  if (payBtn) payBtn.style.display = bk.payment_status === 'paid' ? 'none' : '';
+  // Pay button visibility
+  var payBtn=document.getElementById('dm-pay-btn');
+  if(payBtn)payBtn.style.display=b.payment_status==='paid'?'none':'';
 
-  // Pay methods - reset selection
-  document.querySelectorAll('.pay-m').forEach(function(b) { b.classList.toggle('selected', b.dataset.m==='cash'); });
-  STATE.selectedPayMethod = 'cash';
+  // Reset pay method
+  STATE.payMethod='cash';
+  document.querySelectorAll('.pm').forEach(function(b){b.classList.toggle('sel',b.dataset.m==='cash');});
 
-  // Notes
-  document.getElementById('dm-notes').textContent = bk.notes || 'No notes';
-
-  // Delete btn
-  document.getElementById('dm-delete-btn').onclick = function() { deleteAppt(id); };
-
-  document.getElementById('detail-modal').style.display = 'flex';
+  document.getElementById('dm-notes').textContent=b.notes||'No notes';
+  document.getElementById('dm-del').onclick=function(){deleteAppt(id);};
+  document.getElementById('det-modal').style.display='flex';
 }
 
-function selPayMethod(btn) {
-  STATE.selectedPayMethod = btn.dataset.m;
-  document.querySelectorAll('.pay-m').forEach(function(b) { b.classList.remove('selected'); });
-  btn.classList.add('selected');
+function selPay(btn){
+  STATE.payMethod=btn.dataset.m;
+  document.querySelectorAll('.pm').forEach(function(b){b.classList.toggle('sel',b===btn);});
 }
 
-function savePayment() {
-  var id = STATE.selectedApptId;
-  var bk = SB.CACHE.bookings.find(function(b) { return b.id === id; });
-  if (!bk) return;
-  var amount = parseFloat(bk.service_price||0);
-  var pay = {
-    booking_id:   id,
-    client_id:    bk.client_id || null,
-    client_name:  bk.client_name,
-    staff_name:   bk.staff_name,
-    service_name: bk.service_name,
-    amount:       amount,
-    method:       STATE.selectedPayMethod,
-    paid_at:      bk.booked_at || new Date().toISOString()
-  };
-  SB.CACHE.payments.unshift(pay);
-  SB.insert('payments', pay).catch(function(){});
-  bk.payment_status = 'paid';
-  bk.payment_method = STATE.selectedPayMethod;
-  SB.update('bookings', id, {payment_status:'paid', payment_method: STATE.selectedPayMethod}).catch(function(){});
-  SB.saveCache();
+function quickStatus(id,status){changeStatus(id,status);}
 
-  // Add loyalty points
-  if (bk.client_id) {
-    var c = SB.CACHE.clients.find(function(x) { return x.id === bk.client_id; });
-    if (c) {
-      c.loyalty_points = (c.loyalty_points||0) + Math.floor(amount);
-      SB.update('clients', c.id, {loyalty_points: c.loyalty_points}).catch(function(){});
-    }
-  }
+function changeStatus(id,status){
+  var b=SB.CACHE.bookings.find(function(x){return x.id===id;});
+  if(!b)return;
+  b.status=status;
+  var stM=SM[status]||SM.pending;
 
-  // Log email
-  SB.CACHE.email_log.unshift({
-    id: 'e_'+Date.now(), client_id: bk.client_id,
-    client_name: bk.client_name, client_email: bk.client_email,
-    type:'receipt', subject: 'Receipt CA$' + amount,
-    status:'sent', sent_at: new Date().toISOString()
-  });
-
-  closeModal('detail-modal');
-  toast('Payment saved · CA$' + amount + ' · ' + STATE.selectedPayMethod.replace('_',' '), 'ok');
-  render();
-}
-
-function quickStatus(id, status) {
-  changeApptStatus(id, status);
-}
-
-function changeApptStatus(id, status) {
-  var bk = SB.CACHE.bookings.find(function(b) { return b.id === id; });
-  if (!bk) return;
-  bk.status = status;
-  SB.update('bookings', id, {status: status}).catch(function(){});
-  SB.saveCache();
-  var stM = STATUS_META[status] || STATUS_META.pending;
-  toast(stM.label + ' — ' + (bk.client_name||'Appointment'), 'ok');
-  if (status === 'completed') {
-    // Auto-mark as paid and save payment with selected method
-    var method = STATE.selectedPayMethod || 'cash';
-    var amount  = parseFloat(bk.service_price || 0);
-    // Use booking date for paid_at so revenue shows in correct period
-    var paidAt = bk.booked_at || new Date().toISOString();
-    var pay = {
-      booking_id:   id,
-      client_id:    bk.client_id || null,
-      client_name:  bk.client_name,
-      staff_name:   bk.staff_name,
-      service_name: bk.service_name,
-      amount:       amount,
-      method:       method,
-      paid_at:      paidAt
-    };
-    bk.payment_status = 'paid';
-    bk.payment_method  = method;
-    SB.CACHE.payments.unshift(pay);
-    SB.insert('payments', pay).catch(function(){});
-    SB.update('bookings', id, {payment_status:'paid', payment_method: method}).catch(function(){});
+  if(status==='completed'){
+    var amount=parseFloat(b.service_price||0);
+    var method=STATE.payMethod||'cash';
+    var paidAt=b.booked_at||new Date().toISOString();
+    var pay={booking_id:id,client_id:b.client_id||null,client_name:b.client_name,
+      staff_name:b.staff_name,service_name:b.service_name,amount:amount,method:method,paid_at:paidAt};
+    b.payment_status='paid';b.payment_method=method;
+    SB.CACHE.payments.unshift(Object.assign({id:'p_'+Date.now()},pay));
+    SB.insert('payments',pay).catch(function(){});
+    SB.update('bookings',id,{status:status,payment_status:'paid',payment_method:method}).catch(function(){});
+    if(b.client_id){var c=SB.CACHE.clients.find(function(x){return x.id===b.client_id;});if(c){c.loyalty_points=(c.loyalty_points||0)+Math.floor(amount);SB.update('clients',c.id,{loyalty_points:c.loyalty_points}).catch(function(){});}}
     SB.saveCache();
-    // Log email receipt
-    if (bk.client_email) {
-      SB.CACHE.email_log.unshift({id:'e_'+Date.now(),client_id:bk.client_id,client_name:bk.client_name,
-        client_email:bk.client_email,type:'receipt',subject: 'Receipt CA$' + amount,
-        status:'sent',sent_at:new Date().toISOString()});
-    }
-    // Re-open detail to show paid status & allow method change
-    closeModal('detail-modal');
-    render();
-    setTimeout(function() { openDetail(id); }, 100);
+    Utils.toast('Completed · CA$'+amount+' · '+method.replace('_',' '),'success');
   } else {
-    closeModal('detail-modal');
-    render();
+    SB.update('bookings',id,{status:status}).catch(function(){});
+    SB.saveCache();
+    Utils.toast(stM.lbl+' — '+(b.client_name||'Appointment'),'info');
   }
+  closeModal('det-modal');
+  render();
+  if(status==='completed') setTimeout(function(){openDetail(id);},100);
 }
 
-function deleteAppt(id) {
-  var bk = SB.CACHE.bookings.find(function(b) { return b.id === id; });
-  SB.CACHE.bookings = SB.CACHE.bookings.filter(function(b) { return b.id !== id; });
-  SB.remove('bookings', id).catch(function(){});
-  closeModal('detail-modal');
-  toast('Appointment deleted', 'err');
+function savePayment(){
+  var id=STATE.selectedId;
+  var b=SB.CACHE.bookings.find(function(x){return x.id===id;});
+  if(!b)return;
+  var amount=parseFloat(b.service_price||0);
+  var pay={booking_id:id,client_id:b.client_id||null,client_name:b.client_name,
+    staff_name:b.staff_name,service_name:b.service_name,amount:amount,
+    method:STATE.payMethod,paid_at:b.booked_at||new Date().toISOString()};
+  SB.CACHE.payments.unshift(Object.assign({id:'p_'+Date.now()},pay));
+  b.payment_status='paid';b.payment_method=STATE.payMethod;
+  SB.insert('payments',pay).catch(function(){});
+  SB.update('bookings',id,{payment_status:'paid',payment_method:STATE.payMethod}).catch(function(){});
+  SB.saveCache();
+  closeModal('det-modal');
+  Utils.toast('Payment saved · CA$'+amount,'success');
   render();
 }
 
-/* ─── UTILS ─────────────────────────────────────── */
-function resetToDemo() {
-  if (!confirm('Reset all changes and reload demo data?')) return;
-  localStorage.removeItem('mn_cache_v2');
-  location.reload();
+function deleteAppt(id){
+  if(!confirm('Delete this appointment?'))return;
+  SB.CACHE.bookings=SB.CACHE.bookings.filter(function(b){return b.id!==id;});
+  SB.remove('bookings',id).catch(function(){});
+  SB.saveCache();
+  closeModal('det-modal');
+  Utils.toast('Appointment deleted','info');
+  render();
 }
 
-function closeModal(id) {
-  document.getElementById(id).style.display = 'none';
-  if (id === 'new-appt-modal') {
-    var cs = document.getElementById('m-client-search');
-    var ci = document.getElementById('m-client-id');
-    var dd = document.getElementById('m-client-dropdown');
-    if (cs) cs.value = '';
-    if (ci) ci.value = '';
-    if (dd) dd.style.display = 'none';
-    document.getElementById('m-phone').value = '';
-    document.getElementById('m-notes').value = '';
-  }
-}
-
-function toast(msg, type) {
-  var icons = {ok:'<i class="fa-solid fa-circle-check" style="color:#059669"></i>', err:'<i class="fa-solid fa-circle-xmark" style="color:#991B1B"></i>', info:'<i class="fa-solid fa-circle-info" style="color:#1D4ED8"></i>'};
-  var el = document.createElement('div');
-  el.className = 'toast-item toast-' + (type==='ok'?'ok':type==='err'?'err':'info');
-  el.innerHTML = (icons[type]||icons.info) + '<span>' + msg + '</span>';
-  document.getElementById('toasts').appendChild(el);
-  setTimeout(function() {
-    el.style.opacity='0'; el.style.transform='translateX(110%)'; el.style.transition='.2s';
-    setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 200);
-  }, 3200);
-}
+function closeModal(id){document.getElementById(id).style.display='none';}
 </script>
 </body>
 </html>
