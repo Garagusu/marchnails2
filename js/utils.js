@@ -1,381 +1,311 @@
 /* ═══════════════════════════════════════════════
-   MARCH NAILS BI — UTILS.JS
-   Date helpers, formatters, calculations
+   MARCH NAILS — UTILS.JS v3
    ═══════════════════════════════════════════════ */
-
 var Utils = (function() {
   'use strict';
 
-  // ── Date ranges ──
-  function getRange(period, customStart, customEnd) {
-    var now = new Date();
-    var start, end;
-    end = new Date(now); end.setHours(23,59,59,999);
-
-    switch (period) {
-      case 'today':
-        start = new Date(now); start.setHours(0,0,0,0);
-        end   = new Date(now); end.setHours(23,59,59,999);
-        break;
-      case 'yesterday':
-        start = new Date(now); start.setDate(start.getDate()-1); start.setHours(0,0,0,0);
-        end   = new Date(now); end.setDate(end.getDate()-1);     end.setHours(23,59,59,999);
-        break;
-      case '7d':
-        start = new Date(now); start.setDate(start.getDate()-6); start.setHours(0,0,0,0);
-        break;
-      case '30d':
-        start = new Date(now); start.setDate(start.getDate()-29); start.setHours(0,0,0,0);
-        break;
-      case 'this_month':
-        start = new Date(now.getFullYear(), now.getMonth(), 1);
-        end   = new Date(now.getFullYear(), now.getMonth()+1, 0, 23,59,59,999);
-        break;
-      case 'last_month':
-        start = new Date(now.getFullYear(), now.getMonth()-1, 1);
-        end   = new Date(now.getFullYear(), now.getMonth(), 0, 23,59,59,999);
-        break;
-      case 'this_year':
-        start = new Date(now.getFullYear(), 0, 1);
-        end   = new Date(now.getFullYear(), 11, 31, 23,59,59,999);
-        break;
-      case 'custom':
-        start = customStart ? new Date(customStart) : new Date(now.getFullYear(), now.getMonth(), 1);
-        end   = customEnd   ? new Date(customEnd)   : new Date();
-        start.setHours(0,0,0,0); end.setHours(23,59,59,999);
-        break;
-      default:
-        start = new Date(now); start.setDate(start.getDate()-29); start.setHours(0,0,0,0);
-    }
-    return { start: start, end: end };
+  /* ── WORKING HOURS ─────────────────────────── */
+  function getWorkHours(date) {
+    var d = date instanceof Date ? date : new Date(date);
+    var dow = d.getDay(); // 0=Sun
+    return dow === 0 ? [10,18] : [9,20];
   }
 
-  function getCompareRange(period, range) {
-    var diff = range.end - range.start;
-    return {
-      start: new Date(range.start - diff - 1),
-      end:   new Date(range.start - 1)
-    };
-  }
-
-  function inRange(dateStr, range) {
-    if (!dateStr) return false;
-    var d = new Date(dateStr);
-    // Normalize to local midnight for comparison
-    return d >= range.start && d <= range.end;
-  }
-
+  /* ── LOCAL DATE STRING (no UTC shift) ──────── */
   function localDateStr(date) {
     var d = date instanceof Date ? date : new Date(date);
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   }
 
-  // ── Format ──
-  function fCurrency(n, decimals) {
-    var d = decimals !== undefined ? decimals : 0;
-    return 'CA$' + parseFloat(n || 0).toLocaleString('en-CA', {
-      minimumFractionDigits: d, maximumFractionDigits: d
+  /* ── IS SAME LOCAL DAY ──────────────────────── */
+  function isSameLocalDay(dateStr, targetStr) {
+    if (!dateStr) return false;
+    return localDateStr(new Date(dateStr)) === targetStr;
+  }
+
+  /* ── DATE RANGES ────────────────────────────── */
+  function getRange(period, customStart, customEnd) {
+    var now = new Date(), start, end;
+    end = new Date(now); end.setHours(23,59,59,999);
+    switch (period) {
+      case 'today':
+        start = new Date(now); start.setHours(0,0,0,0); break;
+      case 'yesterday':
+        start = new Date(now); start.setDate(start.getDate()-1); start.setHours(0,0,0,0);
+        end   = new Date(now); end.setDate(end.getDate()-1);     end.setHours(23,59,59,999); break;
+      case '7d':
+        start = new Date(now); start.setDate(start.getDate()-6); start.setHours(0,0,0,0); break;
+      case '30d':
+        start = new Date(now); start.setDate(start.getDate()-29); start.setHours(0,0,0,0); break;
+      case 'this_month':
+        start = new Date(now.getFullYear(),now.getMonth(),1);
+        end   = new Date(now.getFullYear(),now.getMonth()+1,0,23,59,59,999); break;
+      case 'last_month':
+        start = new Date(now.getFullYear(),now.getMonth()-1,1);
+        end   = new Date(now.getFullYear(),now.getMonth(),0,23,59,59,999); break;
+      case 'this_year':
+        start = new Date(now.getFullYear(),0,1);
+        end   = new Date(now.getFullYear(),11,31,23,59,59,999); break;
+      case 'custom':
+        start = customStart ? new Date(customStart) : new Date(now.getFullYear(),now.getMonth(),1);
+        end   = customEnd   ? new Date(customEnd)   : new Date();
+        start.setHours(0,0,0,0); end.setHours(23,59,59,999); break;
+      default:
+        start = new Date(now.getFullYear(),now.getMonth(),1);
+        end   = new Date(now.getFullYear(),now.getMonth()+1,0,23,59,59,999);
+    }
+    return { start:start, end:end };
+  }
+
+  function getCompareRange(period, range) {
+    var diff = range.end - range.start;
+    return { start:new Date(range.start.getTime()-diff-1), end:new Date(range.start.getTime()-1) };
+  }
+
+  function inRange(dateStr, range) {
+    if (!dateStr) return false;
+    var d = new Date(dateStr);
+    return d >= range.start && d <= range.end;
+  }
+
+  /* ── CONFLICT DETECTION ─────────────────────── */
+  function hasConflict(bookings, staffName, startDt, durationMin, excludeId) {
+    var s = new Date(startDt).getTime();
+    var e = s + (durationMin||60)*60000;
+    return bookings.some(function(b) {
+      if (b.id === excludeId) return false;
+      if (b.staff_name !== staffName) return false;
+      if (b.status==='cancelled'||b.status==='no-show'||b.status==='no_show') return false;
+      if (!b.booked_at) return false;
+      var bs = new Date(b.booked_at).getTime();
+      var be = bs + (parseInt(b.duration_minutes)||60)*60000;
+      return s < be && e > bs;
     });
   }
 
-  function fPct(n, decimals) {
-    var d = decimals !== undefined ? decimals : 1;
-    return parseFloat(n || 0).toFixed(d) + '%';
+  /* ── WORKING HOURS VALIDATION ───────────────── */
+  function isWithinWorkHours(dateStr) {
+    if (!dateStr) return false;
+    var d  = new Date(dateStr);
+    var wh = getWorkHours(d);
+    var min = d.getHours()*60 + d.getMinutes();
+    return min >= wh[0]*60 && min < wh[1]*60;
   }
 
-  function fNum(n) {
-    return parseInt(n || 0).toLocaleString('en-CA');
-  }
-
-  function fDate(dateStr, opts) {
-    if (!dateStr) return '—';
-    var d = new Date(dateStr);
-    return d.toLocaleDateString('en-CA', opts || { month: 'short', day: 'numeric' });
-  }
-
-  function fDateTime(dateStr) {
-    if (!dateStr) return '—';
-    var d = new Date(dateStr);
-    return d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) + ' ' +
-           d.toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' });
-  }
-
-  function fDelta(current, previous) {
-    if (!previous || previous === 0) return { pct: 0, dir: 'flat' };
-    var pct = ((current - previous) / previous) * 100;
-    return {
-      pct: Math.abs(pct).toFixed(1),
-      dir: pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat',
-      sign: pct > 0 ? '+' : pct < 0 ? '-' : ''
-    };
-  }
-
-  // ── Filter data ──
-  function filterBookings(bookings, filters) {
+  /* ── UNIFIED FILTERS ────────────────────────── */
+  function filterBookings(bookings, f) {
     return bookings.filter(function(b) {
-      // Date range - use local date for comparison
-      if (filters.range) {
-        if (!b.booked_at) return false;
-        var d = new Date(b.booked_at);
-        if (d < filters.range.start || d > filters.range.end) return false;
-      }
-      // Staff
-      if (filters.staff && filters.staff !== 'all' && b.staff_name !== filters.staff) return false;
-      // Service
-      if (filters.service && filters.service !== 'all' && b.service_name !== filters.service) return false;
-      // Status
-      if (filters.status && filters.status !== 'all' && b.status !== filters.status) return false;
-      // Payment method
-      if (filters.method && filters.method !== 'all' && b.payment_method !== filters.method) return false;
+      if (!b.booked_at) return false;
+      if (new Date(b.booked_at).getHours() < 9) return false;
+      if (f.range   && !inRange(b.booked_at, f.range)) return false;
+      if (f.day     && !isSameLocalDay(b.booked_at, f.day)) return false;
+      if (f.staff   && f.staff!=='all'   && b.staff_name!==f.staff)     return false;
+      if (f.service && f.service!=='all' && b.service_name!==f.service) return false;
+      if (f.status  && f.status!=='all'  && b.status!==f.status)        return false;
+      if (f.client  && b.client_name && b.client_name.toLowerCase().indexOf(f.client.toLowerCase())===-1) return false;
       return true;
     });
   }
 
-  function filterClients(clients, filters) {
-    return clients.filter(function(c) {
-      if (filters.tier && filters.tier !== 'all' && c.tier !== filters.tier) return false;
-      if (filters.search) {
-        var q = filters.search.toLowerCase();
-        var name = ((c.first_name || '') + ' ' + (c.last_name || '')).toLowerCase();
-        if (name.indexOf(q) === -1 && (c.email || '').toLowerCase().indexOf(q) === -1) return false;
-      }
+  function filterPayments(payments, f) {
+    return payments.filter(function(p) {
+      if (!p.paid_at) return false;
+      if (f.range   && !inRange(p.paid_at, f.range)) return false;
+      if (f.day     && !isSameLocalDay(p.paid_at, f.day)) return false;
+      if (f.staff   && f.staff!=='all'   && p.staff_name!==f.staff)     return false;
+      if (f.service && f.service!=='all' && p.service_name!==f.service) return false;
+      if (f.method  && f.method!=='all'  && p.method!==f.method)        return false;
       return true;
     });
   }
 
-  // ── Aggregate ──
-  function sumRevenue(payments) {
-    return payments.reduce(function(s, p) { return s + parseFloat(p.amount || 0); }, 0);
+  /* ── AGGREGATIONS ───────────────────────────── */
+  function sumRevenue(arr) { return arr.reduce(function(s,p){return s+parseFloat(p.amount||0);},0); }
+  function sumCommission(arr) { return arr.reduce(function(s,p){return s+parseFloat(p.commission||parseFloat(p.amount||0)*.25);},0); }
+  function groupBy(arr,key) {
+    return arr.reduce(function(acc,item){var k=item[key]||'Unknown';if(!acc[k])acc[k]=[];acc[k].push(item);return acc;},{});
   }
-
-  function sumCommission(payments) {
-    return payments.reduce(function(s, p) { return s + parseFloat(p.commission || 0); }, 0);
-  }
-
-  function avgTicket(payments) {
-    if (!payments.length) return 0;
-    return sumRevenue(payments) / payments.length;
-  }
-
-  function groupBy(arr, key) {
-    return arr.reduce(function(acc, item) {
-      var k = item[key] || 'Unknown';
-      if (!acc[k]) acc[k] = [];
-      acc[k].push(item);
-      return acc;
-    }, {});
-  }
-
-  function groupByDate(arr, dateKey, fmt) {
-    return arr.reduce(function(acc, item) {
-      var d = item[dateKey] ? new Date(item[dateKey]) : null;
-      if (!d) return acc;
+  function groupByDate(arr,dateKey,fmt) {
+    return arr.reduce(function(acc,item){
+      var d=item[dateKey]?new Date(item[dateKey]):null; if(!d) return acc;
       var k;
-      if (fmt === 'day')   k = d.toISOString().split('T')[0];
-      else if (fmt === 'week') {
-        var jan1 = new Date(d.getFullYear(), 0, 1);
-        var wk = Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
-        k = d.getFullYear() + '-W' + String(wk).padStart(2,'0');
-      }
-      else if (fmt === 'month') k = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
-      else if (fmt === 'year')  k = String(d.getFullYear());
-      else k = d.toISOString().split('T')[0];
-      if (!acc[k]) acc[k] = [];
-      acc[k].push(item);
-      return acc;
-    }, {});
+      if(fmt==='day')   k=localDateStr(d);
+      else if(fmt==='week'){var j=new Date(d.getFullYear(),0,1);var w=Math.ceil(((d-j)/86400000+j.getDay()+1)/7);k=d.getFullYear()+'-W'+String(w).padStart(2,'0');}
+      else if(fmt==='month') k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+      else if(fmt==='year')  k=String(d.getFullYear());
+      else k=localDateStr(d);
+      if(!acc[k])acc[k]=[];acc[k].push(item);return acc;
+    },{});
   }
 
-  // ── KPI calculation ──
+  /* ── KPIs ───────────────────────────────────── */
   function calcKPIs(bookings, payments, clients, range) {
-    var rangeBookings = range ? bookings.filter(function(b) { return inRange(b.booked_at, range); }) : bookings;
-    var rangePayments = range ? payments.filter(function(p) { return inRange(p.paid_at, range); }) : payments;
-
-    // Revenue: use payments if available, else sum completed bookings
-    var revenueFromPayments = sumRevenue(rangePayments);
-    var completedBksForRev  = rangeBookings.filter(function(b) {
-      return b.status === 'completed' || b.payment_status === 'paid';
-    });
-    var revenueFromBookings = completedBksForRev.reduce(function(s, b) {
-      return s + parseFloat(b.service_price || 0);
-    }, 0);
-    // Use whichever source gives more revenue (payments may be partial)
-    var totalRevenue = Math.max(revenueFromPayments, revenueFromBookings);
-    var commissionFromBookings = revenueFromBookings * 0.25;
-    var totalBookings  = rangeBookings.length;
-    var completedBk    = rangeBookings.filter(function(b) { return b.status === 'completed'; });
-    var cancelledBk    = rangeBookings.filter(function(b) { return b.status === 'cancelled'; });
-    var noshowBk       = rangeBookings.filter(function(b) { return b.status === 'no-show'; });
-    var paidPayments   = rangePayments.filter(function(p) { return p.amount > 0; });
-
-    // Best staff
-    var staffGroups = groupBy(rangePayments, 'staff_name');
-    var bestStaff = '';
-    var bestStaffRev = 0;
-    Object.keys(staffGroups).forEach(function(s) {
-      var rev = sumRevenue(staffGroups[s]);
-      if (rev > bestStaffRev) { bestStaffRev = rev; bestStaff = s; }
-    });
-
-    // Most popular service
-    var svcGroups = groupBy(rangeBookings, 'service_name');
-    var topService = '';
-    var topServiceCount = 0;
-    Object.keys(svcGroups).forEach(function(s) {
-      if (svcGroups[s].length > topServiceCount) { topServiceCount = svcGroups[s].length; topService = s; }
-    });
-
-    // Busiest day
-    var dayGroups = groupByDate(rangeBookings, 'booked_at', 'day');
-    var busiestDay = '';
-    var busiestCount = 0;
-    Object.keys(dayGroups).forEach(function(d) {
-      if (dayGroups[d].length > busiestCount) { busiestCount = dayGroups[d].length; busiestDay = d; }
-    });
-
-    // Busiest hour
-    var hourCounts = {};
-    rangeBookings.forEach(function(b) {
-      if (b.booked_at) {
-        var h = new Date(b.booked_at).getHours();
-        hourCounts[h] = (hourCounts[h] || 0) + 1;
-      }
-    });
-    var busiestHour = Object.keys(hourCounts).sort(function(a,b) { return hourCounts[b]-hourCounts[a]; })[0];
-    if (busiestHour !== undefined) busiestHour = busiestHour + ':00';
-
-    // Return rate (clients with 2+ bookings)
-    var clientBookings = groupBy(rangeBookings, 'client_name');
-    var returning = Object.keys(clientBookings).filter(function(c) { return clientBookings[c].length > 1; });
-    var returnRate = Object.keys(clientBookings).length > 0
-      ? (returning.length / Object.keys(clientBookings).length) * 100 : 0;
-
+    var rBk  = range ? bookings.filter(function(b){return inRange(b.booked_at,range);}) : bookings;
+    var rPay = range ? payments.filter(function(p){return inRange(p.paid_at,range);})   : payments;
+    var comp = rBk.filter(function(b){return b.status==='completed';});
+    var canc = rBk.filter(function(b){return b.status==='cancelled';});
+    var ns   = rBk.filter(function(b){return b.status==='no-show'||b.status==='no_show';});
+    var revP = sumRevenue(rPay);
+    var revB = comp.reduce(function(s,b){return s+parseFloat(b.service_price||0);},0);
+    var rev  = Math.max(revP,revB);
+    var comm = rev*.25;
+    var stgP = groupBy(rPay,'staff_name');
+    var bsRev=0, bestStaff='';
+    Object.keys(stgP).forEach(function(s){var r=sumRevenue(stgP[s]);if(r>bsRev){bsRev=r;bestStaff=s;}});
+    if(!bestStaff){var stgB=groupBy(comp,'staff_name');Object.keys(stgB).forEach(function(s){var r=stgB[s].reduce(function(x,b){return x+parseFloat(b.service_price||0);},0);if(r>bsRev){bsRev=r;bestStaff=s;}});}
+    var svcG=groupBy(rBk,'service_name'),topSvc='',topSvcN=0;
+    Object.keys(svcG).forEach(function(s){if(svcG[s].length>topSvcN){topSvcN=svcG[s].length;topSvc=s;}});
+    var bkByC=groupBy(rBk,'client_name'),ret=Object.keys(bkByC).filter(function(c){return bkByC[c].length>1;}).length;
+    var busiestHour='',busiestDay='',hCnt={},dCnt={};
+    rBk.forEach(function(b){if(!b.booked_at)return;var d=new Date(b.booked_at);var h=d.getHours();var day=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];hCnt[h]=(hCnt[h]||0)+1;dCnt[day]=(dCnt[day]||0)+1;});
+    Object.keys(hCnt).forEach(function(h){if(!busiestHour||hCnt[h]>hCnt[busiestHour])busiestHour=h;});
+    Object.keys(dCnt).forEach(function(d){if(!busiestDay||dCnt[d]>dCnt[busiestDay])busiestDay=d;});
+    if(busiestHour) busiestHour=(parseInt(busiestHour)<12?busiestHour+'am':(parseInt(busiestHour)-12||12)+'pm');
+    var avgTk = rPay.length>0 ? rev/rPay.length : (comp.length>0?rev/comp.length:0);
     return {
-      revenue:       totalRevenue,
-      bookings:      totalBookings,
-      clients:       clients.length,
-      avgTicket:     paidPayments.length ? totalRevenue / paidPayments.length : 0,
-      completionRate: totalBookings > 0 ? (completedBk.length / totalBookings) * 100 : 0,
-      noshowRate:    totalBookings > 0 ? (noshowBk.length / totalBookings) * 100 : 0,
-      cancellationRate: totalBookings > 0 ? (cancelledBk.length / totalBookings) * 100 : 0,
-      bestStaff:     bestStaff,
-      bestStaffRev:  bestStaffRev,
-      topService:    topService,
-      topServiceCount: topServiceCount,
-      busiestDay:    busiestDay,
-      busiestHour:   busiestHour,
-      returnRate:    returnRate,
-      commission:    rangePayments.length > 0 ? sumCommission(rangePayments) : commissionFromBookings,
-      netRevenue:    totalRevenue - sumCommission(rangePayments)
+      revenue:rev, commission:comm, netRevenue:rev-comm,
+      bookings:rBk.length, completed:comp.length, cancelled:canc.length, noshow:ns.length,
+      pending:rBk.filter(function(b){return b.status==='pending';}).length,
+      clients:(clients||[]).length, avgTicket:avgTk,
+      completionRate:rBk.length>0?(comp.length/rBk.length)*100:0,
+      cancellationRate:rBk.length>0?(canc.length/rBk.length)*100:0,
+      noshowRate:rBk.length>0?(ns.length/rBk.length)*100:0,
+      returnRate:Object.keys(bkByC).length>0?(ret/Object.keys(bkByC).length)*100:0,
+      bestStaff:bestStaff, topService:topSvc,
+      busiestHour:busiestHour, busiestDay:busiestDay,
     };
   }
 
-  // ── Toast ──
-  function toast(msg, type, duration) {
-    var container = document.getElementById('toast-container');
-    if (!container) {
-      container = document.createElement('div');
-      container.id = 'toast-container';
-      document.body.appendChild(container);
+  /* ── STAFF ANALYTICS ────────────────────────── */
+  function staffAnalytics(staffName, bookings, payments) {
+    function calc(bks,pays) {
+      var comp=bks.filter(function(b){return b.status==='completed';});
+      var rev=Math.max(sumRevenue(pays),comp.reduce(function(s,b){return s+parseFloat(b.service_price||0);},0));
+      return {bookings:bks.length,completed:comp.length,revenue:rev,commission:rev*.25,netRevenue:rev*.75,
+        avgTicket:comp.length>0?rev/comp.length:0,
+        noshow:bks.filter(function(b){return b.status==='no-show'||b.status==='no_show';}).length,
+        cancelled:bks.filter(function(b){return b.status==='cancelled';}).length};
     }
-    var icons = {
-      success: '<i class="fa-solid fa-circle-check" style="color:var(--green)"></i>',
-      error:   '<i class="fa-solid fa-circle-xmark" style="color:var(--red)"></i>',
-      info:    '<i class="fa-solid fa-circle-info" style="color:var(--blue)"></i>',
-      warning: '<i class="fa-solid fa-triangle-exclamation" style="color:var(--amber)"></i>'
+    var periods={
+      today:getRange('today'),yesterday:getRange('yesterday'),
+      this_week:getRange('7d'),this_month:getRange('this_month'),
+      last_month:getRange('last_month'),this_year:getRange('this_year')
     };
-    var el = document.createElement('div');
-    el.className = 'toast toast-' + (type || 'info');
-    el.innerHTML = (icons[type] || icons.info) + '<span>' + msg + '</span>';
-    container.appendChild(el);
-    setTimeout(function() {
-      el.style.opacity = '0';
-      el.style.transform = 'translateX(110%)';
-      el.style.transition = 'all .25s';
-      setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 250);
-    }, duration || 3500);
+    var result={};
+    Object.keys(periods).forEach(function(k){
+      var rng=periods[k];
+      result[k]=calc(filterBookings(bookings,{range:rng,staff:staffName}),filterPayments(payments,{range:rng,staff:staffName}));
+    });
+    var allBks=filterBookings(bookings,{staff:staffName});
+    var allPays=filterPayments(payments,{staff:staffName});
+    result.all=calc(allBks,allPays);
+    var svcG=groupBy(allBks,'service_name');
+    result.topServices=Object.keys(svcG).sort(function(a,b){return svcG[b].length-svcG[a].length;}).slice(0,5).map(function(s){return {name:s,count:svcG[s].length};});
+    var uCli={};allBks.forEach(function(b){if(b.client_name)uCli[b.client_name]=true;});
+    result.totalClients=Object.keys(uCli).length;
+    // Monthly revenue for chart (last 6 months)
+    var monthly=groupByDate(allPays,'paid_at','month');
+    var monthlyBk=groupByDate(allBks.filter(function(b){return b.status==='completed';}),'booked_at','month');
+    result.monthlyRevenue=monthly;
+    result.monthlyBookings=monthlyBk;
+    return result;
   }
 
-  // ── Clock ──
-  function startClock(el1, el2) {
-    function tick() {
-      var n = new Date();
-      var h = n.getHours();
-      var gr = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
-      if (el1) el1.textContent = gr + ' \u2726';
-      if (el2) el2.textContent =
-        n.toLocaleDateString('en-CA', { weekday:'long', month:'long', day:'numeric' }) +
-        '  ' + n.toLocaleTimeString('en-CA', { hour:'2-digit', minute:'2-digit' });
-    }
-    tick();
-    return setInterval(tick, 60000);
+  /* ── CLIENT ANALYTICS ───────────────────────── */
+  function clientAnalytics(clientId, clientName, bookings, payments) {
+    var bks=bookings.filter(function(b){return b.client_id===clientId||b.client_name===clientName;})
+      .sort(function(a,b){return new Date(a.booked_at)-new Date(b.booked_at);});
+    var pays=payments.filter(function(p){return p.client_id===clientId||p.client_name===clientName;});
+    var comp=bks.filter(function(b){return b.status==='completed';});
+    var ltv=Math.max(sumRevenue(pays),comp.reduce(function(s,b){return s+parseFloat(b.service_price||0);},0));
+    var svcG=groupBy(bks,'service_name'),stfG=groupBy(bks,'staff_name');
+    var topSvc=Object.keys(svcG).sort(function(a,b){return svcG[b].length-svcG[a].length;})[0]||'—';
+    var topStaff=Object.keys(stfG).sort(function(a,b){return stfG[b].length-stfG[a].length;})[0]||'—';
+    var first=bks[0]?new Date(bks[0].booked_at):null;
+    var last=bks.length>0?new Date(bks[bks.length-1].booked_at):null;
+    var freq=0;
+    if(bks.length>1){var gaps=[];for(var i=1;i<bks.length;i++)gaps.push((new Date(bks[i].booked_at)-new Date(bks[i-1].booked_at))/(86400000));freq=Math.round(gaps.reduce(function(s,g){return s+g;},0)/gaps.length);}
+    return {
+      ltv:ltv,totalVisits:bks.length,completed:comp.length,avgTicket:comp.length>0?ltv/comp.length:0,
+      noshow:bks.filter(function(b){return b.status==='no-show'||b.status==='no_show';}).length,
+      firstVisit:first,lastVisit:last,topService:topSvc,topStaff:topStaff,
+      avgFrequencyDays:freq,
+      topServices:Object.keys(svcG).sort(function(a,b){return svcG[b].length-svcG[a].length;}).slice(0,3).map(function(s){return {name:s,count:svcG[s].length};}),
+      recentBookings:bks.slice(-5).reverse(),
+    };
   }
 
-  // ── Table sort ──
+  /* ── FORMAT HELPERS ─────────────────────────── */
+  function fCurrency(n){return 'CA$'+parseFloat(n||0).toLocaleString('en-CA',{minimumFractionDigits:0,maximumFractionDigits:0});}
+  function fPct(n,d){return parseFloat(n||0).toFixed(d===undefined?1:d)+'%';}
+  function fDate(s,opts){if(!s)return '—';return new Date(s).toLocaleDateString('en-CA',opts||{month:'short',day:'numeric'});}
+  function fDateTime(s){if(!s)return '—';var d=new Date(s);return d.toLocaleDateString('en-CA',{month:'short',day:'numeric'})+' '+d.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});}
+  function fDelta(cur,prev){if(!prev||prev===0)return{pct:'0.0',dir:'flat'};var p=((cur-prev)/Math.abs(prev))*100;return{pct:Math.abs(p).toFixed(1),dir:p>0.5?'up':p<-0.5?'down':'flat'};}
+
+  /* ── TOAST ──────────────────────────────────── */
+  function toast(msg,type,dur) {
+    var c=document.getElementById('toast-container');
+    if(!c){c=document.createElement('div');c.id='toast-container';c.style.cssText='position:fixed;bottom:1.25rem;right:1.25rem;z-index:9999;display:flex;flex-direction:column;gap:.4rem;pointer-events:none';document.body.appendChild(c);}
+    var icons={success:'✅',error:'❌',warning:'⚠️',info:'ℹ️'};
+    type=type||'info';
+    var colors={success:'#ECFDF5;border-color:#6EE7B7',error:'#FEF2F2;border-color:#FECACA',warning:'#FFFBEB;border-color:#FCD34D',info:'#EFF6FF;border-color:#BFDBFE'};
+    var el=document.createElement('div');
+    el.style.cssText='background:'+colors[type]+';border:1.5px solid;border-radius:10px;padding:.65rem .9rem;font-size:.79rem;display:flex;align-items:center;gap:.5rem;box-shadow:0 4px 16px rgba(0,0,0,.1);max-width:300px;pointer-events:auto;color:#111827;font-family:Inter,sans-serif';
+    el.innerHTML='<span>'+icons[type]+'</span><span>'+msg+'</span>';
+    c.appendChild(el);
+    setTimeout(function(){el.style.transition='.2s';el.style.opacity='0';el.style.transform='translateX(110%)';setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},200);},dur||3200);
+  }
+
+  /* ── TABLE HELPERS ──────────────────────────── */
   function makeSortable(table) {
-    var headers = table.querySelectorAll('thead th');
-    var currentSort = { col: -1, dir: 1 };
-    headers.forEach(function(th, idx) {
-      th.addEventListener('click', function() {
-        var rows = Array.from(table.querySelectorAll('tbody tr'));
-        var dir = (currentSort.col === idx) ? -currentSort.dir : 1;
-        currentSort = { col: idx, dir: dir };
-        headers.forEach(function(h) { h.classList.remove('sort-asc','sort-desc'); });
-        th.classList.add(dir === 1 ? 'sort-asc' : 'sort-desc');
-        rows.sort(function(a, b) {
-          var av = (a.cells[idx] ? a.cells[idx].textContent : '').trim();
-          var bv = (b.cells[idx] ? b.cells[idx].textContent : '').trim();
-          var an = parseFloat(av.replace(/[^0-9.-]/g,''));
-          var bn = parseFloat(bv.replace(/[^0-9.-]/g,''));
-          if (!isNaN(an) && !isNaN(bn)) return (an - bn) * dir;
-          return av.localeCompare(bv) * dir;
+    if(!table) return;
+    var headers=table.querySelectorAll('thead th'),cur={col:-1,dir:1};
+    headers.forEach(function(th,idx){
+      th.style.cursor='pointer';
+      th.addEventListener('click',function(){
+        var dir=cur.col===idx?-cur.dir:1; cur={col:idx,dir:dir};
+        headers.forEach(function(h){h.style.color='';});
+        th.style.color='var(--pink)';
+        var rows=Array.from(table.querySelectorAll('tbody tr'));
+        rows.sort(function(a,b){
+          var av=(a.cells[idx]?a.cells[idx].textContent:'').trim();
+          var bv=(b.cells[idx]?b.cells[idx].textContent:'').trim();
+          var an=parseFloat(av.replace(/[^0-9.-]/g,'')),bn=parseFloat(bv.replace(/[^0-9.-]/g,''));
+          if(!isNaN(an)&&!isNaN(bn))return(an-bn)*dir;
+          return av.localeCompare(bv)*dir;
         });
-        var tbody = table.querySelector('tbody');
-        rows.forEach(function(r) { tbody.appendChild(r); });
+        var tb=table.querySelector('tbody');
+        rows.forEach(function(r){tb.appendChild(r);});
       });
     });
   }
-
-  // ── Search filter ──
-  function makeSearchable(inputEl, tableEl) {
-    inputEl.addEventListener('input', function() {
-      var q = this.value.toLowerCase();
-      var rows = tableEl.querySelectorAll('tbody tr');
-      var visible = 0;
-      rows.forEach(function(row) {
-        var match = row.textContent.toLowerCase().indexOf(q) !== -1;
-        row.style.display = match ? '' : 'none';
-        if (match) visible++;
+  function makeSearchable(inp,table){
+    if(!inp||!table)return;
+    inp.addEventListener('input',function(){
+      var q=this.value.toLowerCase();
+      table.querySelectorAll('tbody tr').forEach(function(r){
+        r.style.display=!q||r.textContent.toLowerCase().indexOf(q)!==-1?'':'none';
       });
-      var info = tableEl.closest('.card, .card-wrap');
-      if (info) {
-        var infoEl = info.querySelector('.table-info');
-        if (infoEl) infoEl.textContent = visible + ' results';
-      }
     });
+  }
+  function startClock(greetEl,dateEl){
+    function tick(){
+      var n=new Date(),h=n.getHours();
+      var gr=h<12?'Good morning':h<18?'Good afternoon':'Good evening';
+      if(greetEl)greetEl.textContent=gr+' ✦';
+      if(dateEl)dateEl.textContent=n.toLocaleDateString('en-CA',{weekday:'short',month:'short',day:'numeric'})+' · '+n.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
+    }
+    tick(); return setInterval(tick,30000);
   }
 
   return {
-    getRange: getRange,
-    getCompareRange: getCompareRange,
-    inRange: inRange,
-    fCurrency: fCurrency,
-    fPct: fPct,
-    fNum: fNum,
-    fDate: fDate,
-    fDateTime: fDateTime,
-    fDelta: fDelta,
-    filterBookings: filterBookings,
-    filterClients: filterClients,
-    sumRevenue: sumRevenue,
-    sumCommission: sumCommission,
-    avgTicket: avgTicket,
-    groupBy: groupBy,
-    groupByDate: groupByDate,
-    calcKPIs: calcKPIs,
-    toast: toast,
-    startClock: startClock,
-    makeSortable: makeSortable,
-    makeSearchable: makeSearchable
+    getWorkHours:getWorkHours, localDateStr:localDateStr, isSameLocalDay:isSameLocalDay,
+    getRange:getRange, getCompareRange:getCompareRange, inRange:inRange,
+    hasConflict:hasConflict, isWithinWorkHours:isWithinWorkHours,
+    filterBookings:filterBookings, filterPayments:filterPayments,
+    sumRevenue:sumRevenue, sumCommission:sumCommission, groupBy:groupBy, groupByDate:groupByDate,
+    calcKPIs:calcKPIs, staffAnalytics:staffAnalytics, clientAnalytics:clientAnalytics,
+    fCurrency:fCurrency, fPct:fPct, fDate:fDate, fDateTime:fDateTime, fDelta:fDelta,
+    toast:toast, makeSortable:makeSortable, makeSearchable:makeSearchable, startClock:startClock,
   };
 })();
