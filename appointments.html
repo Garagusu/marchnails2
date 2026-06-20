@@ -300,12 +300,15 @@ window.addEventListener('DOMContentLoaded', function() {
   Utils.startClock(null, document.getElementById('tb-date'));
   setupFilters();
   setNavDate();
-    // Load demo data only if cache is empty (preserve user changes)
-  if (SB.DEMO && SB.CACHE.bookings.length === 0) {
-    SB.CACHE.clients   = JSON.parse(JSON.stringify(SB.DEMO.clients));
-    SB.CACHE.payments  = JSON.parse(JSON.stringify(SB.DEMO.payments));
-    SB.CACHE.bookings  = JSON.parse(JSON.stringify(SB.DEMO.bookings));
-    SB.CACHE.email_log = JSON.parse(JSON.stringify(SB.DEMO.email_log));
+    // Load data: localStorage first, then demo (preserves all user changes across page loads)
+  if (!SB.loadCacheFromStorage()) {
+    if (SB.DEMO) {
+      SB.CACHE.clients   = JSON.parse(JSON.stringify(SB.DEMO.clients));
+      SB.CACHE.payments  = JSON.parse(JSON.stringify(SB.DEMO.payments));
+      SB.CACHE.bookings  = JSON.parse(JSON.stringify(SB.DEMO.bookings));
+      SB.CACHE.email_log = JSON.parse(JSON.stringify(SB.DEMO.email_log));
+      SB.saveCache();
+    }
   }
   }
   if (typeof render === 'function') render();
@@ -665,6 +668,9 @@ function saveAppt() {
 
 // ── STATUS UPDATE ──
 function updateStatus(id, status) {
+  var bk0 = SB.CACHE.bookings.find(function(b) { return b.id === id; });
+  if (bk0) bk0.status = status;
+  SB.saveCache();
   SB.update('bookings', id, { status: status }).then(function() {
     var bk = SB.CACHE.bookings.find(function(b) { return b.id === id; });
     if (bk) bk.status = status;
