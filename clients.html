@@ -1,560 +1,235 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>March Nails — Clients</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link rel="stylesheet" href="css/core.css">
-<link rel="stylesheet" href="css/components.css">
-
-<style>
-.client-grid { display: grid; grid-template-columns: 340px 1fr; gap: 1rem; }
-@media (max-width:1100px) { .client-grid { grid-template-columns: 1fr; } }
-.client-card { background:var(--white); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--sh-sm); overflow:hidden; }
-.client-card-header { padding:1.1rem; border-bottom:1px solid var(--border); }
-.profile-hero { display:flex; align-items:flex-start; gap:.85rem; margin-bottom:.85rem; }
-.profile-avatar { width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.2rem; font-weight:700; color:#fff; flex-shrink:0; background:linear-gradient(135deg,var(--pink),var(--violet)); }
-.profile-name { font-family:var(--fontd); font-size:1rem; font-weight:700; margin-bottom:2px; }
-.profile-meta { font-size:.75rem; color:var(--text2); line-height:1.5; }
-.profile-tags { display:flex; gap:.35rem; flex-wrap:wrap; margin-top:.4rem; }
-.ltv-box { background:linear-gradient(135deg,var(--pink-bg),var(--violet-bg)); border:1px solid var(--pink-bd); border-radius:var(--r-sm); padding:.75rem; text-align:center; margin-bottom:.85rem; }
-.ltv-val { font-family:var(--fontd); font-size:1.6rem; font-weight:700; color:var(--pink); }
-.ltv-lbl { font-size:.68rem; color:var(--text2); }
-.stat-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:.4rem; margin-bottom:.85rem; }
-.stat-box { background:var(--bg); border-radius:var(--r-sm); padding:.5rem; text-align:center; }
-.stat-v { font-size:.95rem; font-weight:700; font-family:var(--fontd); }
-.stat-l { font-size:.6rem; color:var(--text2); margin-top:1px; }
-.loyalty-bar-wrap { background:var(--gold-bg); border:1px solid var(--amber-bd); border-radius:var(--r-sm); padding:.75rem; margin-bottom:.85rem; }
-.allergy-box { background:var(--red-bg); border:1px solid var(--red-bd); border-radius:var(--r-sm); padding:.6rem .75rem; margin-bottom:.5rem; font-size:.78rem; }
-.pref-box { background:var(--blue-bg); border:1px solid var(--blue-bd); border-radius:var(--r-sm); padding:.6rem .75rem; font-size:.78rem; }
-/* Photo grid */
-.photo-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:.4rem; }
-.photo-thumb { aspect-ratio:1; border-radius:var(--r-sm); background:var(--pink-bg); border:1px solid var(--pink-bd); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; cursor:pointer; transition:all .15s; }
-.photo-thumb:hover { border-color:var(--pink); transform:scale(1.02); }
-.photo-add { border-style:dashed; background:var(--s1); border-color:var(--border2); }
-/* Client list */
-.client-list-item { display:flex; align-items:center; gap:.75rem; padding:.7rem .85rem; border-bottom:1px solid var(--s1); cursor:pointer; transition:background .12s; }
-.client-list-item:hover { background:var(--bg); }
-.client-list-item.selected { background:var(--pink-bg); }
-.client-list-item:last-child { border-bottom:none; }
-.cli-name { font-size:.82rem; font-weight:600; margin-bottom:1px; }
-.cli-meta { font-size:.68rem; color:var(--text2); }
-.cli-ltv  { font-size:.78rem; font-weight:700; color:var(--pink); white-space:nowrap; }
-/* Segment filter tabs */
-.seg-tabs { display:flex; gap:.25rem; flex-wrap:wrap; margin-bottom:.75rem; }
-.seg-tab { padding:.25rem .65rem; border-radius:50px; font-size:.72rem; font-weight:500; cursor:pointer; border:1.5px solid var(--border); background:var(--white); color:var(--text2); transition:all .15s; }
-.seg-tab:hover { border-color:var(--pink); color:var(--pink); }
-.seg-tab.active { background:var(--pink); border-color:var(--pink); color:#fff; }
-</style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-  <script src="js/supabase.js"></script>
-  <script src="js/utils.js"></script>
-  <script src="js/charts.js"></script>
-  <script src="js/export.js"></script>
+<link rel="stylesheet" href="css/core.css"><link rel="stylesheet" href="css/components.css">
+<script src="js/supabase.js"></script><script src="js/utils.js"></script>
 </head>
 <body>
 <div class="app-layout">
-
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand"><div class="brand-name">March <span>Nails</span></div><div class="brand-sub">Business Intelligence</div></div>
     <nav class="sidebar-nav">
       <div class="nav-section">Analytics</div>
-      <a class="nav-item " href="dashboard.html"><i class="fa-solid fa-gauge-high"></i>Dashboard</a>
+      <a class="nav-item" href="dashboard.html"><i class="fa-solid fa-gauge-high"></i>Dashboard</a>
       <a class="nav-item" href="booking.html"><i class="fa-solid fa-calendar-check" style="color:var(--pink)"></i>Booking</a>
-      <a class="nav-item " href="reports.html"><i class="fa-solid fa-chart-column"></i>Reports</a>
+      <a class="nav-item" href="reports.html"><i class="fa-solid fa-chart-column"></i>Reports</a>
       <div class="nav-section">Operations</div>
-      <a class="nav-item " href="appointments.html"><i class="fa-solid fa-calendar-check"></i>Appointments</a>
+      <a class="nav-item" href="appointments.html"><i class="fa-solid fa-calendar-days"></i>Appointments</a>
       <a class="nav-item active" href="clients.html"><i class="fa-solid fa-users"></i>Clients</a>
-      <a class="nav-item " href="staff.html"><i class="fa-solid fa-id-badge"></i>Staff</a>
-      <div class="nav-section">Business</div>
-      <a class="nav-item" href="reports.html"><i class="fa-solid fa-money-bill-trend-up"></i>Revenue</a>
-      <a class="nav-item" href="appointments.html"><i class="fa-solid fa-envelope"></i>Email Log</a>
-      <a class="nav-item" href="appointments.html"><i class="fa-solid fa-scissors"></i>Services</a>
-      <a class="nav-item" href="clients.html"><i class="fa-solid fa-crown"></i>Loyalty</a>
+      <a class="nav-item" href="staff.html"><i class="fa-solid fa-id-badge"></i>Staff</a>
     </nav>
-    
-    <div class="sidebar-footer">
-      <div class="user-info">
-        <div class="user-avatar">A</div>
-        <div><div class="user-name">Admin</div><div class="user-role">Salon Owner</div></div>
-        <button class="btn btn-ghost btn-icon" onclick="logout()" style="margin-left:auto"><i class="fa-solid fa-right-from-bracket" style="font-size:.8rem;color:var(--text3)"></i></button>
-      </div>
-    </div>
+    <div class="sidebar-footer"><div class="user-info"><div class="user-avatar">A</div><div><div class="user-name">Admin</div><div class="user-role">Salon Owner</div></div><button class="btn btn-ghost btn-icon" onclick="localStorage.removeItem('mn_auth');location.href='index.html'" style="margin-left:auto"><i class="fa-solid fa-right-from-bracket" style="font-size:.8rem;color:var(--text3)"></i></button></div></div>
   </aside>
-
   <div class="main-area">
     <div class="topbar">
       <button class="btn btn-ghost btn-icon" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="fa-solid fa-bars"></i></button>
-      <div class="topbar-title">Clients</div>
+      <div class="topbar-title" id="page-title">Clients</div>
       <div class="topbar-date" id="tb-date"></div>
-      <div class="topbar-right">
-        <button class="btn btn-primary" onclick="openNewClient()"><i class="fa-solid fa-user-plus"></i>Add Client</button>
-        <button class="export-btn excel" onclick="Export.exportClients(SB.CACHE.clients)"><i class="fa-solid fa-file-excel"></i>Export</button>
-      </div>
     </div>
-
-    <div class="page-content">
-
-      <!-- KPI Row -->
-      <div class="grid grid-5 mb-1" id="client-kpis"></div>
-
-      <!-- Main layout: list + profile -->
-      <div class="client-grid">
-
-        <!-- LEFT: Client list -->
-        <div>
-          <!-- Search & Segments -->
-          <div class="card" style="margin-bottom:.75rem;padding:.75rem">
-            <div class="search-box" style="margin-bottom:.6rem">
-              <i class="fa-solid fa-magnifying-glass"></i>
-              <input type="text" id="client-search" placeholder="Search by name, email, phone…" oninput="filterClientList(this.value)">
-            </div>
-            <div class="seg-tabs" id="seg-tabs">
-              <button class="seg-tab active" data-seg="all" onclick="setSegment('all',this)">All</button>
-              <button class="seg-tab" data-seg="gold" onclick="setSegment('gold',this)">★ Gold+</button>
-              <button class="seg-tab" data-seg="silver" onclick="setSegment('silver',this)">Silver</button>
-              <button class="seg-tab" data-seg="vip" onclick="setSegment('vip',this)">VIP</button>
-              <button class="seg-tab" data-seg="new" onclick="setSegment('new',this)">New (1 visit)</button>
-              <button class="seg-tab" data-seg="inactive" onclick="setSegment('inactive',this)">Inactive 30d</button>
-              <button class="seg-tab" data-seg="noshow" onclick="setSegment('noshow',this)">No-shows</button>
-              <button class="seg-tab" data-seg="birthday" onclick="setSegment('birthday',this)">🎂 Birthday</button>
-            </div>
-          </div>
-          <div class="client-card">
-            <div id="client-list" style="max-height:640px;overflow-y:auto"></div>
-          </div>
-        </div>
-
-        <!-- RIGHT: Client profile -->
-        <div id="client-profile">
-          <div class="card" style="text-align:center;padding:3rem">
-            <i class="fa-solid fa-user-circle" style="font-size:3rem;color:var(--border2);display:block;margin-bottom:.75rem"></i>
-            <div style="font-size:.88rem;color:var(--text2)">Select a client to view their profile</div>
-          </div>
-        </div>
-
-      </div>
-
-    </div>
+    <div class="page-content" id="page-content"></div>
   </div>
 </div>
-
-<!-- NEW CLIENT MODAL -->
-<div class="modal-overlay" id="new-client-modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title"><i class="fa-solid fa-user-plus" style="color:var(--pink)"></i> New Client</div>
-      <button class="modal-close" onclick="document.getElementById('new-client-modal').style.display='none'">×</button>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">First Name</label><input class="form-input" id="nc-first" placeholder="Emma"></div>
-      <div class="form-group"><label class="form-label">Last Name</label><input class="form-input" id="nc-last" placeholder="Johnson"></div>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="nc-email" type="email" placeholder="emma@email.com"></div>
-      <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="nc-phone" placeholder="(613) 555-0000"></div>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Birthday</label><input class="form-input" id="nc-birthday" type="date"></div>
-      <div class="form-group"><label class="form-label">Tier</label><select class="form-select" id="nc-tier"><option value="standard">Standard</option><option value="silver">Silver</option><option value="gold">Gold</option></select></div>
-    </div>
-    <div class="form-group" style="margin-bottom:.75rem"><label class="form-label">Allergy / Warning Notes</label><textarea class="form-input" id="nc-allergy" placeholder="Any allergies or warnings…" style="height:55px;resize:none"></textarea></div>
-    <div class="form-group" style="margin-bottom:1rem"><label class="form-label">Preferences</label><textarea class="form-input" id="nc-pref" placeholder="Color preferences, favorite staff…" style="height:55px;resize:none"></textarea></div>
-    <div style="display:flex;gap:.5rem;justify-content:flex-end">
-      <button class="btn" onclick="document.getElementById('new-client-modal').style.display='none'">Cancel</button>
-      <button class="btn btn-primary" onclick="saveNewClient()"><i class="fa-solid fa-check"></i>Save Client</button>
-    </div>
-  </div>
-</div>
-
 <div id="toast-container"></div>
 <script>
 'use strict';
+if (!localStorage.getItem('mn_auth')) location.href='index.html';
 
-if (!localStorage.getItem('mn_auth')) { window.location.href = 'index.html'; }
-function logout() { localStorage.removeItem('mn_auth'); window.location.href = 'index.html'; }
-
-var SELECTED_CLIENT = null;
-var SEGMENT = 'all';
-var SEARCH_Q = '';
-
-// clock in DOMContentLoaded
+var STATE = {view:'list', selectedClient:null, search:'', tier:'all', staff:'all', svc:'all', minSpend:'', maxSpend:'', sortBy:'ltv', sortDir:-1};
 
 window.addEventListener('DOMContentLoaded', function() {
   Utils.startClock(null, document.getElementById('tb-date'));
-  // Always start with full demo data as base
-  if (SB.DEMO) {
-    SB.CACHE.clients   = JSON.parse(JSON.stringify(SB.DEMO.clients));
-    SB.CACHE.payments  = JSON.parse(JSON.stringify(SB.DEMO.payments));
-    SB.CACHE.bookings  = JSON.parse(JSON.stringify(SB.DEMO.bookings));
-    SB.CACHE.email_log = JSON.parse(JSON.stringify(SB.DEMO.email_log));
-  }
-  // Then apply any saved changes from localStorage on top
-  try {
-    var _ls = localStorage.getItem('mn_cache_v2');
-    if (_ls) {
-      var _d = JSON.parse(_ls);
-      // Apply status/payment changes to existing bookings
-      if (_d.bookings) {
-        _d.bookings.forEach(function(lsBk) {
-          var existing = SB.CACHE.bookings.find(function(b){ return b.id === lsBk.id; });
-          if (existing) {
-            // Apply saved status/payment changes
-            existing.status         = lsBk.status         || existing.status;
-            existing.payment_status = lsBk.payment_status || existing.payment_status;
-            existing.payment_method = lsBk.payment_method || existing.payment_method;
-          } else {
-            // New booking added by user - add it
-            SB.CACHE.bookings.unshift(lsBk);
-          }
-        });
-      }
-      // Add new payments from localStorage
-      if (_d.payments) {
-        _d.payments.forEach(function(lsPay) {
-          var exists = SB.CACHE.payments.find(function(p){ return p.id === lsPay.id; });
-          if (!exists) SB.CACHE.payments.unshift(lsPay);
-        });
-      }
-      // Add new clients from localStorage
-      if (_d.clients) {
-        _d.clients.forEach(function(lsCli) {
-          var exists = SB.CACHE.clients.find(function(c){ return c.id === lsCli.id; });
-          if (!exists) SB.CACHE.clients.push(lsCli);
-        });
-      }
+  if (!SB.loadCacheFromStorage()) {
+    if (SB.DEMO) {
+      SB.CACHE.clients=JSON.parse(JSON.stringify(SB.DEMO.clients));
+      SB.CACHE.payments=JSON.parse(JSON.stringify(SB.DEMO.payments));
+      SB.CACHE.bookings=JSON.parse(JSON.stringify(SB.DEMO.bookings));
+      SB.CACHE.email_log=JSON.parse(JSON.stringify(SB.DEMO.email_log));
+      SB.saveCache();
     }
-  } catch(e) { /* bad localStorage data - ignore */ }
-  renderKPIs();
-  renderClientList();
-  // Try Supabase in background (demo data already loaded)
-  if (window.location.protocol !== 'file:') {
-    SB.loadAll().then(function() {
-      renderKPIs(); renderClientList();
-    }).catch(function(){});
-  };
+  }
+  if (window.location.protocol !== 'file:') SB.loadAll().then(function(){SB.saveCache();renderPage();}).catch(function(){});
+  renderPage();
 });
 
-function renderKPIs() {
-  var clients = SB.CACHE.clients;
-  var today = new Date();
-  var bdToday = clients.filter(function(c) {
-    if (!c.birthday) return false;
-    var bd = new Date(c.birthday);
-    return bd.getMonth() === today.getMonth() && bd.getDate() === today.getDate();
-  });
-  var inactive30 = clients.filter(function(c) {
-    var lastBk = SB.CACHE.bookings.filter(function(b) { return b.client_name === (c.first_name+' '+c.last_name); })
-      .sort(function(a,b){return new Date(b.booked_at)-new Date(a.booked_at);})[0];
-    if (!lastBk) return true;
-    return (today - new Date(lastBk.booked_at)) > 30*24*3600*1000;
-  });
-  var kpis = [
-    {l:'Total Clients', v:clients.length,                                                      c:'#E91E8C', i:'fa-users'},
-    {l:'VIP (Gold+)',   v:clients.filter(function(c){return c.tier==='gold'||c.tier==='platinum';}).length, c:'#D97706', i:'fa-crown'},
-    {l:'Silver',        v:clients.filter(function(c){return c.tier==='silver';}).length,        c:'#7C3AED', i:'fa-star'},
-    {l:'Birthdays Today',v:bdToday.length,                                                      c:'#E91E8C', i:'fa-cake-candles'},
-    {l:'Inactive 30d',  v:inactive30.length,                                                    c:'#DC2626', i:'fa-user-clock'}
-  ];
-  document.getElementById('client-kpis').innerHTML = kpis.map(function(k) {
-    return '<div class="kpi-card" style="--kpi-color:'+k.c+'"><div class="kpi-top"><div class="kpi-icon" style="background:'+k.c+'18"><i class="fa-solid '+k.i+'" style="color:'+k.c+'"></i></div></div><div class="kpi-value">'+k.v+'</div><div class="kpi-label">'+k.l+'</div></div>';
-  }).join('');
+function renderPage(){
+  if (STATE.selectedClient) renderClientDetail(STATE.selectedClient);
+  else renderClientList();
 }
 
-function setSegment(seg, btn) {
-  SEGMENT = seg;
-  document.querySelectorAll('.seg-tab').forEach(function(b) { b.classList.remove('active'); });
-  btn.classList.add('active');
-  renderClientList();
-}
+/* ── CLIENT LIST ── */
+function renderClientList(){
+  document.getElementById('page-title').textContent='Clients';
 
-function filterClientList(q) { SEARCH_Q = q.toLowerCase(); renderClientList(); }
-
-function getFilteredClients() {
-  var clients = SB.CACHE.clients.slice();
-  var today = new Date();
-
-  // Segment
-  if (SEGMENT === 'gold')     clients = clients.filter(function(c){return c.tier==='gold'||c.tier==='platinum';});
-  else if (SEGMENT === 'silver')   clients = clients.filter(function(c){return c.tier==='silver';});
-  else if (SEGMENT === 'vip')      clients = clients.filter(function(c){return c.vip;});
-  else if (SEGMENT === 'new')      clients = clients.filter(function(c){
-    return SB.CACHE.bookings.filter(function(b){return b.client_id===c.id;}).length === 1;
-  });
-  else if (SEGMENT === 'noshow')   clients = clients.filter(function(c){return (c.no_show_count||0)>0;});
-  else if (SEGMENT === 'birthday') clients = clients.filter(function(c){
-    if (!c.birthday) return false;
-    var bd=new Date(c.birthday); return bd.getMonth()===today.getMonth()&&bd.getDate()===today.getDate();
-  });
-  else if (SEGMENT === 'inactive') clients = clients.filter(function(c){
-    var bks=SB.CACHE.bookings.filter(function(b){return b.client_id===c.id;})
-      .sort(function(a,b){return new Date(b.booked_at)-new Date(a.booked_at);});
-    if(!bks.length) return true;
-    return (today-new Date(bks[0].booked_at))>30*24*3600*1000;
+  // Build enriched client data
+  var enriched = SB.CACHE.clients.map(function(c){
+    var a=Utils.clientAnalytics(c.id, (c.first_name||'')+' '+(c.last_name||''), SB.CACHE.bookings, SB.CACHE.payments);
+    return Object.assign({},c,{_ltv:a.ltv,_visits:a.totalVisits,_last:a.lastVisit,_first:a.firstVisit,_topSvc:a.topService,_topStaff:a.topStaff,_avgTicket:a.avgTicket,_freq:a.avgFrequencyDays,_noshow:a.noshow});
   });
 
-  // Search
-  if (SEARCH_Q) {
-    clients = clients.filter(function(c) {
-      var name=((c.first_name||'')+' '+(c.last_name||'')).toLowerCase();
-      return name.indexOf(SEARCH_Q)!==-1 || (c.email||'').toLowerCase().indexOf(SEARCH_Q)!==-1 || (c.phone||'').indexOf(SEARCH_Q)!==-1;
-    });
-  }
-  return clients;
-}
-
-function renderClientList() {
-  var clients = getFilteredClients();
-  var tierBadge = {standard:'badge-blue',silver:'badge-violet',gold:'badge-gold',platinum:'badge-pink'};
-  var grads = ['linear-gradient(135deg,#E91E8C,#7C3AED)','linear-gradient(135deg,#7C3AED,#4F46E5)','linear-gradient(135deg,#06B6D4,#0284C7)','linear-gradient(135deg,#D97706,#B45309)','linear-gradient(135deg,#EF4444,#DC2626)'];
-
-  var html = clients.map(function(c, i) {
-    var name = (c.first_name||'') + ' ' + (c.last_name||'');
-    var bks  = SB.CACHE.bookings.filter(function(b){return b.client_id===c.id;});
-    var pay  = SB.CACHE.payments.filter(function(p){return p.client_id===c.id;});
-    var ltv  = Utils.sumRevenue(pay);
-    var isSelected = SELECTED_CLIENT && SELECTED_CLIENT.id === c.id;
-    var bd = c.birthday ? new Date(c.birthday) : null;
-    var today = new Date();
-    var isBd = bd && bd.getMonth()===today.getMonth() && bd.getDate()===today.getDate();
-
-    return '<div class="client-list-item' + (isSelected?' selected':'') + '" data-id="' + c.id + '" onclick="selectClient(\'' + c.id + '\')">' +
-      '<div class="avatar avatar-md" style="background:' + grads[i%grads.length] + '">' + (c.first_name||'?')[0] + '</div>' +
-      '<div style="flex:1;min-width:0">' +
-        '<div class="cli-name">' + name + (isBd?' 🎂':'') + '</div>' +
-        '<div class="cli-meta">' + (c.email||'') + ' · ' + bks.length + ' visits</div>' +
-      '</div>' +
-      '<div style="text-align:right;flex-shrink:0">' +
-        '<div class="cli-ltv">' + Utils.fCurrency(ltv) + '</div>' +
-        '<span class="badge ' + (tierBadge[c.tier]||'badge-blue') + '" style="font-size:.58rem">' + (c.tier||'std') + '</span>' +
-      '</div>' +
-      '</div>';
-  }).join('');
-
-  document.getElementById('client-list').innerHTML = html ||
-    '<div class="empty-state" style="padding:2rem"><i class="fa-solid fa-user-slash"></i><p>No clients match</p></div>';
-}
-
-function selectClient(id) {
-  SELECTED_CLIENT = SB.CACHE.clients.find(function(c) { return c.id === id; });
-  if (!SELECTED_CLIENT) return;
-  renderClientList(); // re-render to show selection
-  renderClientProfile(SELECTED_CLIENT);
-}
-
-function renderClientProfile(c) {
-  var name = (c.first_name||'') + ' ' + (c.last_name||'');
-  var bks  = SB.CACHE.bookings.filter(function(b){return b.client_id===c.id;}).sort(function(a,b){return new Date(b.booked_at)-new Date(a.booked_at);});
-  var pay  = SB.CACHE.payments.filter(function(p){return p.client_id===c.id;});
-  var ltv  = Utils.sumRevenue(pay);
-  var avg  = pay.length ? ltv/pay.length : 0;
-  var emails = SB.CACHE.email_log.filter(function(e){return e.client_id===c.id;}).slice(0,8);
-
-  // Loyalty
-  var tierPts = {standard:0, silver:500, gold:1000, platinum:2000};
-  var nextTier = {standard:'Silver', silver:'Gold', gold:'Platinum', platinum:'Platinum!'};
-  var pts = c.loyalty_points || 0;
-  var nextPts = tierPts[c.tier==='standard'?'silver':c.tier==='silver'?'gold':c.tier==='gold'?'platinum':'platinum'] || 2000;
-  var pct = Math.min(100, nextPts > 0 ? (pts/nextPts*100) : 100);
-
-  // tier badge colors
-  var tierC = {standard:'badge-blue',silver:'badge-violet',gold:'badge-gold',platinum:'badge-pink'};
-
-  // Birthday
-  var bd = c.birthday ? new Date(c.birthday) : null;
-  var bdStr = bd ? bd.toLocaleDateString('en-CA',{month:'long',day:'numeric'}) : '—';
-  var today = new Date();
-  var isBdToday = bd && bd.getMonth()===today.getMonth() && bd.getDate()===today.getDate();
-
-  // Build profile HTML
-  var profileHTML = '<div class="client-card">' +
-    // Header
-    '<div style="background:linear-gradient(135deg,var(--pink-bg),var(--violet-bg));padding:1.1rem;border-bottom:1px solid var(--border)">' +
-      '<div class="profile-hero">' +
-        '<div class="profile-avatar" style="' + (c.vip?'outline:2px solid var(--gold);outline-offset:2px':'') + '">' + (c.first_name||'?')[0] + '</div>' +
-        '<div style="flex:1">' +
-          '<div class="profile-name">' + name + (isBdToday?' 🎂':'') + '</div>' +
-          '<div class="profile-meta">' + (c.email||'') + '<br>' + (c.phone||'—') + ' · Birthday: ' + bdStr + '</div>' +
-          '<div class="profile-tags">' +
-            '<span class="badge ' + (tierC[c.tier]||'badge-blue') + '">' + (c.tier||'standard') + '</span>' +
-            (c.vip ? '<span class="badge badge-gold">★ VIP</span>' : '') +
-            (bks.length>10 ? '<span class="badge badge-pink">Loyal Client</span>' : '') +
-            ((c.no_show_count||0)>2 ? '<span class="badge badge-red">'+c.no_show_count+' No-shows</span>' : '') +
-          '</div>' +
-        '</div>' +
-        '<div style="text-align:right">' +
-          '<button class="btn btn-primary btn-sm" onclick="bookForClient(\'' + c.id + '\')"><i class="fa-solid fa-calendar-plus"></i>Book</button>' +
-        '</div>' +
-      '</div>' +
-
-      // LTV + Stats
-      '<div class="ltv-box">' +
-        '<div class="ltv-val">' + Utils.fCurrency(ltv) + '</div>' +
-        '<div class="ltv-lbl">Lifetime Value · ' + bks.length + ' visits</div>' +
-      '</div>' +
-      '<div class="stat-row">' +
-        '<div class="stat-box"><div class="stat-v">' + bks.length + '</div><div class="stat-l">Visits</div></div>' +
-        '<div class="stat-box"><div class="stat-v">' + Utils.fCurrency(avg) + '</div><div class="stat-l">Avg Ticket</div></div>' +
-        '<div class="stat-box"><div class="stat-v">' + (c.no_show_count||0) + '</div><div class="stat-l">No-shows</div></div>' +
-      '</div>' +
-
-      // Loyalty
-      '<div class="loyalty-bar-wrap">' +
-        '<div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:4px">' +
-          '<span style="font-weight:600">Loyalty Points</span>' +
-          '<span style="color:var(--gold);font-weight:700">' + pts + ' pts</span>' +
-        '</div>' +
-        '<div class="progress"><div class="progress-bar" style="width:' + pct + '%;background:linear-gradient(90deg,#B45309,#D97706)"></div></div>' +
-        '<div style="font-size:.68rem;color:var(--text2);margin-top:3px">' + (c.tier||'standard').charAt(0).toUpperCase()+(c.tier||'standard').slice(1) + ' · ' + (nextPts-pts > 0 ? (nextPts-pts)+' more pts → '+nextTier[c.tier||'standard'] : 'Max tier!') + '</div>' +
-      '</div>' +
-
-      // Allergy + Prefs
-      (c.allergy_notes ? '<div class="allergy-box"><i class="fa-solid fa-triangle-exclamation" style="color:var(--red)"></i> <strong>Allergy / Warning:</strong> ' + c.allergy_notes + '</div>' : '') +
-      (c.preferences ? '<div class="pref-box"><i class="fa-solid fa-heart" style="color:var(--blue)"></i> <strong>Preferences:</strong> ' + c.preferences + '</div>' : '') +
-    '</div>' + // end header
-
-    // Tabs
-    '<div style="display:flex;border-bottom:1px solid var(--border)">' +
-      '<button class="report-tab active" style="border-radius:0;border-bottom:none;padding:.6rem .9rem" onclick="showProfileTab(\'history\',this)">History</button>' +
-      '<button class="report-tab" style="border-radius:0;border-bottom:none;padding:.6rem .9rem" onclick="showProfileTab(\'emails\',this)">Emails</button>' +
-      '<button class="report-tab" style="border-radius:0;border-bottom:none;padding:.6rem .9rem" onclick="showProfileTab(\'photos\',this)">Photos</button>' +
-      '<button class="report-tab" style="border-radius:0;border-bottom:none;padding:.6rem .9rem" onclick="showProfileTab(\'edit\',this)">Edit</button>' +
-    '</div>' +
-
-    // History
-    '<div id="ptab-history" style="padding:1rem">' +
-      '<div class="table-wrap">' +
-        '<table class="data-table" id="client-hist-table">' +
-          '<thead><tr><th>Date</th><th>Service</th><th>Staff</th><th>Price</th><th>Payment</th><th>Rating</th></tr></thead>' +
-          '<tbody>' +
-          bks.slice(0,15).map(function(b) {
-            return '<tr><td class="td-muted" style="white-space:nowrap">'+Utils.fDate(b.booked_at)+'</td>' +
-              '<td class="tds">'+b.service_name+'</td>' +
-              '<td class="td-muted">'+b.staff_name+'</td>' +
-              '<td class="td-pos">CA$'+b.service_price+'</td>' +
-              '<td>'+(b.payment_status==='paid'?'<span class="badge badge-green">Paid</span>':'<span class="badge badge-amber">Unpaid</span>')+'</td>' +
-              '<td style="color:var(--amber)">⭐⭐⭐⭐⭐</td></tr>';
-          }).join('') +
-          (bks.length===0?'<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--text3)">No visits yet</td></tr>':'') +
-          '</tbody>' +
-        '</table>' +
-      '</div>' +
-    '</div>' +
-
-    // Emails
-    '<div id="ptab-emails" style="padding:1rem;display:none">' +
-      (emails.length > 0 ? emails.map(function(e) {
-        var iconMap = {receipt:'fa-receipt',confirmation:'fa-calendar-check',birthday:'fa-cake-candles',reminder:'fa-bell',winback:'fa-rotate-left'};
-        return '<div class="email-item" style="display:flex;align-items:flex-start;gap:.65rem;padding:.65rem .85rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:.4rem">' +
-          '<div style="width:28px;height:28px;border-radius:50%;background:var(--pink-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fa-solid '+(iconMap[e.type]||'fa-envelope')+'" style="color:var(--pink);font-size:.75rem"></i></div>' +
-          '<div style="flex:1"><div style="font-size:.8rem;font-weight:500">'+(e.subject||e.type)+'</div><div style="font-size:.68rem;color:var(--text2)">'+Utils.fDate(e.sent_at)+'</div></div>' +
-          '<span class="badge '+(e.status==='opened'?'badge-green':e.status==='clicked'?'badge-blue':'badge-gray')+'">'+e.status+'</span>' +
-          '</div>';
-      }).join('') : '<div class="empty-state" style="padding:1.5rem"><i class="fa-solid fa-envelope-open"></i><p>No emails sent yet</p></div>') +
-    '</div>' +
-
-    // Photos
-    '<div id="ptab-photos" style="padding:1rem;display:none">' +
-      '<div class="photo-grid">' +
-        '<div class="photo-thumb"><i class="fa-solid fa-camera" style="color:var(--pink);font-size:1rem"></i><div style="font-size:.58rem;color:var(--text3)">Before/After</div></div>' +
-        '<div class="photo-thumb"><i class="fa-solid fa-camera" style="color:var(--pink);font-size:1rem"></i><div style="font-size:.58rem;color:var(--text3)">Before/After</div></div>' +
-        '<div class="photo-thumb photo-add" onclick="Utils.toast(\'Upload feature coming soon\',\'info\')"><i class="fa-solid fa-plus" style="color:var(--text3);font-size:.9rem"></i><div style="font-size:.58rem;color:var(--text3)">Add Photo</div></div>' +
-      '</div>' +
-    '</div>' +
-
-    // Edit
-    '<div id="ptab-edit" style="padding:1rem;display:none">' +
-      '<div class="form-row">' +
-        '<div class="form-group"><label class="form-label">First Name</label><input class="form-input" id="ec-first" value="' + (c.first_name||'') + '"></div>' +
-        '<div class="form-group"><label class="form-label">Last Name</label><input class="form-input" id="ec-last" value="' + (c.last_name||'') + '"></div>' +
-      '</div>' +
-      '<div class="form-row">' +
-        '<div class="form-group"><label class="form-label">Email</label><input class="form-input" id="ec-email" value="' + (c.email||'') + '"></div>' +
-        '<div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="ec-phone" value="' + (c.phone||'') + '"></div>' +
-      '</div>' +
-      '<div class="form-row">' +
-        '<div class="form-group"><label class="form-label">Birthday</label><input class="form-input" id="ec-bd" type="date" value="' + (c.birthday||'') + '"></div>' +
-        '<div class="form-group"><label class="form-label">Tier</label><select class="form-select" id="ec-tier"><option value="standard"' + (c.tier==='standard'?' selected':'') + '>Standard</option><option value="silver"' + (c.tier==='silver'?' selected':'') + '>Silver</option><option value="gold"' + (c.tier==='gold'?' selected':'') + '>Gold</option><option value="platinum"' + (c.tier==='platinum'?' selected':'') + '>Platinum</option></select></div>' +
-      '</div>' +
-      '<div class="form-group" style="margin-bottom:.75rem"><label class="form-label">Allergy Notes</label><textarea class="form-input" id="ec-allergy" style="height:55px;resize:none">' + (c.allergy_notes||'') + '</textarea></div>' +
-      '<div class="form-group" style="margin-bottom:.85rem"><label class="form-label">Preferences</label><textarea class="form-input" id="ec-pref" style="height:55px;resize:none">' + (c.preferences||'') + '</textarea></div>' +
-      '<div style="display:flex;gap:.4rem">' +
-        '<button class="btn btn-primary btn-sm" onclick="saveClientEdit(\'' + c.id + '\')"><i class="fa-solid fa-check"></i>Save Changes</button>' +
-        '<button class="btn btn-danger btn-sm" onclick="Utils.toast(\'Client deactivated\',\'info\')"><i class="fa-solid fa-user-slash"></i>Deactivate</button>' +
-      '</div>' +
-    '</div>' +
-
-    '</div>'; // end client-card
-
-  document.getElementById('client-profile').innerHTML = profileHTML;
-  Utils.makeSortable(document.getElementById('client-hist-table'));
-}
-
-function showProfileTab(tab, btn) {
-  var tabs = ['history','emails','photos','edit'];
-  tabs.forEach(function(t) {
-    var el = document.getElementById('ptab-' + t);
-    if (el) el.style.display = t === tab ? '' : 'none';
+  // Apply filters
+  var filtered=enriched.filter(function(c){
+    var name=((c.first_name||'')+' '+(c.last_name||'')).toLowerCase();
+    if(STATE.search && name.indexOf(STATE.search.toLowerCase())===-1 && (c.email||'').toLowerCase().indexOf(STATE.search.toLowerCase())===-1 && (c.phone||'').indexOf(STATE.search)===-1) return false;
+    if(STATE.tier!=='all' && c.tier!==STATE.tier) return false;
+    if(STATE.staff!=='all' && c._topStaff!==STATE.staff) return false;
+    if(STATE.svc!=='all' && c._topSvc!==STATE.svc) return false;
+    if(STATE.minSpend && c._ltv < parseFloat(STATE.minSpend)) return false;
+    if(STATE.maxSpend && c._ltv > parseFloat(STATE.maxSpend)) return false;
+    return true;
   });
-  document.querySelectorAll('#client-profile .report-tab').forEach(function(b) { b.classList.remove('active'); });
-  if (btn) btn.classList.add('active');
+
+  // Sort
+  filtered.sort(function(a,b){
+    var av=a[STATE.sortBy]||0, bv=b[STATE.sortBy]||0;
+    if(STATE.sortBy==='_last'||STATE.sortBy==='_first'){av=av?av.getTime():0;bv=bv?bv.getTime():0;}
+    return (av>bv?1:av<bv?-1:0)*STATE.sortDir;
+  });
+
+  // KPIs
+  var totalLTV=enriched.reduce(function(s,c){return s+c._ltv;},0);
+  var vip=enriched.filter(function(c){return c.tier==='gold'||c.tier==='platinum';});
+  var active=enriched.filter(function(c){return c._last&&(new Date()-c._last)<90*86400000;});
+
+  var html='';
+  // KPI strip
+  html+='<div class="grid grid-4 mb-1">';
+  [{l:'Total Clients',v:enriched.length,c:'var(--pink)',ic:'fa-users'},
+   {l:'Active (90d)',v:active.length,c:'var(--green)',ic:'fa-user-check'},
+   {l:'Gold/VIP',v:vip.length,c:'var(--amber)',ic:'fa-crown'},
+   {l:'Total LTV',v:Utils.fCurrency(totalLTV),c:'var(--violet)',ic:'fa-chart-line'},
+  ].forEach(function(k){html+='<div class="kpi-card" style="--kpi-color:'+k.c+'"><div class="kpi-icon"><i class="fa-solid '+k.ic+'"></i></div><div class="kpi-value">'+k.v+'</div><div class="kpi-label">'+k.l+'</div></div>';});
+  html+='</div>';
+
+  // Filters
+  html+='<div class="card mb-1">';
+  html+='<div style="display:grid;grid-template-columns:1fr 140px 120px 120px 100px 100px auto;gap:.5rem;align-items:center;padding:.5rem .75rem">';
+  html+='<div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" placeholder="Search name, email, phone…" value="'+STATE.search+'" oninput="STATE.search=this.value;renderClientList()"></div>';
+  html+='<select class="filter-select" onchange="STATE.tier=this.value;renderClientList()"><option value="all">All Tiers</option><option value="standard"'+(STATE.tier==='standard'?' selected':'')+'>Standard</option><option value="silver"'+(STATE.tier==='silver'?' selected':'')+'>Silver</option><option value="gold"'+(STATE.tier==='gold'?' selected':'')+'>Gold</option></select>';
+  html+='<select class="filter-select" onchange="STATE.staff=this.value;renderClientList()"><option value="all">All Staff</option><option'+(STATE.staff==='Happy'?' selected':'')+'>Happy</option><option'+(STATE.staff==='Flower'?' selected':'')+'>Flower</option><option'+(STATE.staff==='Daisy'?' selected':'')+'>Daisy</option><option'+(STATE.staff==='Hannah'?' selected':'')+'>Hannah</option></select>';
+  html+='<select class="filter-select" onchange="STATE.svc=this.value;renderClientList()"><option value="all">All Services</option><option>Acrylic Full Set</option><option>Acrylic Refill</option><option>Gel-X Extensions</option><option>Pedicure Shellac</option><option>Manicure Shellac</option></select>';
+  html+='<input type="number" class="filter-select" placeholder="Min $" value="'+STATE.minSpend+'" oninput="STATE.minSpend=this.value;renderClientList()" style="min-width:80px">';
+  html+='<input type="number" class="filter-select" placeholder="Max $" value="'+STATE.maxSpend+'" oninput="STATE.maxSpend=this.value;renderClientList()" style="min-width:80px">';
+  html+='<button class="btn btn-sm" onclick="STATE.search=\'\';STATE.tier=\'all\';STATE.staff=\'all\';STATE.svc=\'all\';STATE.minSpend=\'\';STATE.maxSpend=\'\';renderClientList()"><i class="fa-solid fa-xmark"></i>Clear</button>';
+  html+='</div></div>';
+
+  // Sort controls
+  html+='<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;padding:.4rem .75rem;border-bottom:1px solid var(--s1)">'
+    +'<div style="font-size:.72rem;color:var(--text2)">'+filtered.length+' clients</div>'
+    +'<div style="display:flex;gap:.25rem;align-items:center;font-size:.7rem;color:var(--text2)">Sort by: '
+    +[['_ltv','Spend'],['_visits','Visits'],['_last','Last Visit'],['_first','First Visit'],['_avgTicket','Avg Ticket']].map(function(s){
+      return '<button class="btn btn-sm'+(STATE.sortBy===s[0]?' btn-primary':'')+'" onclick="toggleSort(\''+s[0]+'\')" style="padding:.15rem .45rem;font-size:.65rem">'+s[1]+'</button>';
+    }).join('')+'</div></div>';
+
+  // Table
+  html+='<div class="table-wrap"><table class="data-table"><thead><tr>'
+    +'<th>Client</th><th>Tier</th><th>Visits</th><th>Total Spent</th><th>Avg Ticket</th>'
+    +'<th>Last Visit</th><th>First Visit</th><th>Fav Service</th><th>Fav Staff</th><th>Points</th></tr></thead><tbody>';
+
+  var tierBadge={standard:'<span class="badge badge-blue">Standard</span>',silver:'<span class="badge badge-violet">★ Silver</span>',gold:'<span class="badge badge-gold">★★ Gold</span>',platinum:'<span class="badge badge-pink">Platinum</span>'};
+  filtered.forEach(function(c){
+    var name=(c.first_name||'')+' '+(c.last_name||'');
+    var initials=(c.first_name?c.first_name[0]:'?')+(c.last_name?c.last_name[0]:'');
+    html+='<tr style="cursor:pointer" onclick="openClient(\''+c.id+'\')">'
+      +'<td><div style="display:flex;align-items:center;gap:7px">'
+      +'<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--pink),#7C3AED);display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:700;color:#fff">'+initials+'</div>'
+      +'<div><div style="font-weight:500">'+name+'</div><div style="font-size:.65rem;color:var(--text2)">'+(c.email||c.phone||'')+'</div></div></div></td>'
+      +'<td>'+(tierBadge[c.tier||'standard']||tierBadge.standard)+'</td>'
+      +'<td>'+c._visits+'</td>'
+      +'<td class="td-pos">'+Utils.fCurrency(c._ltv)+'</td>'
+      +'<td>'+Utils.fCurrency(c._avgTicket)+'</td>'
+      +'<td class="td-muted">'+(c._last?Utils.fDate(c._last,{month:'short',day:'numeric',year:'numeric'}):'—')+'</td>'
+      +'<td class="td-muted">'+(c._first?Utils.fDate(c._first,{month:'short',day:'numeric',year:'numeric'}):'—')+'</td>'
+      +'<td class="td-muted" style="max-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(c._topSvc||'—')+'</td>'
+      +'<td class="td-muted">'+(c._topStaff||'—')+'</td>'
+      +'<td style="color:var(--amber);font-weight:600">'+(c.loyalty_points||0)+'</td></tr>';
+  });
+  if(!filtered.length)html+='<tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--text3)">No clients match filters</td></tr>';
+  html+='</tbody></table></div></div>';
+
+  document.getElementById('page-content').innerHTML=html;
 }
 
-function saveClientEdit(id) {
-  var updates = {
-    first_name:    document.getElementById('ec-first').value,
-    last_name:     document.getElementById('ec-last').value,
-    email:         document.getElementById('ec-email').value,
-    phone:         document.getElementById('ec-phone').value,
-    birthday:      document.getElementById('ec-bd').value || null,
-    tier:          document.getElementById('ec-tier').value,
-    allergy_notes: document.getElementById('ec-allergy').value,
-    preferences:   document.getElementById('ec-pref').value
-  };
-  SB.update('clients', id, updates).then(function() {
-    var c = SB.CACHE.clients.find(function(x){return x.id===id;});
-    if (c) Object.assign(c, updates);
-    SELECTED_CLIENT = c;
-    Utils.toast('Client updated!', 'success');
-    renderClientList();
-    renderClientProfile(c);
-  }).catch(function(e) { Utils.toast('Error: '+e.message,'error'); });
-}
+function toggleSort(key){if(STATE.sortBy===key)STATE.sortDir*=-1;else{STATE.sortBy=key;STATE.sortDir=-1;}renderClientList();}
 
-function bookForClient(clientId) {
-  sessionStorage.setItem('book_client_id', clientId);
-  window.location.href = 'appointments.html';
-}
+/* ── CLIENT DETAIL ── */
+function openClient(id){STATE.selectedClient=id;renderClientDetail(id);}
+function backToList(){STATE.selectedClient=null;renderClientList();}
 
-function openNewClient() { document.getElementById('new-client-modal').style.display = 'flex'; }
+function renderClientDetail(id){
+  var c=SB.CACHE.clients.find(function(x){return x.id===id;});
+  if(!c)return;
+  var name=(c.first_name||'')+' '+(c.last_name||'');
+  var initials=(c.first_name?c.first_name[0]:'?')+(c.last_name?c.last_name[0]:'');
+  document.getElementById('page-title').innerHTML='<button onclick="backToList()" style="background:none;border:none;cursor:pointer;color:var(--text2);font-size:.8rem;margin-right:.5rem"><i class="fa-solid fa-arrow-left"></i></button>'+name;
 
-function saveNewClient() {
-  var first = document.getElementById('nc-first').value.trim();
-  var last  = document.getElementById('nc-last').value.trim();
-  if (!first || !last) { Utils.toast('Name required', 'warning'); return; }
+  var a=Utils.clientAnalytics(c.id,name,SB.CACHE.bookings,SB.CACHE.payments);
 
-  var client = {
-    first_name:    first,
-    last_name:     last,
-    email:         document.getElementById('nc-email').value,
-    phone:         document.getElementById('nc-phone').value,
-    birthday:      document.getElementById('nc-birthday').value || null,
-    tier:          document.getElementById('nc-tier').value,
-    allergy_notes: document.getElementById('nc-allergy').value,
-    preferences:   document.getElementById('nc-pref').value,
-    loyalty_points: 0,
-    no_show_count:  0
-  };
+  var html='';
+  // Header
+  html+='<div class="card mb-1"><div style="display:flex;align-items:center;gap:1rem">'
+    +'<div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--pink),#7C3AED);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;color:#fff">'+initials+'</div>'
+    +'<div><div style="font-family:\'Syne\',sans-serif;font-size:1.1rem;font-weight:700">'+name+'</div>'
+    +(c.email?'<div style="font-size:.75rem;color:var(--text2)"><i class="fa-solid fa-envelope fa-xs"></i> '+c.email+'</div>':'')
+    +(c.phone?'<div style="font-size:.75rem;color:var(--text2)"><i class="fa-solid fa-phone fa-xs"></i> '+c.phone+'</div>':'')
+    +(c.birthday?'<div style="font-size:.72rem;color:var(--amber)"><i class="fa-solid fa-cake-candles fa-xs"></i> '+Utils.fDate(c.birthday,{month:'long',day:'numeric'})+'</div>':'')+'</div>'
+    +'<div style="margin-left:auto;display:flex;gap:.5rem">'
+    +(c.allergy_notes?'<div style="background:var(--red-bg);border:1px solid #FECACA;border-radius:var(--rsm);padding:.4rem .6rem;font-size:.72rem;color:var(--red);max-width:200px"><i class="fa-solid fa-triangle-exclamation"></i> '+c.allergy_notes+'</div>':'')
+    +(c.preferences?'<div style="background:var(--s1);border-radius:var(--rsm);padding:.4rem .6rem;font-size:.72rem;color:var(--text2);max-width:200px"><i class="fa-solid fa-heart" style="color:var(--pink)"></i> '+c.preferences+'</div>':'')
+    +'</div></div></div>';
 
-  SB.insert('clients', client).then(function(data) {
-    if (Array.isArray(data) && data[0]) SB.CACHE.clients.unshift(data[0]);
-    document.getElementById('new-client-modal').style.display = 'none';
-    Utils.toast('Client added: ' + first + ' ' + last, 'success');
-    renderKPIs();
-    renderClientList();
-  }).catch(function(e) { Utils.toast('Error: '+e.message,'error'); });
+  // Analytics grid
+  html+='<div class="grid grid-4 mb-1">';
+  [{l:'Lifetime Value',v:Utils.fCurrency(a.ltv),c:'var(--pink)'},{l:'Total Visits',v:a.totalVisits,c:'var(--violet)'},
+   {l:'Avg Ticket',v:Utils.fCurrency(a.avgTicket),c:'var(--blue)'},{l:'No-shows',v:a.noshow,c:'var(--red)'},
+   {l:'Fav Service',v:a.topService,c:'var(--green)'},{l:'Fav Staff',v:a.topStaff,c:'var(--violet)'},
+   {l:'Visit Freq',v:a.avgFrequencyDays?'Every '+a.avgFrequencyDays+'d':'—',c:'var(--amber)'},
+   {l:'Loyalty Pts',v:(c.loyalty_points||0),c:'var(--amber)'},
+  ].forEach(function(k){html+='<div class="kpi-card" style="--kpi-color:'+k.c+'"><div class="kpi-value" style="font-size:.95rem">'+k.v+'</div><div class="kpi-label">'+k.l+'</div></div>';});
+  html+='</div>';
+
+  // First/Last visit + top services
+  html+='<div class="grid grid-2 mb-1">'
+    +'<div class="card"><div class="card-header"><div class="card-title">Visit History</div></div>'
+    +'<div style="padding:.5rem .75rem">'
+    +'<div class="metric-row"><span style="color:var(--text2);font-size:.8rem">First Visit</span><span style="font-weight:600">'+(a.firstVisit?Utils.fDate(a.firstVisit,{month:'long',day:'numeric',year:'numeric'}):'—')+'</span></div>'
+    +'<div class="metric-row"><span style="color:var(--text2);font-size:.8rem">Last Visit</span><span style="font-weight:600">'+(a.lastVisit?Utils.fDate(a.lastVisit,{month:'long',day:'numeric',year:'numeric'}):'—')+'</span></div>'
+    +'<div class="metric-row"><span style="color:var(--text2);font-size:.8rem">Total Visits</span><span style="font-weight:600">'+a.totalVisits+'</span></div>'
+    +'<div class="metric-row"><span style="color:var(--text2);font-size:.8rem">Completed</span><span style="font-weight:600">'+a.completed+'</span></div>'
+    +'<div class="metric-row"><span style="color:var(--text2);font-size:.8rem">Avg Frequency</span><span style="font-weight:600">'+(a.avgFrequencyDays?'Every '+a.avgFrequencyDays+' days':'—')+'</span></div>'
+    +'</div></div>'
+    +'<div class="card"><div class="card-header"><div class="card-title">Favourite Services</div></div>'
+    +'<div style="padding:.25rem 0">';
+  a.topServices.forEach(function(sv,i){
+    html+='<div style="display:flex;align-items:center;gap:.6rem;padding:.4rem .75rem;border-bottom:1px solid var(--s1)">'
+      +'<div style="font-size:.62rem;font-weight:700;color:var(--text3);width:16px">'+(i+1)+'</div>'
+      +'<div style="flex:1;font-size:.78rem;font-weight:500">'+sv.name+'</div>'
+      +'<div class="badge badge-pink">'+sv.count+'x</div></div>';
+  });
+  if(!a.topServices.length)html+='<div style="padding:1rem;color:var(--text3);font-size:.78rem;text-align:center">No bookings yet</div>';
+  html+='</div></div></div>';
+
+  // Recent bookings
+  html+='<div class="card"><div class="card-header"><div class="card-title">Booking History</div></div>'
+    +'<div class="table-wrap"><table class="data-table"><thead><tr><th>Date</th><th>Time</th><th>Service</th><th>Staff</th><th>Price</th><th>Status</th><th>Payment</th></tr></thead><tbody>';
+  var cbks=SB.CACHE.bookings.filter(function(b){return b.client_id===id||b.client_name===name;}).sort(function(a,b){return new Date(b.booked_at)-new Date(a.booked_at);});
+  var SM2={pending:'badge-orange',confirmed:'badge-blue',arrived:'badge-green',in_progress:'badge-violet',completed:'badge-green',cancelled:'badge-grey','no-show':'badge-red'};
+  cbks.slice(0,50).forEach(function(b){
+    var dt=new Date(b.booked_at);
+    html+='<tr><td class="td-muted">'+Utils.fDate(b.booked_at,{month:'short',day:'numeric',year:'numeric'})+'</td>'
+      +'<td>'+dt.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'})+'</td>'
+      +'<td class="tds">'+(b.service_name||'—')+'</td><td class="td-muted">'+(b.staff_name||'—')+'</td>'
+      +'<td class="td-pos">'+Utils.fCurrency(b.service_price||0)+'</td>'
+      +'<td><span class="badge badge-'+(SM2[b.status]||'badge-grey')+'">'+(b.status||'—').replace('_',' ')+'</span></td>'
+      +'<td class="td-muted">'+(b.payment_status==='paid'?'<span style="color:var(--green)">Paid</span>':'Unpaid')+'</td></tr>';
+  });
+  if(!cbks.length)html+='<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text3)">No booking history</td></tr>';
+  html+='</tbody></table></div></div>';
+
+  document.getElementById('page-content').innerHTML=html;
 }
 </script>
 </body>
