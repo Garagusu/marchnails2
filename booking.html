@@ -652,19 +652,41 @@ function renderDay(){
         +'<div class="add-hint"><i class="fa-solid fa-plus" style="font-size:.58rem"></i>Book</div>'
         +'</div>';}
     });
-    // Render all bookings for this staff
-    colBks.forEach(function(b){
-      if(!b.booked_at) return;
+    // Render bookings with overlap detection
+    var blocks2 = colBks.filter(function(b){
+      return b.booked_at && new Date(b.booked_at).getHours()>=9;
+    }).map(function(b){
       var dt=new Date(b.booked_at);
-      var h=dt.getHours(),m=dt.getMinutes();
-      if(h<9) return;
+      var sMin=dt.getHours()*60+dt.getMinutes();
       var dur=parseInt(b.duration_minutes||60);
-      var top=Math.max(0,((h-HOURS[0])+m/60)*HH);
+      return {b:b,dt:dt,sMin:sMin,eMin:sMin+dur,col:0,nCols:1};
+    });
+    blocks2.forEach(function(blk,bi){
+      var cols=[0];
+      blocks2.forEach(function(o,oi){
+        if(oi===bi||o.sMin>=blk.eMin||o.eMin<=blk.sMin) return;
+        cols.push(o.col);
+      });
+      var c=0; while(cols.indexOf(c)!==-1) c++;
+      blk.col=c;
+    });
+    blocks2.forEach(function(blk){
+      var peers=blocks2.filter(function(o){
+        return o!==blk && o.sMin<blk.eMin && o.eMin>blk.sMin;
+      });
+      blk.nCols=peers.length>0?peers.length+1:1;
+    });
+    blocks2.forEach(function(blk){
+      var b=blk.b,dt=blk.dt;
+      var dur=parseInt(b.duration_minutes||60);
+      var top=Math.max(0,((dt.getHours()-HOURS[0])+dt.getMinutes()/60)*HH);
       var ht=Math.max(28,(dur/60)*HH-2);
       var stCls='st-'+(b.status||'pending').replace('_','-');
       var stM=SM[b.status]||SM.pending;
       var timeStr=dt.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
-      html+='<div class="ab '+stCls+'" style="top:'+top+'px;height:'+ht+'px" onclick="event.stopPropagation();openDetail(\''+b.id+'\')">'
+      var wPct=100/blk.nCols;
+      var L=blk.col*wPct, R=100-L-wPct;
+      html+='<div class="ab '+stCls+'" style="top:'+top+'px;height:'+ht+'px;left:calc('+L+'%+2px);right:calc('+R+'%+2px)" onclick="event.stopPropagation();openDetail(\''+b.id+'\')">';
         +'<div class="ab-name">'+(b.client_name||'?')+'</div>';
       if(ht>36)html+='<div class="ab-svc">'+(b.service_name||'')+'</div>';
       if(ht>52)html+='<div class="ab-meta">'+timeStr+' · CA$'+(b.service_price||0)+'</div>';
