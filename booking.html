@@ -883,7 +883,7 @@ var STATUS_META = {
   no_show:     { label:'No-show',     bg:'var(--s-noshow-bg)',    color:'var(--s-noshow)',    bd:'var(--s-noshow-bd)' }
 };
 
-var HOURS = [8,9,10,11,12,13,14,15,16,17,18,19,20];
+var HOURS = [9,10,11,12,13,14,15,16,17,18,19];
 var HOUR_H = 56; // px per hour
 
 /* ─── INIT ──────────────────────────────────────── */
@@ -1107,6 +1107,11 @@ function renderDayView() {
 
   var html = '<div class="day-view">';
 
+  // Show working hours info
+  var dow2 = STATE.date.getDay(); // 0=Sun
+  var workStart = (dow2 === 0) ? 10 : 9;  // Sun: 10am, others: 9am
+  var workEnd   = (dow2 === 0) ? 18 : 20; // Sun: 6pm, others: 8pm
+
   // Header
   html += '<div class="day-view-header" style="grid-template-columns:60px repeat(' + cols + ',1fr)">';
   html += '<div class="dv-corner"></div>';
@@ -1136,12 +1141,18 @@ function renderDayView() {
 
     html += '<div class="dv-col">';
 
-    // Empty cells
+    // Empty cells (with closed-hour indicator)
     HOURS.forEach(function(h) {
-      html += '<div class="dv-cell" onclick="openNewApptAt(\'' + s.name + '\',' + h + ')">' +
-        '<div class="dv-cell-half"></div>' +
-        '<div class="slot-add-hint"><i class="fa-solid fa-plus" style="font-size:.65rem"></i>Book</div>' +
-        '</div>';
+      var isClosed = h < workStart || h >= workEnd;
+      if (isClosed) {
+        html += '<div class="dv-cell" style="background:repeating-linear-gradient(45deg,var(--s1),var(--s1) 3px,var(--white) 3px,var(--white) 8px);cursor:default">' +
+          '<div class="dv-cell-half"></div></div>';
+      } else {
+        html += '<div class="dv-cell" onclick="openNewApptAt(\'' + s.name + '\',' + h + ')">' +
+          '<div class="dv-cell-half"></div>' +
+          '<div class="slot-add-hint"><i class="fa-solid fa-plus" style="font-size:.65rem"></i>Book</div>' +
+          '</div>';
+      }
     });
 
     // Appointment blocks - overlap-aware positioning
@@ -1614,7 +1625,10 @@ function openNewAppt() {
 function openNewApptAt(staffName, hour) {
   var d = new Date(STATE.date);
   d.setHours(hour, 0, 0, 0);
-  document.getElementById('m-datetime').value = d.toISOString().slice(0,16);
+  // Format as local datetime string (not UTC)
+  var pad = function(n){return String(n).padStart(2,'0');};
+  var localDT = d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':00';
+  document.getElementById('m-datetime').value = localDT;
   document.getElementById('m-staff').value = staffName;
   document.getElementById('new-appt-modal').style.display = 'flex';
 }
