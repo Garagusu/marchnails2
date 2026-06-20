@@ -1007,7 +1007,11 @@ function updateNavLabel() {
 }
 
 function updateStatsStrip() {
-  var dateStr = STATE.date.toISOString().split('T')[0];
+  // Use local date string to avoid UTC timezone shift
+  var _d = STATE.date;
+  var dateStr = _d.getFullYear() + '-' +
+    String(_d.getMonth()+1).padStart(2,'0') + '-' +
+    String(_d.getDate()).padStart(2,'0');
   var todayBks = SB.CACHE.bookings.filter(function(b) {
     return b.booked_at && b.booked_at.startsWith(dateStr);
   });
@@ -1025,7 +1029,11 @@ function updateStatsStrip() {
 
 /* ─── STAFF RAIL ────────────────────────────────── */
 function renderStaffRail() {
-  var dateStr = STATE.date.toISOString().split('T')[0];
+  // Use local date string to avoid UTC timezone shift
+  var _d = STATE.date;
+  var dateStr = _d.getFullYear() + '-' +
+    String(_d.getMonth()+1).padStart(2,'0') + '-' +
+    String(_d.getDate()).padStart(2,'0');
   var html = '';
   var filtered = STATE.staffFilter === 'all' ? STAFF_CONFIG : STAFF_CONFIG.filter(function(s) { return s.name === STATE.staffFilter; });
 
@@ -1060,7 +1068,11 @@ function filterByStaff(name) {
 
 /* ─── DAY VIEW ──────────────────────────────────── */
 function renderDayView() {
-  var dateStr = STATE.date.toISOString().split('T')[0];
+  // Use local date string to avoid UTC timezone shift
+  var _d = STATE.date;
+  var dateStr = _d.getFullYear() + '-' +
+    String(_d.getMonth()+1).padStart(2,'0') + '-' +
+    String(_d.getDate()).padStart(2,'0');
   var staffList = STATE.staffFilter === 'all' ? STAFF_CONFIG : STAFF_CONFIG.filter(function(s) { return s.name === STATE.staffFilter; });
 
   var dayBks = SB.CACHE.bookings.filter(function(b) {
@@ -1169,7 +1181,7 @@ function renderWeekView() {
   var dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
   days.forEach(function(d, i) {
     var isToday = d.toDateString() === today;
-    var ds = d.toISOString().split('T')[0];
+    var ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
     var cnt = SB.CACHE.bookings.filter(function(b) { return b.booked_at && b.booked_at.startsWith(ds); }).length;
     html += '<div class="wv-day-head' + (isToday?' today':'') + '" onclick="goDay(\'' + ds + '\')">' +
       '<div class="wv-day-num">' + d.getDate() + '</div>' +
@@ -1190,7 +1202,7 @@ function renderWeekView() {
 
   html += '<div style="flex:1;display:grid;grid-template-columns:repeat(7,1fr)">';
   days.forEach(function(d) {
-    var ds = d.toISOString().split('T')[0];
+    var ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
     var dayBks = SB.CACHE.bookings.filter(function(b) { return b.booked_at && b.booked_at.startsWith(ds); });
     html += '<div class="dv-col">';
     HOURS.forEach(function(h) {
@@ -1249,7 +1261,7 @@ function renderMonthView() {
   // Days
   for (var d2=1; d2<=last.getDate(); d2++) {
     var dt2 = new Date(year, month, d2);
-    var ds  = dt2.toISOString().split('T')[0];
+    var ds = dt2.getFullYear()+'-'+String(dt2.getMonth()+1).padStart(2,'0')+'-'+String(dt2.getDate()).padStart(2,'0');
     var isTd = dt2.toDateString() === today;
     var dayBks = SB.CACHE.bookings.filter(function(b) { return b.booked_at && b.booked_at.startsWith(ds); });
     var rev = SB.CACHE.payments.filter(function(p) { return p.paid_at && p.paid_at.startsWith(ds); })
@@ -1298,12 +1310,14 @@ function renderListView() {
   var groups = {};
   all.forEach(function(b) {
     if (!b.booked_at) return;
-    var ds = b.booked_at.split('T')[0];
+    var _ld = new Date(b.booked_at);
+    var ds = _ld.getFullYear()+'-'+String(_ld.getMonth()+1).padStart(2,'0')+'-'+String(_ld.getDate()).padStart(2,'0');
     if (!groups[ds]) groups[ds] = [];
     groups[ds].push(b);
   });
 
-  var today = new Date().toISOString().split('T')[0];
+  var _td = new Date();
+  var today = _td.getFullYear()+'-'+String(_td.getMonth()+1).padStart(2,'0')+'-'+String(_td.getDate()).padStart(2,'0');
   var html = '<div class="list-view">';
   var sortedDates = Object.keys(groups).sort();
 
@@ -1375,7 +1389,11 @@ function renderRightPanel() {
       .slice(0, 20);
 
     // Occupancy for today
-    var dateStr = STATE.date.toISOString().split('T')[0];
+    // Use local date string to avoid UTC timezone shift
+  var _d = STATE.date;
+  var dateStr = _d.getFullYear() + '-' +
+    String(_d.getMonth()+1).padStart(2,'0') + '-' +
+    String(_d.getDate()).padStart(2,'0');
     var todayBks = SB.CACHE.bookings.filter(function(b) { return b.booked_at && b.booked_at.startsWith(dateStr); });
     var maxSlots = 4 * HOURS.length; // 4 staff × hours
     var occ = maxSlots > 0 ? Math.round((todayBks.length / maxSlots) * 100) : 0;
