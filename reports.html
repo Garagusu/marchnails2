@@ -285,12 +285,12 @@ var FP = [], FB = [], CP = [], CB = [];
 window.addEventListener('DOMContentLoaded', function() {
   Utils.startClock(null, document.getElementById('tb-date'));
   setupFilters();
-    // Load demo data immediately - never show blank UI
-  if (SB.DEMO) {
-    SB.CACHE.clients   = SB.DEMO.clients;
-    SB.CACHE.payments  = SB.DEMO.payments;
-    SB.CACHE.bookings  = SB.DEMO.bookings;
-    SB.CACHE.email_log = SB.DEMO.email_log;
+  // Load demo data only if cache is empty (preserve user changes)
+  if (SB.DEMO && SB.CACHE.bookings.length === 0) {
+    SB.CACHE.clients   = JSON.parse(JSON.stringify(SB.DEMO.clients));
+    SB.CACHE.payments  = JSON.parse(JSON.stringify(SB.DEMO.payments));
+    SB.CACHE.bookings  = JSON.parse(JSON.stringify(SB.DEMO.bookings));
+    SB.CACHE.email_log = JSON.parse(JSON.stringify(SB.DEMO.email_log));
   }
   if (typeof render === "function") { render(); }
   // Try Supabase in background (demo data already loaded)
