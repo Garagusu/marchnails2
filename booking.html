@@ -582,28 +582,30 @@ function updateLabel(){
 
 function updateStats(){
   var ds=lds(STATE.date);
-  var todayBks=SB.CACHE.bookings.filter(function(b){return b.booked_at&&bDate(b)===ds&&new Date(b.booked_at).getHours()>=9;});
-  var pending=SB.CACHE.bookings.filter(function(b){return b.status==='pending';});
-  var todayPay=SB.CACHE.payments.filter(function(p){return p.paid_at&&lds(new Date(p.paid_at))===ds;});
-  var rev=todayPay.reduce(function(s,p){return s+parseFloat(p.amount||0);},0);
-  if(!rev){rev=todayBks.filter(function(b){return b.status==='completed';}).reduce(function(s,b){return s+parseFloat(b.service_price||0);},0);}
+  // Use canonical filters for consistency with dashboard
+  var todayBks = Utils.filterBookings(SB.CACHE.bookings, {day:ds});
+  var todayPay = Utils.filterPayments(SB.CACHE.payments, {day:ds});
+  var kpis     = Utils.calcKPIs(todayBks, todayPay);
+  var pending  = SB.CACHE.bookings.filter(function(b){return b.status==='pending';});
   var s1=document.getElementById('st-today'),s2=document.getElementById('st-pending'),s3=document.getElementById('st-rev');
-  if(s1)s1.textContent=todayBks.length;
+  if(s1)s1.textContent=kpis.bookings;   // active bookings (not cancelled)
   if(s2)s2.textContent=pending.length;
-  if(s3)s3.textContent='CA$'+Math.round(rev);
+  if(s3)s3.textContent=Utils.fCurrency(kpis.revenue);
 }
 
 /* ── STAFF RAIL ── */
 function renderRail(){
   var ds=lds(STATE.date);
+  var wh=Utils.getWorkHours(STATE.date);
+  var maxSlots=wh[1]-wh[0]; // working hours span
   var staffList=STATE.staff==='all'?STAFF:STAFF.filter(function(s){return s.name===STATE.staff;});
   var html='';
   staffList.forEach(function(s){
-    var bks=SB.CACHE.bookings.filter(function(b){return b.staff_name===s.name&&b.booked_at&&bDate(b)===ds&&new Date(b.booked_at).getHours()>=9;});
-    var pays=SB.CACHE.payments.filter(function(p){return p.staff_name===s.name&&p.paid_at&&lds(new Date(p.paid_at))===ds;});
-    var rev=pays.reduce(function(s,p){return s+parseFloat(p.amount||0);},0);
-    if(!rev)rev=bks.filter(function(b){return b.status==='completed';}).reduce(function(s,b){return s+parseFloat(b.service_price||0);},0);
-    var pct=Math.min(100,Math.round((bks.length/9)*100));
+    var bks  = Utils.filterBookings(SB.CACHE.bookings, {day:ds, staff:s.name});
+    var pays = Utils.filterPayments(SB.CACHE.payments,  {day:ds, staff:s.name});
+    var kpis = Utils.calcKPIs(bks, pays);
+    var rev  = kpis.revenue;
+    var pct  = Math.min(100,Math.round((bks.length/maxSlots)*100));
     html+='<div class="srail-item" onclick="filterStaff(\''+s.name+'\')">'
       +'<div class="sav" style="background:'+s.grad+'">'+s.name[0]+'</div>'
       +'<div class="sinfo"><div class="sname">'+s.name+'</div>'
@@ -736,9 +738,8 @@ function renderMonth(){
   for(var d2=1;d2<=last.getDate();d2++){
     var dt2=new Date(yr,mo,d2),ds=lds(dt2),isT=dt2.toDateString()===today;
     var dBks=SB.CACHE.bookings.filter(function(b){return b.booked_at&&bDate(b)===ds&&new Date(b.booked_at).getHours()>=9;});
-    var pays=SB.CACHE.payments.filter(function(p){return p.paid_at&&lds(new Date(p.paid_at))===ds;});
-    var rev=pays.reduce(function(s,p){return s+parseFloat(p.amount||0);},0);
-    if(!rev)rev=dBks.filter(function(b){return b.status==='completed';}).reduce(function(s,b){return s+parseFloat(b.service_price||0);},0);
+    var pays = Utils.filterPayments(SB.CACHE.payments, {day:ds});
+    var rev  = Utils.calcRevenue(dBks.filter(function(b){return b.status==='completed';}), pays);
     html+='<div class="mv-day'+(isT?' today':'')+'" onclick="goDayView(\''+ds+'\')"><div class="mv-num">'+d2+'</div>';
     dBks.slice(0,3).forEach(function(b){var m=SM[b.status]||SM.pending;html+='<div class="mv-pill" style="background:'+m.bg+';color:'+m.color+'">'+(b.client_name||'?').split(' ')[0]+'</div>';});
     if(dBks.length>3)html+='<div style="font-size:.58rem;color:var(--text3)">+'+( dBks.length-3)+' more</div>';
@@ -836,16 +837,17 @@ function renderRightPanel(){
     });
     body.innerHTML=html;
   } else {
-    var bks=SB.CACHE.bookings.filter(function(b){return b.booked_at&&new Date(b.booked_at).getHours()>=9;});
-    var pays=SB.CACHE.payments;
-    var rev=Math.max(pays.reduce(function(s,p){return s+parseFloat(p.amount||0);},0),bks.filter(function(b){return b.status==='completed';}).reduce(function(s,b){return s+parseFloat(b.service_price||0);},0));
+    var bks  = Utils.filterBookings(SB.CACHE.bookings, {});
+    var pays = Utils.filterPayments(SB.CACHE.payments, {});
+    var kp   = Utils.calcKPIs(bks, pays);
+    var rev  = kp.revenue;
     body.innerHTML='<div style="display:flex;flex-direction:column;gap:.45rem;font-size:.77rem">'
-      +[['Total Revenue','CA$'+Math.round(rev),'var(--pink)'],
-        ['Total Bookings',bks.length,'var(--violet)'],
-        ['Completed',bks.filter(function(b){return b.status==='completed';}).length,'var(--green)'],
-        ['Pending',bks.filter(function(b){return b.status==='pending';}).length,'var(--amber)'],
-        ['No-shows',bks.filter(function(b){return b.status==='no-show'||b.status==='no_show';}).length,'var(--red)'],
-        ['Clients',SB.CACHE.clients.length,'var(--blue)']
+      +[['Total Revenue',Utils.fCurrency(kp.revenue),'var(--pink)'],
+        ['Active Bookings',kp.bookings,'var(--violet)'],
+        ['Completed',kp.completed,'var(--green)'],
+        ['Pending',kp.pending,'var(--amber)'],
+        ['No-shows',kp.noshow,'var(--red)'],
+        ['Active Clients',kp.clients,'var(--blue)']
       ].map(function(r){return '<div style="display:flex;justify-content:space-between;align-items:center;padding:.35rem 0;border-bottom:1px solid var(--s1)"><span style="color:var(--text2)">'+r[0]+'</span><span style="font-weight:700;color:'+r[2]+'">'+r[1]+'</span></div>';}).join('')+'</div>';
   }
 }
