@@ -474,8 +474,8 @@ function applyFilters() {
 
 // ── Main render ──
 function render() {
+  var range = Utils.getRange(STATE.period, STATE.customStart, STATE.customEnd);
   applyFilters();
-  // Pass already-filtered data - calcKPIs does NOT re-filter
   var kpis  = Utils.calcKPIs(FILTERED_BOOKINGS, FILTERED_PAYMENTS);
   var cKPIs = STATE.compare ? Utils.calcKPIs(COMPARE_BOOKINGS, COMPARE_PAYMENTS) : null;
 
