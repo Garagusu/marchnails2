@@ -386,12 +386,20 @@ function renderRevenue() {
   var mLabels = mKeys.map(function(k) { return k.replace('_',' ').replace(/\b\w/g,function(c){return c.toUpperCase();}); });
   Charts.doughnut('c-rev-method', mLabels, mKeys.map(function(k){return Utils.sumRevenue(mg[k]);}), ['#10B981','#3B82F6','#8B5CF6','#F59E0B']);
 
-  // Payment detail table
-  var html = FP.slice(0,200).map(function(p) {
-    return '<tr><td class="td-muted">'+Utils.fDateTime(p.paid_at)+'</td><td class="tds">'+(p.client_name||'—')+'</td><td class="td-muted">'+(p.staff_name||'—')+'</td><td class="td-muted">'+(p.service_name||'—')+'</td><td class="td-pos">'+Utils.fCurrency(p.amount)+'</td><td class="td-muted">'+(p.method||'—').replace('_',' ')+'</td><td style="color:var(--pink);font-weight:600">'+Utils.fCurrency(p.commission)+'</td><td class="td-pos">'+Utils.fCurrency(p.net_revenue)+'</td></tr>';
-  }).join('') || '<tr><td colspan="8" style="text-align:center;padding:1.5rem;color:var(--text3)">No payments in this period</td></tr>';
-  document.getElementById('rev-tbody').innerHTML = html;
-  document.getElementById('rev-info').textContent = FP.length + ' payments · Total: ' + Utils.fCurrency(Utils.sumRevenue(FP));
+  // Payment detail table - use payments if available, else completed bookings
+  var tableData = FP.length > 0 ? FP : FB.filter(function(b){ return b.status==='completed'||b.payment_status==='paid'; });
+  var isFromBookings = FP.length === 0;
+  var html2 = tableData.slice(0,200).map(function(p) {
+    var amt  = isFromBookings ? parseFloat(p.service_price||0) : parseFloat(p.amount||0);
+    var comm = isFromBookings ? amt*0.25 : parseFloat(p.commission||amt*0.25);
+    var net  = isFromBookings ? amt*0.75 : parseFloat(p.net_revenue||amt*0.75);
+    var date = isFromBookings ? (p.booked_at||'') : (p.paid_at||'');
+    var method = isFromBookings ? (p.payment_method||'—') : (p.method||'—');
+    return '<tr><td class="td-muted">'+Utils.fDateTime(date)+'</td><td class="tds">'+(p.client_name||'—')+'</td><td class="td-muted">'+(p.staff_name||'—')+'</td><td class="td-muted">'+(p.service_name||'—')+'</td><td class="td-pos">'+Utils.fCurrency(amt)+'</td><td class="td-muted">'+method.replace('_',' ')+'</td><td style="color:var(--pink);font-weight:600">'+Utils.fCurrency(comm)+'</td><td class="td-pos">'+Utils.fCurrency(net)+'</td></tr>';
+  }).join('') || '<tr><td colspan="8" style="text-align:center;padding:1.5rem;color:var(--text3)">No data in this period</td></tr>';
+  document.getElementById('rev-tbody').innerHTML = html2;
+  var totalRev = FP.length>0 ? Utils.sumRevenue(FP) : tableData.reduce(function(s,b){return s+parseFloat(b.service_price||0);},0);
+  document.getElementById('rev-info').textContent = tableData.length + ' records · Total: ' + Utils.fCurrency(totalRev);
   Utils.makeSortable(document.getElementById('rev-table'));
   Utils.makeSearchable(document.getElementById('rev-search'), document.getElementById('rev-table'));
 }
