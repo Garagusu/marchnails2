@@ -387,19 +387,28 @@ function renderRevenue() {
   var mLabels = mKeys.map(function(k) { return k.replace('_',' ').replace(/\b\w/g,function(c){return c.toUpperCase();}); });
   Charts.doughnut('c-rev-method', mLabels, mKeys.map(function(k){return Utils.sumRevenue(mg[k]);}), ['#10B981','#3B82F6','#8B5CF6','#F59E0B']);
 
-  // Payment table - always use FP (payments), consistent with KPIs
-  var html2 = FP.slice(0,200).map(function(p) {
-    var amt  = parseFloat(p.amount||0);
-    var comm = parseFloat(p.commission || amt*0.25);
-    var net  = parseFloat(p.net_revenue || amt*0.75);
-    return '<tr><td class="td-muted">'+Utils.fDateTime(p.paid_at)+'</td><td class="tds">'+(p.client_name||'—')+'</td>'
-      +'<td class="td-muted">'+(p.staff_name||'—')+'</td><td class="td-muted">'+(p.service_name||'—')+'</td>'
-      +'<td class="td-pos">'+Utils.fCurrency(amt)+'</td><td class="td-muted">'+(p.method||'—').replace('_',' ')+'</td>'
+  // Revenue table uses COMPLETED BOOKINGS (same source as KPIs)
+  var completedBks = FB.filter(function(b){ return b.status === 'completed'; });
+  // Find payment method for each booking
+  var payMap = {};
+  FP.forEach(function(p){ if(p.booking_id) payMap[p.booking_id] = p.method; });
+  var html2 = completedBks.slice(0,200).map(function(b) {
+    var amt  = parseFloat(b.service_price||0);
+    var comm = amt * 0.25;
+    var net  = amt * 0.75;
+    var method = payMap[b.id] || b.payment_method || '—';
+    return '<tr>'
+      +'<td class="td-muted">'+Utils.fDateTime(b.booked_at)+'</td>'
+      +'<td class="tds">'+(b.client_name||'—')+'</td>'
+      +'<td class="td-muted">'+(b.staff_name||'—')+'</td>'
+      +'<td class="td-muted">'+(b.service_name||'—')+'</td>'
+      +'<td class="td-pos">'+Utils.fCurrency(amt)+'</td>'
+      +'<td class="td-muted">'+method.replace('_',' ')+'</td>'
       +'<td style="color:var(--pink);font-weight:600">'+Utils.fCurrency(comm)+'</td>'
       +'<td class="td-pos">'+Utils.fCurrency(net)+'</td></tr>';
-  }).join('') || '<tr><td colspan="8" style="text-align:center;padding:1.5rem;color:var(--text3)">No payments in this period</td></tr>';
+  }).join('') || '<tr><td colspan="8" style="text-align:center;padding:1.5rem;color:var(--text3)">No completed appointments in this period</td></tr>';
   document.getElementById('rev-tbody').innerHTML = html2;
-  document.getElementById('rev-info').textContent = FP.length + ' payments · ' + Utils.fCurrency(kpis.revenue);
+  document.getElementById('rev-info').textContent = completedBks.length + ' completed · ' + Utils.fCurrency(kpis.revenue);
   Utils.makeSortable(document.getElementById('rev-table'));
   Utils.makeSearchable(document.getElementById('rev-search'), document.getElementById('rev-table'));
 }
@@ -424,9 +433,10 @@ function renderStaff() {
   var html = staffNames.map(function(s, i) {
     var p = stgP[s] || [];
     var b = stgB[s] || [];
-    var rev = Utils.sumRevenue(p);
-    var comm = Utils.sumCommission(p);
-    var completed = b.filter(function(x){return x.status==='completed';}).length;
+    var completed_bks = b.filter(function(x){return x.status==='completed';});
+    var rev  = completed_bks.reduce(function(s,x){return s+parseFloat(x.service_price||0);},0);
+    var comm = rev * 0.25;
+    var completed = completed_bks.length;
     var noshow    = b.filter(function(x){return x.status==='no-show';}).length;
     var avg = p.length ? rev/p.length : 0;
     return '<tr><td><div style="display:flex;align-items:center;gap:6px"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,'+colors[i]+','+colors[(i+1)%4]+')">'+s[0]+'</div>'+s+'</div></td><td>'+b.length+'</td><td class="td-pos">'+completed+'</td><td '+(noshow>0?'class="td-neg"':'')+'>'+noshow+'</td><td class="td-pos">'+Utils.fCurrency(rev)+'</td><td style="color:var(--pink);font-weight:600">'+Utils.fCurrency(comm)+'</td><td class="td-pos">'+Utils.fCurrency(rev-comm)+'</td><td>'+Utils.fCurrency(avg)+'</td><td style="color:var(--amber)">'+ratings[s]+' ⭐</td></tr>';
@@ -437,18 +447,24 @@ function renderStaff() {
 
 // ── SERVICES ──
 function renderServices() {
-  var sg = Utils.groupBy(FP, 'service_name');
-  var keys = Object.keys(sg).sort(function(a,b){return Utils.sumRevenue(sg[b])-Utils.sumRevenue(sg[a]);});
-  var revData = keys.map(function(k){return Utils.sumRevenue(sg[k]);});
+  // Services revenue from COMPLETED BOOKINGS service_price
+  var completedFB = FB.filter(function(b){return b.status==='completed';});
+  var sg = Utils.groupBy(completedFB, 'service_name');
+  var keys = Object.keys(sg).sort(function(a,b){
+    var ra=sg[a].reduce(function(s,x){return s+parseFloat(x.service_price||0);},0);
+    var rb=sg[b].reduce(function(s,x){return s+parseFloat(x.service_price||0);},0);
+    return rb-ra;
+  });
+  var revData = keys.map(function(k){return sg[k].reduce(function(s,x){return s+parseFloat(x.service_price||0);},0);});
   var bkData  = keys.map(function(k){return sg[k].length;});
-  var total   = Utils.sumRevenue(FP);
+  var total   = kpis.revenue;
 
   Charts.hBar('c-svc-rev', keys, revData, '#E91E8C');
   Charts.hBar('c-svc-bk',  keys, bkData,  '#7C3AED');
 
   var maxRev = revData[0] || 1;
   var html = keys.map(function(k) {
-    var rev = Utils.sumRevenue(sg[k]);
+    var rev = sg[k].reduce(function(s,x){return s+parseFloat(x.service_price||0);},0);
     var cnt = sg[k].length;
     var avg = cnt > 0 ? rev/cnt : 0;
     var share = total > 0 ? (rev/total*100) : 0;
