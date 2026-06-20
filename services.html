@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>March Nails — Services</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="css/core.css">
+<link rel="stylesheet" href="css/components.css">
+<script src="js/supabase.js"></script>
+<script src="js/utils.js"></script>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand"><div class="brand-name">March <span>Nails</span></div><div class="brand-sub">Business Intelligence</div></div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Analytics</div>
+      <a class="nav-item" href="dashboard.html"><i class="fa-solid fa-gauge-high"></i>Dashboard</a>
+      <a class="nav-item" href="booking.html"><i class="fa-solid fa-calendar-check"></i>Booking</a>
+      <a class="nav-item" href="reports.html"><i class="fa-solid fa-chart-column"></i>Reports</a>
+      <div class="nav-section">Operations</div>
+      <a class="nav-item" href="appointments.html"><i class="fa-solid fa-calendar-days"></i>Appointments</a>
+      <a class="nav-item" href="clients.html"><i class="fa-solid fa-users"></i>Clients</a>
+      <a class="nav-item" href="staff.html"><i class="fa-solid fa-id-badge"></i>Staff</a>
+      <div class="nav-section">Business</div>
+      <a class="nav-item" href="reports.html"><i class="fa-solid fa-money-bill-trend-up"></i>Revenue</a>
+      <a class="nav-item active" href="services.html"><i class="fa-solid fa-scissors"></i>Services</a>
+      <a class="nav-item" href="loyalty.html"><i class="fa-solid fa-crown"></i>Loyalty</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar">A</div>
+        <div><div class="user-name">Admin</div><div class="user-role">Salon Owner</div></div>
+        <button class="btn btn-ghost btn-icon" onclick="localStorage.removeItem('mn_auth');location.href='index.html'" style="margin-left:auto"><i class="fa-solid fa-right-from-bracket" style="font-size:.8rem;color:var(--text3)"></i></button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-area">
+    <div class="topbar">
+      <button class="btn btn-ghost btn-icon" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="fa-solid fa-bars"></i></button>
+      <div class="topbar-title">Services & Pricing</div>
+      <div class="topbar-date" id="tb-date"></div>
+      <div class="topbar-right">
+        <button class="btn btn-primary" onclick="openAddService()"><i class="fa-solid fa-plus"></i>Add Service</button>
+      </div>
+    </div>
+
+    <div class="page-content">
+      <div class="page-header">
+        <div>
+          <h1>Services & Pricing</h1>
+          <p>Manage your service menu, prices and durations</p>
+        </div>
+      </div>
+
+      <!-- KPI Strip -->
+      <div class="grid grid-4 mb-1" id="svc-kpis"></div>
+
+      <!-- Filter -->
+      <div class="filter-bar" style="margin-bottom:1rem">
+        <span class="filter-bar-label"><i class="fa-solid fa-filter" style="color:var(--pink)"></i></span>
+        <select class="filter-select" id="f-cat" onchange="render()">
+          <option value="all">All Categories</option>
+          <option value="Nails">Nails</option>
+          <option value="Lashes">Lashes</option>
+          <option value="Other">Other</option>
+        </select>
+        <div class="search-box" style="min-width:200px">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="svc-search" placeholder="Search services…" oninput="render()">
+        </div>
+        <div style="margin-left:auto;display:flex;gap:.4rem;align-items:center">
+          <span style="font-size:.72rem;color:var(--text2)" id="svc-count"></span>
+          <button class="btn btn-ghost btn-sm" onclick="exportServices()"><i class="fa-solid fa-download"></i>Export</button>
+        </div>
+      </div>
+
+      <!-- Services Table -->
+      <div class="card" id="services-wrap"></div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" id="svc-modal" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box" style="max-width:500px">
+    <div class="modal-header">
+      <div class="modal-title" id="svc-modal-title">Add Service</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body" id="svc-modal-body"></div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<style>
+.modal-overlay{position:fixed;inset:0;background:rgba(26,29,46,.45);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem}
+.modal-box{background:var(--white);border-radius:var(--r-xl);width:100%;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--sh-xl)}
+.modal-header{padding:1.1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-family:var(--fontd);font-size:.95rem;font-weight:700}
+.modal-close{width:28px;height:28px;border-radius:50%;border:none;background:var(--s1);color:var(--text2);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.modal-close:hover{background:var(--red-bg);color:var(--red)}
+.modal-body{padding:1.1rem 1.25rem;overflow-y:auto;flex:1}
+.form-group{display:flex;flex-direction:column;gap:.28rem;margin-bottom:.75rem}
+.form-label{font-size:.65rem;font-weight:700;color:var(--text2);letter-spacing:.08em;text-transform:uppercase}
+.form-input{padding:.6rem .8rem;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:.82rem;color:var(--text);background:var(--white);font-family:var(--font);transition:border-color .15s}
+.form-input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(233,30,140,.08);outline:none}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.svc-row{display:grid;grid-template-columns:1fr auto auto auto auto;align-items:center;gap:.75rem;padding:.65rem .9rem;border-bottom:1px solid var(--s1);font-size:.8rem;transition:background .1s}
+.svc-row:last-child{border-bottom:none}
+.svc-row:hover{background:var(--s1)}
+.svc-head{display:grid;grid-template-columns:1fr auto auto auto auto;gap:.75rem;padding:.5rem .9rem;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);border-bottom:2px solid var(--border);background:var(--s1)}
+.cat-badge{display:inline-flex;align-items:center;font-size:.6rem;font-weight:600;padding:.15rem .45rem;border-radius:50px;white-space:nowrap}
+.cat-nails{background:var(--pink-bg);color:var(--pink);border:1px solid var(--pink-bd)}
+.cat-lashes{background:var(--violet-bg);color:var(--violet);border:1px solid var(--violet-bd)}
+.cat-other{background:var(--s1);color:var(--text2);border:1px solid var(--border)}
+.stat-pill{font-size:.7rem;font-weight:600;color:var(--text2)}
+.actions-cell{display:flex;gap:.3rem;justify-content:flex-end;min-width:64px}
+.popularity-bar{height:5px;background:var(--s1);border-radius:3px;overflow:hidden;width:80px}
+.popularity-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--pink),var(--violet))}
+.form-footer{display:flex;gap:.5rem;justify-content:flex-end;margin-top:1rem;padding-top:.75rem;border-top:1px solid var(--border)}
+.toggle-active{width:36px;height:20px;border-radius:10px;position:relative;cursor:pointer;transition:background .2s;border:none}
+.toggle-active.on{background:var(--green)}
+.toggle-active.off{background:var(--text3)}
+.toggle-active::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s}
+.toggle-active.on::after{transform:translateX(16px)}
+</style>
+
+<script>
+'use strict';
+if (!localStorage.getItem('mn_auth')) location.href='index.html';
+
+// ── Default service catalog ──
+var DEFAULT_SERVICES = [
+  {id:'s1',  name:'Acrylic Full Set',    category:'Nails',   price:75,  duration:90,  active:true,  description:'Full acrylic nail set with shape & design'},
+  {id:'s2',  name:'Acrylic Refill',      category:'Nails',   price:60,  duration:60,  active:true,  description:'2-3 week acrylic fill'},
+  {id:'s3',  name:'Gel-X Extensions',   category:'Nails',   price:80,  duration:90,  active:true,  description:'Gel-X soft gel extension system'},
+  {id:'s4',  name:'Pedicure Shellac',    category:'Nails',   price:55,  duration:60,  active:true,  description:'Shellac gel pedicure with foot care'},
+  {id:'s5',  name:'Manicure Shellac',   category:'Nails',   price:35,  duration:45,  active:true,  description:'Shellac gel manicure'},
+  {id:'s6',  name:'Lash Extensions',    category:'Lashes',  price:89,  duration:120, active:true,  description:'Classic or volume lash extension set'},
+  {id:'s7',  name:'Nail Art',           category:'Nails',   price:45,  duration:60,  active:true,  description:'Custom nail art & designs'},
+  {id:'s8',  name:'Acrylic Removal',    category:'Nails',   price:25,  duration:30,  active:true,  description:'Safe acrylic removal with nail care'},
+  {id:'s9',  name:'Gel Overlay',        category:'Nails',   price:65,  duration:75,  active:true,  description:'Hard gel overlay on natural nails'},
+  {id:'s10', name:'Lash Fill',          category:'Lashes',  price:55,  duration:75,  active:true,  description:'2-3 week lash refill'},
+  {id:'s11', name:'Nail Repair',        category:'Nails',   price:10,  duration:15,  active:true,  description:'Single nail repair (per nail)'},
+  {id:'s12', name:'French Tip',         category:'Nails',   price:15,  duration:15,  active:true,  description:'French tip add-on'},
+];
+
+var SERVICES = [];
+var EDITING_ID = null;
+
+window.addEventListener('DOMContentLoaded', function() {
+  Utils.startClock(null, document.getElementById('tb-date'));
+  // Load from localStorage or default
+  var stored = localStorage.getItem('mn_services');
+  SERVICES = stored ? JSON.parse(stored) : JSON.parse(JSON.stringify(DEFAULT_SERVICES));
+  // Load cache for analytics
+  if (!SB.loadCacheFromStorage() && SB.DEMO) {
+    SB.CACHE.bookings = JSON.parse(JSON.stringify(SB.DEMO.bookings));
+  }
+  render();
+});
+
+function saveServices() {
+  localStorage.setItem('mn_services', JSON.stringify(SERVICES));
+}
+
+function render() {
+  renderKPIs();
+  renderTable();
+}
+
+function renderKPIs() {
+  var active = SERVICES.filter(function(s){return s.active;});
+  var avgPrice = active.length ? active.reduce(function(s,x){return s+x.price;},0)/active.length : 0;
+  var avgDur = active.length ? active.reduce(function(s,x){return s+x.duration;},0)/active.length : 0;
+  var cats = {};
+  SERVICES.forEach(function(s){cats[s.category]=(cats[s.category]||0)+1;});
+
+  document.getElementById('svc-kpis').innerHTML = [
+    {l:'Total Services', v:SERVICES.length, c:'var(--pink)',    ic:'fa-scissors'},
+    {l:'Active',         v:active.length,   c:'var(--green)',   ic:'fa-check-circle'},
+    {l:'Avg Price',      v:Utils.fCurrency(avgPrice), c:'var(--violet)', ic:'fa-tag'},
+    {l:'Avg Duration',   v:Utils.fDuration(avgDur),   c:'var(--amber)',  ic:'fa-clock'},
+  ].map(function(k){
+    return '<div class="kpi-card" style="--kpi-color:'+k.c+'">'
+      +'<div class="kpi-top"><div class="kpi-icon" style="background:'+k.c+'20"><i class="fa-solid '+k.ic+'" style="color:'+k.c+'"></i></div></div>'
+      +'<div class="kpi-value">'+k.v+'</div><div class="kpi-label">'+k.l+'</div></div>';
+  }).join('');
+}
+
+function renderTable() {
+  var cat = document.getElementById('f-cat').value;
+  var q   = (document.getElementById('svc-search').value||'').toLowerCase();
+
+  // Get booking counts for popularity
+  var bkCounts = {};
+  SB.CACHE.bookings.filter(function(b){return b.status==='completed';}).forEach(function(b){
+    if (b.service_name) bkCounts[b.service_name] = (bkCounts[b.service_name]||0)+1;
+  });
+  var maxCount = Math.max.apply(null, Object.values(bkCounts).concat([1]));
+
+  var filtered = SERVICES.filter(function(s){
+    if (cat !== 'all' && s.category !== cat) return false;
+    if (q && s.name.toLowerCase().indexOf(q)===-1 && (s.description||'').toLowerCase().indexOf(q)===-1) return false;
+    return true;
+  });
+
+  document.getElementById('svc-count').textContent = filtered.length + ' services';
+
+  var html = '<div class="svc-head">'
+    + '<div>Service</div>'
+    + '<div style="min-width:80px;text-align:right">Popularity</div>'
+    + '<div style="min-width:70px;text-align:right">Duration</div>'
+    + '<div style="min-width:70px;text-align:right">Price</div>'
+    + '<div style="min-width:80px;text-align:center">Actions</div>'
+    + '</div>';
+
+  if (!filtered.length) {
+    html += '<div style="padding:2rem;text-align:center;color:var(--text3)"><i class="fa-solid fa-scissors" style="font-size:1.5rem;margin-bottom:.5rem;display:block"></i>No services found</div>';
+  } else {
+    var catColors = {Nails:'cat-nails', Lashes:'cat-lashes', Other:'cat-other'};
+    filtered.forEach(function(s) {
+      var count = bkCounts[s.name] || 0;
+      var pct = Math.round((count/maxCount)*100);
+      html += '<div class="svc-row" style="opacity:'+(s.active?1:.55)+'">'+
+        '<div>'+
+          '<div style="display:flex;align-items:center;gap:.5rem">'+
+            '<div style="width:8px;height:8px;border-radius:50%;background:'+(s.active?'var(--green)':'var(--text3)')+';flex-shrink:0"></div>'+
+            '<div>'+
+              '<div style="font-weight:600;font-size:.82rem">'+Utils.safe(s.name)+'</div>'+
+              '<div style="font-size:.65rem;color:var(--text2);margin-top:1px">'+
+                '<span class="cat-badge '+( catColors[s.category]||'cat-other')+'">'+s.category+'</span>'+
+                (s.description?'<span style="margin-left:.35rem">'+Utils.safe(s.description)+'</span>':'')+
+              '</div>'+
+            '</div>'+
+          '</div>'+
+        '</div>'+
+        '<div style="min-width:80px;text-align:right">'+
+          '<div class="popularity-bar" style="margin-left:auto"><div class="popularity-fill" style="width:'+pct+'%"></div></div>'+
+          '<div style="font-size:.6rem;color:var(--text3);margin-top:2px;text-align:right">'+count+' bookings</div>'+
+        '</div>'+
+        '<div style="min-width:70px;text-align:right;font-size:.78rem;color:var(--text2)">'+Utils.fDuration(s.duration)+'</div>'+
+        '<div style="min-width:70px;text-align:right;font-weight:700;color:var(--pink)">'+Utils.fCurrency(s.price)+'</div>'+
+        '<div class="actions-cell">'+
+          '<button class="btn btn-ghost btn-icon" title="Edit" onclick="editService(\''+s.id+'\')"><i class="fa-solid fa-pen" style="font-size:.7rem"></i></button>'+
+          '<button class="btn btn-ghost btn-icon" title="'+(s.active?'Deactivate':'Activate')+'" onclick="toggleActive(\''+s.id+'\')">'+
+            '<i class="fa-solid '+(s.active?'fa-eye-slash':'fa-eye')+'" style="font-size:.7rem;color:'+(s.active?'var(--amber)':'var(--green)')+'"></i>'+
+          '</button>'+
+          '<button class="btn btn-ghost btn-icon" title="Delete" onclick="deleteService(\''+s.id+'\')"><i class="fa-solid fa-trash" style="font-size:.7rem;color:var(--red)"></i></button>'+
+        '</div>'+
+      '</div>';
+    });
+  }
+
+  document.getElementById('services-wrap').innerHTML = html;
+}
+
+function openAddService() {
+  EDITING_ID = null;
+  document.getElementById('svc-modal-title').textContent = 'Add Service';
+  document.getElementById('svc-modal-body').innerHTML = buildForm(null);
+  document.getElementById('svc-modal').style.display = 'flex';
+}
+
+function editService(id) {
+  var s = SERVICES.find(function(x){return x.id===id;});
+  if (!s) return;
+  EDITING_ID = id;
+  document.getElementById('svc-modal-title').textContent = 'Edit Service';
+  document.getElementById('svc-modal-body').innerHTML = buildForm(s);
+  document.getElementById('svc-modal').style.display = 'flex';
+}
+
+function buildForm(s) {
+  return '<div class="form-group"><label class="form-label">Service Name</label><input class="form-input" id="f-name" value="'+(s?Utils.safe(s.name):'')+'" placeholder="e.g. Acrylic Full Set"></div>'
+    +'<div class="form-row">'
+    +'<div class="form-group"><label class="form-label">Category</label><select class="form-input" id="f-cat-sel"><option'+((!s||s.category==='Nails')?' selected':'')+'>Nails</option><option'+(s&&s.category==='Lashes'?' selected':'')+'>Lashes</option><option'+(s&&s.category==='Other'?' selected':'')+'>Other</option></select></div>'
+    +'<div class="form-group"><label class="form-label">Price (CA$)</label><input type="number" class="form-input" id="f-price" value="'+(s?s.price:'')+'" placeholder="75" min="0" step="5"></div>'
+    +'</div>'
+    +'<div class="form-row">'
+    +'<div class="form-group"><label class="form-label">Duration (minutes)</label><input type="number" class="form-input" id="f-dur" value="'+(s?s.duration:'60')+'" placeholder="60" min="15" step="15"></div>'
+    +'<div class="form-group"><label class="form-label">Status</label><select class="form-input" id="f-active"><option value="1"'+((!s||s.active)?' selected':'')+'>Active</option><option value="0"'+(s&&!s.active?' selected':'')+'>Inactive</option></select></div>'
+    +'</div>'
+    +'<div class="form-group"><label class="form-label">Description (optional)</label><textarea class="form-input" id="f-desc" style="height:60px;resize:none" placeholder="Short description for staff reference…">'+(s?Utils.safe(s.description||''):'')+'</textarea></div>'
+    +'<div class="form-footer">'
+    +'<button class="btn" onclick="closeModal()">Cancel</button>'
+    +'<button class="btn btn-primary" onclick="saveService()"><i class="fa-solid fa-check"></i>Save Service</button>'
+    +'</div>';
+}
+
+function saveService() {
+  var name  = (document.getElementById('f-name').value||'').trim();
+  var price = parseFloat(document.getElementById('f-price').value||0);
+  var dur   = parseInt(document.getElementById('f-dur').value||60);
+  var cat   = document.getElementById('f-cat-sel').value;
+  var desc  = (document.getElementById('f-desc').value||'').trim();
+  var active= document.getElementById('f-active').value === '1';
+
+  if (!name) { Utils.toast('Service name is required','warning'); return; }
+  if (price < 0) { Utils.toast('Price cannot be negative','warning'); return; }
+  if (dur < 15)  { Utils.toast('Duration must be at least 15 minutes','warning'); return; }
+
+  if (EDITING_ID) {
+    var s = SERVICES.find(function(x){return x.id===EDITING_ID;});
+    if (s) { s.name=name; s.price=price; s.duration=dur; s.category=cat; s.description=desc; s.active=active; }
+    Utils.toast('Service updated','success');
+  } else {
+    SERVICES.push({id:'s'+Date.now(), name:name, price:price, duration:dur, category:cat, description:desc, active:active});
+    Utils.toast(name+' added','success');
+  }
+  saveServices();
+  closeModal();
+  render();
+}
+
+function toggleActive(id) {
+  var s = SERVICES.find(function(x){return x.id===id;});
+  if (!s) return;
+  s.active = !s.active;
+  saveServices();
+  Utils.toast(s.name+' '+(s.active?'activated':'deactivated'), s.active?'success':'info');
+  render();
+}
+
+function deleteService(id) {
+  var s = SERVICES.find(function(x){return x.id===id;});
+  if (!s) return;
+  Utils.confirmDialog('Delete Service', 'Delete "'+s.name+'"? This cannot be undone.', function() {
+    SERVICES = SERVICES.filter(function(x){return x.id!==id;});
+    saveServices();
+    Utils.toast('Deleted: '+s.name,'info');
+    render();
+  }, true);
+}
+
+function closeModal() {
+  document.getElementById('svc-modal').style.display='none';
+}
+
+function exportServices() {
+  var rows = SERVICES.map(function(s){
+    return [s.name, s.category, 'CA$'+s.price, s.duration+' min', s.active?'Active':'Inactive', s.description||''];
+  });
+  var csv = 'Service,Category,Price,Duration,Status,Description\n';
+  rows.forEach(function(r){ csv += r.map(function(c){return '"'+c+'"';}).join(',')+'\n'; });
+  var blob = new Blob([csv],{type:'text/csv'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'march-nails-services.csv';
+  a.click();
+  Utils.toast('Services exported','success');
+}
+</script>
+</body>
+</html>
