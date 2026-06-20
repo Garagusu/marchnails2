@@ -1013,10 +1013,18 @@ function updateStatsStrip() {
     String(_d.getMonth()+1).padStart(2,'0') + '-' +
     String(_d.getDate()).padStart(2,'0');
   var todayBks = SB.CACHE.bookings.filter(function(b) {
-    return b.booked_at && b.booked_at.startsWith(dateStr);
+    if(!b.booked_at) return false;
+    var _ds2=new Date(b.booked_at);
+    var _ss2=_ds2.getFullYear()+'-'+String(_ds2.getMonth()+1).padStart(2,'0')+'-'+String(_ds2.getDate()).padStart(2,'0');
+    return _ss2===dateStr;
   });
   var pending = SB.CACHE.bookings.filter(function(b) { return b.status === 'pending'; });
-  var todayPay = SB.CACHE.payments.filter(function(p) { return p.paid_at && p.paid_at.startsWith(dateStr); });
+  var todayPay = SB.CACHE.payments.filter(function(p) {
+    if(!p.paid_at) return false;
+    var _dp2=new Date(p.paid_at);
+    var _sp2=_dp2.getFullYear()+'-'+String(_dp2.getMonth()+1).padStart(2,'0')+'-'+String(_dp2.getDate()).padStart(2,'0');
+    return _sp2===dateStr;
+  });
   var rev = todayPay.reduce(function(s,p) { return s+parseFloat(p.amount||0); }, 0);
 
   var s1 = document.getElementById('stat-today');
@@ -1039,10 +1047,18 @@ function renderStaffRail() {
 
   filtered.forEach(function(s) {
     var bks = SB.CACHE.bookings.filter(function(b) {
-      return b.staff_name === s.name && b.booked_at && b.booked_at.startsWith(dateStr);
+      if(b.staff_name !== s.name || !b.booked_at) return false;
+      var _dr=new Date(b.booked_at);
+      var _sr=_dr.getFullYear()+'-'+String(_dr.getMonth()+1).padStart(2,'0')+'-'+String(_dr.getDate()).padStart(2,'0');
+      return _sr===dateStr;
     });
     var done = bks.filter(function(b) { return b.status === 'completed'; }).length;
-    var rev  = SB.CACHE.payments.filter(function(p) { return p.staff_name===s.name && p.paid_at && p.paid_at.startsWith(dateStr); })
+    var rev  = SB.CACHE.payments.filter(function(p) {
+      if(p.staff_name!==s.name||!p.paid_at) return false;
+      var _drp=new Date(p.paid_at);
+      var _srp=_drp.getFullYear()+'-'+String(_drp.getMonth()+1).padStart(2,'0')+'-'+String(_drp.getDate()).padStart(2,'0');
+      return _srp===dateStr;
+    })
                 .reduce(function(sum,p) { return sum+parseFloat(p.amount||0); }, 0);
     var pct = Math.min(100, Math.round((bks.length / 8) * 100));
 
@@ -1076,7 +1092,11 @@ function renderDayView() {
   var staffList = STATE.staffFilter === 'all' ? STAFF_CONFIG : STAFF_CONFIG.filter(function(s) { return s.name === STATE.staffFilter; });
 
   var dayBks = SB.CACHE.bookings.filter(function(b) {
-    if (!b.booked_at || !b.booked_at.startsWith(dateStr)) return false;
+    if (!b.booked_at) return false;
+    // Compare local date to avoid UTC timezone shift
+    var bLocal = new Date(b.booked_at);
+    var bDs = bLocal.getFullYear()+'-'+String(bLocal.getMonth()+1).padStart(2,'0')+'-'+String(bLocal.getDate()).padStart(2,'0');
+    if (bDs !== dateStr) return false;
     if (STATE.statusFilter !== 'all' && b.status !== STATE.statusFilter) return false;
     if (STATE.svcFilter    !== 'all' && b.service_name !== STATE.svcFilter) return false;
     return true;
@@ -1182,7 +1202,12 @@ function renderWeekView() {
   days.forEach(function(d, i) {
     var isToday = d.toDateString() === today;
     var ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-    var cnt = SB.CACHE.bookings.filter(function(b) { return b.booked_at && b.booked_at.startsWith(ds); }).length;
+    var cnt = SB.CACHE.bookings.filter(function(b) {
+      if(!b.booked_at) return false;
+      var _d2=new Date(b.booked_at);
+      var _s2=_d2.getFullYear()+'-'+String(_d2.getMonth()+1).padStart(2,'0')+'-'+String(_d2.getDate()).padStart(2,'0');
+      return _s2===ds;
+    }).length;
     html += '<div class="wv-day-head' + (isToday?' today':'') + '" onclick="goDay(\'' + ds + '\')">' +
       '<div class="wv-day-num">' + d.getDate() + '</div>' +
       '<div class="wv-day-name">' + dayNames[i] + '</div>' +
@@ -1203,7 +1228,12 @@ function renderWeekView() {
   html += '<div style="flex:1;display:grid;grid-template-columns:repeat(7,1fr)">';
   days.forEach(function(d) {
     var ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-    var dayBks = SB.CACHE.bookings.filter(function(b) { return b.booked_at && b.booked_at.startsWith(ds); });
+    var dayBks = SB.CACHE.bookings.filter(function(b) {
+      if (!b.booked_at) return false;
+      var _bd=new Date(b.booked_at);
+      var _bds=_bd.getFullYear()+'-'+String(_bd.getMonth()+1).padStart(2,'0')+'-'+String(_bd.getDate()).padStart(2,'0');
+      return _bds===ds;
+    });
     html += '<div class="dv-col">';
     HOURS.forEach(function(h) {
       html += '<div class="dv-cell" onclick="goDay(\'' + ds + '\')">' +
@@ -1263,8 +1293,18 @@ function renderMonthView() {
     var dt2 = new Date(year, month, d2);
     var ds = dt2.getFullYear()+'-'+String(dt2.getMonth()+1).padStart(2,'0')+'-'+String(dt2.getDate()).padStart(2,'0');
     var isTd = dt2.toDateString() === today;
-    var dayBks = SB.CACHE.bookings.filter(function(b) { return b.booked_at && b.booked_at.startsWith(ds); });
-    var rev = SB.CACHE.payments.filter(function(p) { return p.paid_at && p.paid_at.startsWith(ds); })
+    var dayBks = SB.CACHE.bookings.filter(function(b) {
+      if (!b.booked_at) return false;
+      var _bd=new Date(b.booked_at);
+      var _bds=_bd.getFullYear()+'-'+String(_bd.getMonth()+1).padStart(2,'0')+'-'+String(_bd.getDate()).padStart(2,'0');
+      return _bds===ds;
+    });
+    var rev = SB.CACHE.payments.filter(function(p) {
+      if(!p.paid_at) return false;
+      var _dp=new Date(p.paid_at);
+      var _sp=_dp.getFullYear()+'-'+String(_dp.getMonth()+1).padStart(2,'0')+'-'+String(_dp.getDate()).padStart(2,'0');
+      return _sp===ds;
+    })
               .reduce(function(s,p) { return s+parseFloat(p.amount||0); }, 0);
 
     html += '<div class="month-day' + (isTd?' today':'') + '" onclick="goDay(\'' + ds + '\')">' +
@@ -1394,7 +1434,12 @@ function renderRightPanel() {
   var dateStr = _d.getFullYear() + '-' +
     String(_d.getMonth()+1).padStart(2,'0') + '-' +
     String(_d.getDate()).padStart(2,'0');
-    var todayBks = SB.CACHE.bookings.filter(function(b) { return b.booked_at && b.booked_at.startsWith(dateStr); });
+    var todayBks = SB.CACHE.bookings.filter(function(b) {
+      if(!b.booked_at) return false;
+      var _do=new Date(b.booked_at);
+      var _so=_do.getFullYear()+'-'+String(_do.getMonth()+1).padStart(2,'0')+'-'+String(_do.getDate()).padStart(2,'0');
+      return _so===dateStr;
+    });
     var maxSlots = 4 * HOURS.length; // 4 staff × hours
     var occ = maxSlots > 0 ? Math.round((todayBks.length / maxSlots) * 100) : 0;
 
