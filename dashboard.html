@@ -350,12 +350,15 @@ window.addEventListener('DOMContentLoaded', function() {
   Utils.startClock(document.getElementById('dash-greeting'), document.getElementById('tb-date'));
   setupFilterListeners();
   
-  // Load demo data only if cache is empty (preserve user changes)
-  if (SB.DEMO && SB.CACHE.bookings.length === 0) {
-    SB.CACHE.clients   = JSON.parse(JSON.stringify(SB.DEMO.clients));
-    SB.CACHE.payments  = JSON.parse(JSON.stringify(SB.DEMO.payments));
-    SB.CACHE.bookings  = JSON.parse(JSON.stringify(SB.DEMO.bookings));
-    SB.CACHE.email_log = JSON.parse(JSON.stringify(SB.DEMO.email_log));
+  // Load data: localStorage first, then demo (preserves all user changes across page loads)
+  if (!SB.loadCacheFromStorage()) {
+    if (SB.DEMO) {
+      SB.CACHE.clients   = JSON.parse(JSON.stringify(SB.DEMO.clients));
+      SB.CACHE.payments  = JSON.parse(JSON.stringify(SB.DEMO.payments));
+      SB.CACHE.bookings  = JSON.parse(JSON.stringify(SB.DEMO.bookings));
+      SB.CACHE.email_log = JSON.parse(JSON.stringify(SB.DEMO.email_log));
+      SB.saveCache();
+    }
   }
   render();
   updatePendingBadge();
