@@ -688,19 +688,19 @@ function renderDay(){
       blk.nCols=peers.length>0?peers.length+1:1;
     });
     blocks2.forEach(function(blk){
-      var b=blk.b,dt=blk.dt;
+      var b=blk.b, dt=blk.dt;
       var dur=parseInt(b.duration_minutes||60);
       var top=Math.max(0,((dt.getHours()-HOURS[0])+dt.getMinutes()/60)*HH);
       var ht=Math.max(28,(dur/60)*HH-2);
-      var stCls='st-'+(b.status||'pending').replace('_','-');
+      var stCls='st-'+(b.status||'pending').replace(/_/g,'-');
       var stM=SM[b.status]||SM.pending;
       var timeStr=dt.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
       var wPct=100/blk.nCols;
       var L=blk.col*wPct, R=100-L-wPct;
-      html+='<div class="ab '+stCls+'" style="top:'+top+'px;height:'+ht+'px;left:calc('+L+'%+2px);right:calc('+R+'%+2px)" onclick="event.stopPropagation();openDetail(\''+b.id+'\')">';
-        +'<div class="ab-name">'+(b.client_name||'?')+'</div>';
-      if(ht>36)html+='<div class="ab-svc">'+(b.service_name||'')+'</div>';
-      if(ht>52)html+='<div class="ab-meta">'+timeStr+' · CA$'+(b.service_price||0)+'</div>';
+      html+='<div class="ab '+stCls+'" style="top:'+top+'px;height:'+ht+'px;left:calc('+L+'%+3px);right:calc('+R+'%+3px)" onclick="event.stopPropagation();openDetail(\''+b.id+'\')">';
+      html+='<div class="ab-name">'+(b.client_name||'Walk-in')+'</div>';
+      if(ht>36) html+='<div class="ab-svc">'+(b.service_name||'')+'</div>';
+      if(ht>52) html+='<div class="ab-meta">'+timeStr+' · CA$'+(b.service_price||0)+'</div>';
       html+='<div class="ab-dot" style="background:'+stM.color+'"></div></div>';
     });
     html+='</div>';
