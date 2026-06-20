@@ -537,12 +537,20 @@ function resetDemo(){if(confirm('Reset all changes and reload demo data?')){loca
 
 /* ── LOCAL DATE STR ── */
 function lds(d){var x=d instanceof Date?d:new Date(d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');}
-function bDate(b){return b.booked_at?lds(new Date(b.booked_at)):'';}
+function bDate(b){return b.booked_at?lds(localDt(b)):'';}
+// Parse booked_at as LOCAL time (strip UTC offset so display matches intended time)
+function localDt(b){
+  if(!b.booked_at) return new Date();
+  // Remove timezone offset — treat stored time as local
+  var s=b.booked_at.replace('T',' ').replace(/\+\d{2}:\d{2}$/,'').replace(/Z$/,'').trim();
+  return new Date(s);
+}
 
 /* ── UNIFIED DAY FILTER ── */
 function getDayBookings(dateStr){
   return SB.CACHE.bookings.filter(function(b){
     if(!b.booked_at) return false;
+    if(localDt(b).getHours()<9) return false; // hide before 9am (local time)
     if(bDate(b)!==dateStr) return false;
     if(STATE.staff!=='all'&&b.staff_name!==STATE.staff) return false;
     if(STATE.status!=='all'&&b.status!==STATE.status) return false;
@@ -601,6 +609,7 @@ function renderRail(){
   // Same base filter as getDayBookings: same day, no status filter
   var allDayBks=SB.CACHE.bookings.filter(function(b){
     if(!b.booked_at) return false;
+    if(localDt(b).getHours()<9) return false; // local time check
     return bDate(b)===ds;
   });
   var html='';
@@ -664,7 +673,7 @@ function renderDay(){
     var blocks2 = colBks.filter(function(b){
       return !!b.booked_at;
     }).map(function(b){
-      var dt=new Date(b.booked_at);
+      var dt=localDt(b);
       var sMin=dt.getHours()*60+dt.getMinutes();
       var dur=parseInt(b.duration_minutes||60);
       return {b:b,dt:dt,sMin:sMin,eMin:sMin+dur,col:0,nCols:1};
@@ -738,7 +747,7 @@ function renderWeek(){
     });
     dBks.forEach(function(b){
       if(!b.booked_at)return;
-      var dt=new Date(b.booked_at),h=dt.getHours(),m=dt.getMinutes();
+      var dt=localDt(b),h=dt.getHours(),m=dt.getMinutes();
       if(h<9)return;
       var dur=parseInt(b.duration_minutes||60);
       var top=Math.max(0,((h-HOURS[0])+m/60)*HH);
@@ -810,7 +819,7 @@ function renderList(){
     bks.forEach(function(b){
       var sc=STAFF.find(function(s){return s.name===b.staff_name;})||STAFF[0];
       var stM=SM[b.status]||SM.pending;
-      var dt=new Date(b.booked_at);
+      var dt=localDt(b);
       var timeStr=dt.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
       html+='<div class="lv-row" onclick="openDetail(\''+b.id+'\')">'
         +'<div class="lv-time">'+timeStr+'</div>'
@@ -857,7 +866,7 @@ function renderRightPanel(){
     if(!upcoming.length)html+='<div style="text-align:center;padding:1rem;color:var(--text3);font-size:.74rem">No upcoming appointments</div>';
     upcoming.forEach(function(b){
       var sc=STAFF.find(function(s){return s.name===b.staff_name;})||STAFF[0];
-      var dt=new Date(b.booked_at),isT=dt.toDateString()===now.toDateString();
+      var dt=localDt(b),isT=dt.toDateString()===now.toDateString();
       var ts=(isT?'':dt.toLocaleDateString('en-CA',{month:'short',day:'numeric'})+' ')+dt.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
       html+='<div class="up-item" onclick="openDetail(\''+b.id+'\')">'
         +'<div class="up-time">'+ts+'</div>'
@@ -1041,7 +1050,7 @@ function openDetail(id){
   if(!b)return;
   var sc=STAFF.find(function(s){return s.name===b.staff_name;})||STAFF[0];
   var stM=SM[b.status]||SM.pending;
-  var dt=b.booked_at?new Date(b.booked_at):null;
+  var dt=b.booked_at?localDt(b):null;
 
   var av=document.getElementById('dm-av');
   av.textContent=sc.name[0];av.style.background=sc.grad;
