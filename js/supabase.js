@@ -18,6 +18,43 @@ var SB = (function() {
     loaded: { bookings: false, clients: false, payments: false }
   };
 
+  var LS_KEY = 'mn_cache_v2';
+
+  // Save cache to localStorage
+  function saveCache() {
+    try {
+      var data = {
+        bookings:  CACHE.bookings,
+        clients:   CACHE.clients,
+        payments:  CACHE.payments,
+        email_log: CACHE.email_log,
+        savedAt:   new Date().toISOString()
+      };
+      localStorage.setItem(LS_KEY, JSON.stringify(data));
+    } catch(e) { /* quota exceeded or private mode */ }
+  }
+
+  // Load cache from localStorage
+  function loadCacheFromStorage() {
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      if (!raw) return false;
+      var data = JSON.parse(raw);
+      if (!data.bookings || !data.bookings.length) return false;
+      CACHE.bookings  = data.bookings;
+      CACHE.clients   = data.clients   || [];
+      CACHE.payments  = data.payments  || [];
+      CACHE.email_log = data.email_log || [];
+      return true;
+    } catch(e) { return false; }
+  }
+
+  // Clear persisted cache (for reset)
+  function clearCache() {
+    localStorage.removeItem(LS_KEY);
+    CACHE.bookings = []; CACHE.clients = []; CACHE.payments = []; CACHE.email_log = [];
+  }
+
   // ── Core fetch ──
   function request(path, opts) {
     if (window.location.protocol === 'file:') {
@@ -54,15 +91,37 @@ var SB = (function() {
   }
 
   function insert(table, data) {
-    return request(table, { method: 'POST', body: JSON.stringify(data) });
+    // Always save to localStorage immediately
+    if (CACHE[table]) {
+      var exists = CACHE[table].find(function(r) { return r.id === data.id; });
+      if (!exists) CACHE[table].unshift(data);
+      saveCache();
+    }
+    return request(table, { method: 'POST', body: JSON.stringify(data) })
+      .then(function(res) { saveCache(); return res; })
+      .catch(function(e) { saveCache(); return [data]; });
   }
 
   function update(table, id, data) {
-    return request(table + '?id=eq.' + id, { method: 'PATCH', body: JSON.stringify(data) });
+    // Update in-memory cache immediately
+    if (CACHE[table]) {
+      var item = CACHE[table].find(function(r) { return r.id === id; });
+      if (item) { Object.assign(item, data); }
+      saveCache();
+    }
+    return request(table + '?id=eq.' + id, { method: 'PATCH', body: JSON.stringify(data) })
+      .then(function(res) { saveCache(); return res; })
+      .catch(function(e) { saveCache(); return []; });
   }
 
   function remove(table, id) {
-    return request(table + '?id=eq.' + id, { method: 'DELETE' });
+    // Remove from cache immediately
+    if (CACHE[table]) {
+      CACHE[table] = CACHE[table].filter(function(r) { return r.id !== id; });
+      saveCache();
+    }
+    return request(table + '?id=eq.' + id, { method: 'DELETE' })
+      .catch(function(e) { saveCache(); return []; });
   }
 
   function rpc(fn, params) {
@@ -154,7 +213,10 @@ var SB = (function() {
     CACHE: CACHE,
     get: get, insert: insert, update: update, remove: remove, rpc: rpc,
     loadAll: loadAll, testConnection: testConnection,
-    showBanner: showBanner, hideBanner: hideBanner
+    showBanner: showBanner, hideBanner: hideBanner,
+    saveCache: saveCache,
+    loadCacheFromStorage: loadCacheFromStorage,
+    clearCache: clearCache
   };
 })();
 
@@ -2125,11 +2187,19 @@ var SB = (function() {
   SB.loadAll = (function(original) {
     return function() {
       return original().catch(function() {
-        // Only load demo data if cache is empty (don't overwrite user changes)
-        if (SB.CACHE.bookings.length === 0)  SB.CACHE.bookings  = JSON.parse(JSON.stringify(SB.DEMO.bookings));
-        if (SB.CACHE.clients.length === 0)   SB.CACHE.clients   = JSON.parse(JSON.stringify(SB.DEMO.clients));
-        if (SB.CACHE.payments.length === 0)  SB.CACHE.payments  = JSON.parse(JSON.stringify(SB.DEMO.payments));
-        if (SB.CACHE.email_log.length === 0) SB.CACHE.email_log = JSON.parse(JSON.stringify(SB.DEMO.email_log));
+        // Supabase failed - try localStorage first, then demo data
+        var fromStorage = SB.loadCacheFromStorage();
+        if (!fromStorage) {
+          // No localStorage data, load demo
+          if (SB.CACHE.bookings.length === 0)
+            SB.CACHE.bookings  = JSON.parse(JSON.stringify(SB.DEMO.bookings));
+          if (SB.CACHE.clients.length === 0)
+            SB.CACHE.clients   = JSON.parse(JSON.stringify(SB.DEMO.clients));
+          if (SB.CACHE.payments.length === 0)
+            SB.CACHE.payments  = JSON.parse(JSON.stringify(SB.DEMO.payments));
+          if (SB.CACHE.email_log.length === 0)
+            SB.CACHE.email_log = JSON.parse(JSON.stringify(SB.DEMO.email_log));
+        }
         SB.CACHE.loaded.bookings = true;
         SB.CACHE.loaded.clients  = true;
         SB.CACHE.loaded.payments = true;
