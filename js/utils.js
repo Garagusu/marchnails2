@@ -60,7 +60,13 @@ var Utils = (function() {
   function inRange(dateStr, range) {
     if (!dateStr) return false;
     var d = new Date(dateStr);
+    // Normalize to local midnight for comparison
     return d >= range.start && d <= range.end;
+  }
+
+  function localDateStr(date) {
+    var d = date instanceof Date ? date : new Date(date);
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   }
 
   // ── Format ──
@@ -180,15 +186,17 @@ var Utils = (function() {
     var rangeBookings = range ? bookings.filter(function(b) { return inRange(b.booked_at, range); }) : bookings;
     var rangePayments = range ? payments.filter(function(p) { return inRange(p.paid_at, range); }) : payments;
 
-    // Fallback: if payments empty, use completed bookings service_price
-    var totalRevenue;
-    if (rangePayments.length > 0) {
-      totalRevenue = sumRevenue(rangePayments);
-    } else {
-      totalRevenue = rangeBookings
-        .filter(function(b) { return b.status === 'completed' || b.payment_status === 'paid'; })
-        .reduce(function(s, b) { return s + parseFloat(b.service_price || 0); }, 0);
-    }
+    // Revenue: use payments if available, else sum completed bookings
+    var revenueFromPayments = sumRevenue(rangePayments);
+    var completedBksForRev  = rangeBookings.filter(function(b) {
+      return b.status === 'completed' || b.payment_status === 'paid';
+    });
+    var revenueFromBookings = completedBksForRev.reduce(function(s, b) {
+      return s + parseFloat(b.service_price || 0);
+    }, 0);
+    // Use whichever source gives more revenue (payments may be partial)
+    var totalRevenue = Math.max(revenueFromPayments, revenueFromBookings);
+    var commissionFromBookings = revenueFromBookings * 0.25;
     var totalBookings  = rangeBookings.length;
     var completedBk    = rangeBookings.filter(function(b) { return b.status === 'completed'; });
     var cancelledBk    = rangeBookings.filter(function(b) { return b.status === 'cancelled'; });
@@ -252,7 +260,7 @@ var Utils = (function() {
       busiestDay:    busiestDay,
       busiestHour:   busiestHour,
       returnRate:    returnRate,
-      commission:    sumCommission(rangePayments),
+      commission:    rangePayments.length > 0 ? sumCommission(rangePayments) : commissionFromBookings,
       netRevenue:    totalRevenue - sumCommission(rangePayments)
     };
   }
