@@ -896,49 +896,18 @@ window.addEventListener('DOMContentLoaded', function() {
       ' · ' + n.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
   }, 1000);
 
-  // Always start with full demo data as base
-  if (SB.DEMO) {
-    SB.CACHE.clients   = JSON.parse(JSON.stringify(SB.DEMO.clients));
-    SB.CACHE.payments  = JSON.parse(JSON.stringify(SB.DEMO.payments));
-    SB.CACHE.bookings  = JSON.parse(JSON.stringify(SB.DEMO.bookings));
-    SB.CACHE.email_log = JSON.parse(JSON.stringify(SB.DEMO.email_log));
-  }
-  // Then apply any saved changes from localStorage on top
-  try {
-    var _ls = localStorage.getItem('mn_cache_v2');
-    if (_ls) {
-      var _d = JSON.parse(_ls);
-      // Apply status/payment changes to existing bookings
-      if (_d.bookings) {
-        _d.bookings.forEach(function(lsBk) {
-          var existing = SB.CACHE.bookings.find(function(b){ return b.id === lsBk.id; });
-          if (existing) {
-            // Apply saved status/payment changes
-            existing.status         = lsBk.status         || existing.status;
-            existing.payment_status = lsBk.payment_status || existing.payment_status;
-            existing.payment_method = lsBk.payment_method || existing.payment_method;
-          } else {
-            // New booking added by user - add it
-            SB.CACHE.bookings.unshift(lsBk);
-          }
-        });
-      }
-      // Add new payments from localStorage
-      if (_d.payments) {
-        _d.payments.forEach(function(lsPay) {
-          var exists = SB.CACHE.payments.find(function(p){ return p.id === lsPay.id; });
-          if (!exists) SB.CACHE.payments.unshift(lsPay);
-        });
-      }
-      // Add new clients from localStorage
-      if (_d.clients) {
-        _d.clients.forEach(function(lsCli) {
-          var exists = SB.CACHE.clients.find(function(c){ return c.id === lsCli.id; });
-          if (!exists) SB.CACHE.clients.push(lsCli);
-        });
-      }
+  // Data loading: localStorage = source of truth, demo = first-time fallback
+  if (!SB.loadCacheFromStorage()) {
+    // First time ever - load demo data and save to localStorage
+    if (SB.DEMO) {
+      SB.CACHE.clients   = JSON.parse(JSON.stringify(SB.DEMO.clients));
+      SB.CACHE.payments  = JSON.parse(JSON.stringify(SB.DEMO.payments));
+      SB.CACHE.bookings  = JSON.parse(JSON.stringify(SB.DEMO.bookings));
+      SB.CACHE.email_log = JSON.parse(JSON.stringify(SB.DEMO.email_log));
+      SB.saveCache(); // Persist demo data so next load uses localStorage
     }
-  } catch(e) { /* bad localStorage data - ignore */ }
+  }
+  // localStorage is now the single source of truth - all changes persist here
 
   // Populate client select
   populateClientSelect();
@@ -1603,8 +1572,10 @@ function saveNewAppt() {
   var client  = SB.CACHE.clients.find(function(c) { return c.id === clientId; });
   var cName   = client ? (client.first_name + ' ' + client.last_name) : (clientNameRaw || 'Walk-in');
 
+  // Local object for cache (with temp id)
+  var tempId = 'tmp_' + Date.now();
   var bk = {
-    id:              'b_' + Date.now(),
+    id:              tempId,
     client_id:       clientId || null,
     client_name:     cName,
     client_email:    client ? client.email : null,
@@ -1619,13 +1590,30 @@ function saveNewAppt() {
     notes:           notes,
     recurring:       repeat
   };
-
   SB.CACHE.bookings.unshift(bk);
   SB.saveCache();
-  SB.insert('bookings', bk).then(function(data) {
-    if (Array.isArray(data) && data[0]) {
-      var idx = SB.CACHE.bookings.indexOf(bk);
-      if (idx > -1) SB.CACHE.bookings[idx] = data[0];
+
+  // Supabase payload - only schema columns
+  var sbBk = {
+    client_id:       clientId || null,
+    client_name:     cName,
+    client_email:    client ? client.email : null,
+    staff_name:      staff,
+    service_name:    svcName,
+    service_price:   price,
+    duration_minutes:dur,
+    status:          STATE.selectedNewStatus,
+    payment_status:  'unpaid',
+    payment_method:  'pending',
+    booked_at:       new Date(dt).toISOString(),
+    notes:           notes,
+    recurring:       repeat
+  };
+  SB.insert('bookings', sbBk).then(function(data) {
+    if (Array.isArray(data) && data[0] && data[0].id) {
+      // Replace temp id with real UUID
+      bk.id = data[0].id;
+      SB.saveCache();
     }
   }).catch(function(){});
 
@@ -1730,17 +1718,14 @@ function savePayment() {
   if (!bk) return;
   var amount = parseFloat(bk.service_price||0);
   var pay = {
-    id: 'p_' + Date.now(),
-    booking_id: id,
-    client_id: bk.client_id,
-    client_name: bk.client_name,
-    staff_name: bk.staff_name,
+    booking_id:   id,
+    client_id:    bk.client_id || null,
+    client_name:  bk.client_name,
+    staff_name:   bk.staff_name,
     service_name: bk.service_name,
-    amount: amount,
-    method: STATE.selectedPayMethod,
-    commission: parseFloat((amount*0.25).toFixed(2)),
-    net_revenue: parseFloat((amount*0.75).toFixed(2)),
-    paid_at: new Date().toISOString()
+    amount:       amount,
+    method:       STATE.selectedPayMethod,
+    paid_at:      bk.booked_at || new Date().toISOString()
   };
   SB.CACHE.payments.unshift(pay);
   SB.insert('payments', pay).catch(function(){});
@@ -1762,7 +1747,7 @@ function savePayment() {
   SB.CACHE.email_log.unshift({
     id: 'e_'+Date.now(), client_id: bk.client_id,
     client_name: bk.client_name, client_email: bk.client_email,
-    type:'receipt', subject:'Your '+bk.service_name+' Receipt -- CA$'+amount,
+    type:'receipt', subject: 'Receipt CA$' + amount,
     status:'sent', sent_at: new Date().toISOString()
   });
 
@@ -1790,17 +1775,14 @@ function changeApptStatus(id, status) {
     // Use booking date for paid_at so revenue shows in correct period
     var paidAt = bk.booked_at || new Date().toISOString();
     var pay = {
-      id: 'p_' + Date.now(),
-      booking_id: id,
-      client_id:  bk.client_id,
+      booking_id:   id,
+      client_id:    bk.client_id || null,
       client_name:  bk.client_name,
       staff_name:   bk.staff_name,
       service_name: bk.service_name,
-      amount: amount,
-      method: method,
-      commission:   parseFloat((amount * 0.25).toFixed(2)),
-      net_revenue:  parseFloat((amount * 0.75).toFixed(2)),
-      paid_at: paidAt
+      amount:       amount,
+      method:       method,
+      paid_at:      paidAt
     };
     bk.payment_status = 'paid';
     bk.payment_method  = method;
@@ -1811,7 +1793,7 @@ function changeApptStatus(id, status) {
     // Log email receipt
     if (bk.client_email) {
       SB.CACHE.email_log.unshift({id:'e_'+Date.now(),client_id:bk.client_id,client_name:bk.client_name,
-        client_email:bk.client_email,type:'receipt',subject:'Your '+bk.service_name+' Receipt -- CA$'+amount,
+        client_email:bk.client_email,type:'receipt',subject: 'Receipt CA$' + amount,
         status:'sent',sent_at:new Date().toISOString()});
     }
     // Re-open detail to show paid status & allow method change
