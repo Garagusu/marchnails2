@@ -2125,10 +2125,11 @@ var SB = (function() {
   SB.loadAll = (function(original) {
     return function() {
       return original().catch(function() {
-        SB.CACHE.clients   = SB.DEMO.clients;
-        SB.CACHE.payments  = SB.DEMO.payments;
-        SB.CACHE.bookings  = SB.DEMO.bookings;
-        SB.CACHE.email_log = SB.DEMO.email_log;
+        // Only load demo data if cache is empty (don't overwrite user changes)
+        if (SB.CACHE.bookings.length === 0)  SB.CACHE.bookings  = JSON.parse(JSON.stringify(SB.DEMO.bookings));
+        if (SB.CACHE.clients.length === 0)   SB.CACHE.clients   = JSON.parse(JSON.stringify(SB.DEMO.clients));
+        if (SB.CACHE.payments.length === 0)  SB.CACHE.payments  = JSON.parse(JSON.stringify(SB.DEMO.payments));
+        if (SB.CACHE.email_log.length === 0) SB.CACHE.email_log = JSON.parse(JSON.stringify(SB.DEMO.email_log));
         SB.CACHE.loaded.bookings = true;
         SB.CACHE.loaded.clients  = true;
         SB.CACHE.loaded.payments = true;
