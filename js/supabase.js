@@ -20,15 +20,45 @@ var SB = (function() {
 
   var LS_KEY = 'mn_cache_v2';
 
-  // Save cache to localStorage
+  // Save ONLY changes/deltas to localStorage (not full demo data)
   function saveCache() {
     try {
+      // Save bookings with modified status/payment (changed from demo)
+      var demoBookingMap = {};
+      if (SB.DEMO) SB.DEMO.bookings.forEach(function(b){ demoBookingMap[b.id] = b; });
+
+      // Include: all cache bookings (modified demo + new user-created)
+      var toSaveBookings = CACHE.bookings.map(function(b) {
+        return {
+          id: b.id,
+          client_id: b.client_id,
+          client_name: b.client_name,
+          client_email: b.client_email,
+          staff_name: b.staff_name,
+          service_name: b.service_name,
+          service_price: b.service_price,
+          duration_minutes: b.duration_minutes,
+          status: b.status,
+          payment_status: b.payment_status,
+          payment_method: b.payment_method,
+          booked_at: b.booked_at,
+          notes: b.notes
+        };
+      });
+
+      // New payments (not in demo)
+      var demoPayIds = SB.DEMO ? SB.DEMO.payments.map(function(p){return p.id;}) : [];
+      var newPayments = CACHE.payments.filter(function(p){ return demoPayIds.indexOf(p.id) === -1; });
+
+      // New clients (not in demo)
+      var demoCliIds = SB.DEMO ? SB.DEMO.clients.map(function(c){return c.id;}) : [];
+      var newClients = CACHE.clients.filter(function(c){ return demoCliIds.indexOf(c.id) === -1; });
+
       var data = {
-        bookings:  CACHE.bookings,
-        clients:   CACHE.clients,
-        payments:  CACHE.payments,
-        email_log: CACHE.email_log,
-        savedAt:   new Date().toISOString()
+        bookings: toSaveBookings,
+        payments: newPayments,
+        clients:  newClients,
+        savedAt:  new Date().toISOString()
       };
       localStorage.setItem(LS_KEY, JSON.stringify(data));
     } catch(e) { /* quota exceeded or private mode */ }
@@ -40,13 +70,20 @@ var SB = (function() {
       var raw = localStorage.getItem(LS_KEY);
       if (!raw) return false;
       var data = JSON.parse(raw);
-      if (!data.bookings || !data.bookings.length) return false;
+      if (!data.bookings || data.bookings.length < 50) {
+        // Too few bookings - stale/partial data, clear and reload demo
+        localStorage.removeItem(LS_KEY);
+        return false;
+      }
       CACHE.bookings  = data.bookings;
       CACHE.clients   = data.clients   || [];
       CACHE.payments  = data.payments  || [];
       CACHE.email_log = data.email_log || [];
       return true;
-    } catch(e) { return false; }
+    } catch(e) {
+      localStorage.removeItem(LS_KEY);
+      return false;
+    }
   }
 
   // Clear persisted cache (for reset)
