@@ -457,29 +457,27 @@ function updatePendingBadge() {
 // ── Filter data ──
 function applyFilters() {
   var range = Utils.getRange(STATE.period, STATE.customStart, STATE.customEnd);
+  // Use canonical filters - same functions used everywhere
   FILTERED_BOOKINGS = Utils.filterBookings(SB.CACHE.bookings, {
     range: range, staff: STATE.staff, service: STATE.service
   });
-  FILTERED_PAYMENTS = SB.CACHE.payments.filter(function(p) {
-    if (!Utils.inRange(p.paid_at, range)) return false;
-    if (STATE.staff   !== 'all' && p.staff_name   !== STATE.staff)   return false;
-    if (STATE.service !== 'all' && p.service_name !== STATE.service) return false;
-    return true;
+  FILTERED_PAYMENTS = Utils.filterPayments(SB.CACHE.payments, {
+    range: range, staff: STATE.staff, service: STATE.service
   });
 
   if (STATE.compare) {
     var cmpRange = Utils.getCompareRange(STATE.period, range);
     COMPARE_BOOKINGS = Utils.filterBookings(SB.CACHE.bookings, { range: cmpRange });
-    COMPARE_PAYMENTS = SB.CACHE.payments.filter(function(p) { return Utils.inRange(p.paid_at, cmpRange); });
+    COMPARE_PAYMENTS = Utils.filterPayments(SB.CACHE.payments, { range: cmpRange });
   }
 }
 
 // ── Main render ──
 function render() {
   applyFilters();
-  var range = Utils.getRange(STATE.period, STATE.customStart, STATE.customEnd);
-  var kpis  = Utils.calcKPIs(FILTERED_BOOKINGS, FILTERED_PAYMENTS, SB.CACHE.clients, range);
-  var cKPIs = STATE.compare ? Utils.calcKPIs(COMPARE_BOOKINGS, COMPARE_PAYMENTS, SB.CACHE.clients, Utils.getCompareRange(STATE.period, range)) : null;
+  // Pass already-filtered data - calcKPIs does NOT re-filter
+  var kpis  = Utils.calcKPIs(FILTERED_BOOKINGS, FILTERED_PAYMENTS);
+  var cKPIs = STATE.compare ? Utils.calcKPIs(COMPARE_BOOKINGS, COMPARE_PAYMENTS) : null;
 
   renderKPIs(kpis, cKPIs);
   refreshCharts();
@@ -895,7 +893,7 @@ function exportDashboard(type) {
   if (type === 'excel') Export.exportPayments(FILTERED_PAYMENTS, STATE.period);
   else if (type === 'csv') Export.exportBookings(FILTERED_BOOKINGS, STATE.period);
   else Export.exportRevenueReport(
-    Utils.calcKPIs(FILTERED_BOOKINGS, FILTERED_PAYMENTS, SB.CACHE.clients),
+    Utils.calcKPIs(FILTERED_BOOKINGS, FILTERED_PAYMENTS),
     FILTERED_BOOKINGS, FILTERED_PAYMENTS, STATE.period
   );
 }
