@@ -15,6 +15,7 @@ var Utils = (function() {
     switch (period) {
       case 'today':
         start = new Date(now); start.setHours(0,0,0,0);
+        end   = new Date(now); end.setHours(23,59,59,999);
         break;
       case 'yesterday':
         start = new Date(now); start.setDate(start.getDate()-1); start.setHours(0,0,0,0);
@@ -112,8 +113,12 @@ var Utils = (function() {
   // ── Filter data ──
   function filterBookings(bookings, filters) {
     return bookings.filter(function(b) {
-      // Date range
-      if (filters.range && !inRange(b.booked_at, filters.range)) return false;
+      // Date range - use local date for comparison
+      if (filters.range) {
+        if (!b.booked_at) return false;
+        var d = new Date(b.booked_at);
+        if (d < filters.range.start || d > filters.range.end) return false;
+      }
       // Staff
       if (filters.staff && filters.staff !== 'all' && b.staff_name !== filters.staff) return false;
       // Service
