@@ -169,6 +169,25 @@ input,select,textarea{font-family:var(--font)}
   flex:1;display:flex;overflow:hidden;min-height:0;
 }
 
+/* ─── MAIN NAV (icon + label sidebar) ────────────── */
+.main-nav{
+  width:72px;flex-shrink:0;
+  background:var(--white);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:center;
+  padding:.5rem 0;gap:.15rem;overflow:hidden;
+}
+.mn-item{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:.5rem .25rem;border-radius:var(--rsm);
+  color:var(--text3);text-decoration:none;
+  transition:all .15s;cursor:pointer;width:60px;
+}
+.mn-item:hover{background:var(--s1);color:var(--text2)}
+.mn-item.mn-active{background:var(--pink-bg);color:var(--pink)}
+.mn-item i{font-size:.95rem}
+.mn-item span{font-size:.6rem;font-weight:500;letter-spacing:.02em;text-align:center}
+.mn-sep{height:1px;background:var(--border);width:40px;margin:.3rem 0}
+
 /* ─── STAFF COLUMN (left) ─────────────────────────── */
 .staff-rail{
   width:180px;flex-shrink:0;
@@ -573,7 +592,10 @@ input,select,textarea{font-family:var(--font)}
     <!-- Date navigation -->
     <div class="date-nav">
       <button class="nav-btn" onclick="navigate(-1)"><i class="fa-solid fa-chevron-left"></i></button>
-      <div class="nav-date-label" id="nav-label" onclick="goToday()">Today</div>
+      <div class="nav-date-label" id="nav-label" onclick="openDatePicker()" style="position:relative;cursor:pointer">
+        <span id="nav-label-text">Today</span>
+        <input type="date" id="nav-datepicker" style="position:absolute;opacity:0;width:100%;height:100%;top:0;left:0;cursor:pointer;border:none;background:transparent" onchange="goToDate(this.value)">
+      </div>
       <button class="nav-btn" onclick="navigate(1)"><i class="fa-solid fa-chevron-right"></i></button>
       <button class="today-btn" onclick="goToday()">Today</button>
     </div>
@@ -629,6 +651,18 @@ input,select,textarea{font-family:var(--font)}
 <!-- BOOKING BODY -->
 <div class="booking-body">
 
+  <!-- MAIN NAV (compact) -->
+  <div class="main-nav" id="main-nav">
+    <a class="mn-item" href="dashboard.html" title="Dashboard"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></a>
+    <a class="mn-item mn-active" href="booking.html" title="Booking"><i class="fa-solid fa-calendar-check"></i><span>Booking</span></a>
+    <a class="mn-item" href="clients.html" title="Clients"><i class="fa-solid fa-users"></i><span>Clients</span></a>
+    <a class="mn-item" href="staff.html" title="Staff"><i class="fa-solid fa-id-badge"></i><span>Staff</span></a>
+    <a class="mn-item" href="reports.html" title="Reports"><i class="fa-solid fa-chart-column"></i><span>Reports</span></a>
+    <a class="mn-item" href="appointments.html" title="Appointments"><i class="fa-solid fa-calendar-days"></i><span>Appts</span></a>
+    <div class="mn-sep"></div>
+    <a class="mn-item" href="index.html" title="Sign Out" onclick="localStorage.removeItem('mn_auth')" style="margin-top:auto"><i class="fa-solid fa-right-from-bracket"></i><span>Out</span></a>
+  </div>
+
   <!-- STAFF RAIL -->
   <div class="staff-rail" id="staff-rail">
     <div class="staff-rail-header">
@@ -668,15 +702,16 @@ input,select,textarea{font-family:var(--font)}
     </div>
     <div class="modal-body">
       <div class="frow">
-        <div class="fg">
+        <div class="fg" style="position:relative">
           <label class="fl">Client</label>
-          <select class="fi" id="m-client">
-            <option value="">Select client…</option>
-          </select>
+          <input class="fi" id="m-client-search" placeholder="Search existing client or type new name…" autocomplete="off" oninput="clientSearch(this.value)" onfocus="clientSearch(this.value)">
+          <input type="hidden" id="m-client-id">
+          <div id="m-client-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:200;background:var(--white);border:1.5px solid var(--pink);border-radius:var(--rsm);box-shadow:var(--sh-lg);max-height:180px;overflow-y:auto;margin-top:2px"></div>
+          <div style="font-size:.65rem;color:var(--text2);margin-top:3px">Type to search · Leave blank to add as Walk-in</div>
         </div>
         <div class="fg">
           <label class="fl">Phone</label>
-          <input class="fi" id="m-phone" placeholder="Auto-filled from client" readonly style="background:var(--s1)">
+          <input class="fi" id="m-phone" placeholder="Auto-filled or enter manually">
         </div>
       </div>
       <div class="frow">
@@ -692,6 +727,10 @@ input,select,textarea{font-family:var(--font)}
             <option value="Lash Extensions|89|120">Lash Extensions — CA$89</option>
             <option value="Nail Art|45|60">Nail Art — CA$45</option>
             <option value="Acrylic Removal|25|30">Acrylic Removal — CA$25</option>
+            <option value="Gel Overlay|65|75">Gel Overlay — CA$65</option>
+            <option value="Chrome Powder|20|15">Chrome Powder Add-on — CA$20</option>
+            <option value="Paraffin Treatment|30|20">Paraffin Treatment — CA$30</option>
+            <option value="Other|0|60">Other / Custom</option>
           </select>
         </div>
         <div class="fg">
@@ -919,6 +958,17 @@ function goToday() {
   render();
 }
 
+function openDatePicker() {
+  var inp = document.getElementById('nav-datepicker');
+  if (inp) { inp.value = STATE.date.toISOString().split('T')[0]; inp.showPicker ? inp.showPicker() : inp.click(); }
+}
+
+function goToDate(ds) {
+  if (!ds) return;
+  STATE.date = new Date(ds + 'T12:00:00');
+  render();
+}
+
 /* ─── MAIN RENDER ───────────────────────────────── */
 function render() {
   updateNavLabel();
@@ -950,7 +1000,7 @@ function updateNavLabel() {
   } else {
     label = 'All Appointments';
   }
-  document.getElementById('nav-label').textContent = label;
+  var nl=document.getElementById('nav-label-text'); if(nl) nl.textContent=label; else document.getElementById('nav-label').textContent=label;
   var sm = document.getElementById('rail-date-sm');
   if (sm) sm.textContent = d.toLocaleDateString('en-CA',{month:'short',day:'numeric'});
 }
@@ -1396,18 +1446,71 @@ function renderRightPanel() {
 
 /* ─── NEW APPOINTMENT ───────────────────────────── */
 function populateClientSelect() {
-  var sel = document.getElementById('m-client');
-  if (!sel) return;
-  // Keep first option, remove rest
-  while (sel.options.length > 1) sel.remove(1);
-  SB.CACHE.clients.forEach(function(c) {
-    var opt = document.createElement('option');
-    opt.value = c.id;
-    opt.textContent = (c.first_name||'') + ' ' + (c.last_name||'') +
-      (c.tier==='gold'||c.tier==='platinum' ? ' ★' : '');
-    sel.appendChild(opt);
+  // No-op: now using search autocomplete
+}
+
+function clientSearch(q) {
+  var dd = document.getElementById('m-client-dropdown');
+  var idEl = document.getElementById('m-client-id');
+  
+  if (!q || q.length < 1) { dd.style.display = 'none'; return; }
+  
+  var ql = q.toLowerCase();
+  var matches = SB.CACHE.clients.filter(function(c) {
+    var name = ((c.first_name||'') + ' ' + (c.last_name||'')).toLowerCase();
+    return name.indexOf(ql) !== -1 || (c.phone||'').indexOf(q) !== -1 || (c.email||'').toLowerCase().indexOf(ql) !== -1;
+  }).slice(0, 8);
+  
+  var html2 = '';
+  
+  if (matches.length > 0) {
+    html2 += '<div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);padding:.4rem .7rem .2rem">Existing Clients</div>';
+    matches.forEach(function(c) {
+      var name = (c.first_name||'') + ' ' + (c.last_name||'');
+      var tierIcon = c.tier==='gold'||c.tier==='platinum' ? ' <span style="color:#D97706">★</span>' : '';
+      html2 += '<div class="client-dd-item" onclick="selectClient(' + JSON.stringify({id:c.id,name:name,phone:c.phone||''}) + ')" style="padding:.5rem .7rem;cursor:pointer;display:flex;align-items:center;gap:.5rem;font-size:.8rem;border-bottom:1px solid var(--s1)">' +
+        '<div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--pink),#7C3AED);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:#fff;flex-shrink:0">' + (c.first_name||'?')[0] + '</div>' +
+        '<div><div style="font-weight:500">' + name + tierIcon + '</div><div style="font-size:.65rem;color:var(--text2)">' + (c.phone||c.email||'') + '</div></div>' +
+        '</div>';
+    });
+  }
+  
+  // Option to add as new
+  html2 += '<div onclick="selectNewClient(' + JSON.stringify(q) + ')" style="padding:.5rem .7rem;cursor:pointer;display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:var(--pink);border-top:1px solid var(--border)">' +
+    '<div style="width:24px;height:24px;border-radius:50%;background:var(--pink-bg);border:1.5px dashed var(--pink-bd);display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--pink);flex-shrink:0">+</div>' +
+    '<div><div style="font-weight:500">Add "' + q + '" as new client</div><div style="font-size:.65rem;color:var(--text2)">Walk-in · will be saved</div></div>' +
+    '</div>';
+  
+  dd.innerHTML = html2;
+  dd.style.display = 'block';
+  
+  // Add hover styles
+  dd.querySelectorAll('.client-dd-item').forEach(function(el) {
+    el.addEventListener('mouseenter', function() { this.style.background = 'var(--pink-bg)'; });
+    el.addEventListener('mouseleave', function() { this.style.background = ''; });
   });
 }
+
+function selectClient(data) {
+  document.getElementById('m-client-search').value = data.name;
+  document.getElementById('m-client-id').value = data.id;
+  document.getElementById('m-phone').value = data.phone || '';
+  document.getElementById('m-client-dropdown').style.display = 'none';
+}
+
+function selectNewClient(name) {
+  document.getElementById('m-client-search').value = name;
+  document.getElementById('m-client-id').value = '';
+  document.getElementById('m-client-dropdown').style.display = 'none';
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#m-client-search') && !e.target.closest('#m-client-dropdown')) {
+    var dd = document.getElementById('m-client-dropdown');
+    if (dd) dd.style.display = 'none';
+  }
+});
 
 function openNewAppt() {
   var now = new Date(); now.setMinutes(0,0,0);
@@ -1434,6 +1537,17 @@ function updateServicePrice() {
   var dur   = parseInt(parts[2]||60);
   document.getElementById('m-price').value    = price;
   document.getElementById('m-duration').value = dur;
+  // If Other, make price editable and clear it
+  var priceEl = document.getElementById('m-price');
+  if (name === 'Other') {
+    priceEl.value = '';
+    priceEl.placeholder = 'Enter custom price…';
+    priceEl.style.borderColor = 'var(--pink)';
+    priceEl.focus();
+  } else {
+    priceEl.style.borderColor = '';
+    priceEl.placeholder = '';
+  }
   var comm = price * 0.25;
   document.getElementById('m-comm-preview').innerHTML =
     '<i class="fa-solid fa-circle-check" style="color:#059669"></i> ' +
@@ -1442,7 +1556,8 @@ function updateServicePrice() {
 
 function saveNewAppt() {
   var svcVal  = document.getElementById('m-service').value;
-  var clientId= document.getElementById('m-client').value;
+  var clientId= document.getElementById('m-client-id').value;
+  var clientNameRaw = document.getElementById('m-client-search').value.trim();
   var staff   = document.getElementById('m-staff').value;
   var dt      = document.getElementById('m-datetime').value;
   var price   = parseFloat(document.getElementById('m-price').value)||0;
@@ -1454,7 +1569,7 @@ function saveNewAppt() {
 
   var svcName = svcVal.split('|')[0];
   var client  = SB.CACHE.clients.find(function(c) { return c.id === clientId; });
-  var cName   = client ? (client.first_name + ' ' + client.last_name) : 'Walk-in';
+  var cName   = client ? (client.first_name + ' ' + client.last_name) : (clientNameRaw || 'Walk-in');
 
   var bk = {
     id:              'b_' + Date.now(),
@@ -1651,7 +1766,19 @@ function deleteAppt(id) {
 }
 
 /* ─── UTILS ─────────────────────────────────────── */
-function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+function closeModal(id) {
+  document.getElementById(id).style.display = 'none';
+  if (id === 'new-appt-modal') {
+    var cs = document.getElementById('m-client-search');
+    var ci = document.getElementById('m-client-id');
+    var dd = document.getElementById('m-client-dropdown');
+    if (cs) cs.value = '';
+    if (ci) ci.value = '';
+    if (dd) dd.style.display = 'none';
+    document.getElementById('m-phone').value = '';
+    document.getElementById('m-notes').value = '';
+  }
+}
 
 function toast(msg, type) {
   var icons = {ok:'<i class="fa-solid fa-circle-check" style="color:#059669"></i>', err:'<i class="fa-solid fa-circle-xmark" style="color:#991B1B"></i>', info:'<i class="fa-solid fa-circle-info" style="color:#1D4ED8"></i>'};
