@@ -360,10 +360,13 @@ function renderActiveTab(id) {
 // ── REVENUE ──
 function renderRevenue() {
   var kpis = Utils.calcKPIs(FB, FP);
+  var kpiDefs = [
+    { l:'Total Revenue',   v: Utils.fCurrency(kpis.revenue),    c:'#E91E8C' },
     { l:'Bookings',        v: kpis.bookings,                    c:'#7C3AED' },
     { l:'Avg Ticket',      v: Utils.fCurrency(kpis.avgTicket),  c:'#0891B2' },
     { l:'Net Revenue',     v: Utils.fCurrency(kpis.netRevenue), c:'#059669' }
   ];
+
   document.getElementById('rev-kpis').innerHTML = kpiDefs.map(function(k) {
     return '<div class="kpi-card" style="--kpi-color:'+k.c+'"><div class="kpi-value">'+k.v+'</div><div class="kpi-label">'+k.l+'</div></div>';
   }).join('');
@@ -569,6 +572,11 @@ function renderCompare() {
 // ── INTENSITY ──
 function renderIntensity() {
   var kpis = Utils.calcKPIs(FB, FP);
+  var iKpis = [
+    {l:'Busiest Day',  v:kpis.busiestDay||'—',  c:'#E91E8C'},
+    {l:'Busiest Hour', v:kpis.busiestHour||'—', c:'#7C3AED'},
+    {l:'Top Staff',    v:kpis.bestStaff||'—',   c:'#0891B2'},
+    {l:'Top Service',  v:(kpis.topService||'—').split(' ').slice(0,2).join(' '), c:'#059669'}
   ];
   document.getElementById('intensity-kpis').innerHTML = iKpis.map(function(k) {
     return '<div class="kpi-card" style="--kpi-color:'+k.c+'"><div class="kpi-value" style="font-size:1.1rem">'+k.v+'</div><div class="kpi-label">'+k.l+'</div></div>';
