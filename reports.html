@@ -336,18 +336,13 @@ function showTab(id, btn) {
 }
 
 function render() {
-  var range = Utils.getRange(STATE.period, STATE.customStart, STATE.customEnd);
+  var range    = Utils.getRange(STATE.period, STATE.customStart, STATE.customEnd);
   var cmpRange = Utils.getCompareRange(STATE.period, range);
-
+  // Canonical filters — same as dashboard and booking
   FB = Utils.filterBookings(SB.CACHE.bookings, { range: range, staff: STATE.staff, service: STATE.service });
-  FP = SB.CACHE.payments.filter(function(p) {
-    if (!Utils.inRange(p.paid_at, range)) return false;
-    if (STATE.staff   !== 'all' && p.staff_name   !== STATE.staff)   return false;
-    if (STATE.service !== 'all' && p.service_name !== STATE.service) return false;
-    return true;
-  });
+  FP = Utils.filterPayments(SB.CACHE.payments, { range: range, staff: STATE.staff, service: STATE.service });
   CB = Utils.filterBookings(SB.CACHE.bookings, { range: cmpRange });
-  CP = SB.CACHE.payments.filter(function(p) { return Utils.inRange(p.paid_at, cmpRange); });
+  CP = Utils.filterPayments(SB.CACHE.payments, { range: cmpRange });
 
   var activeTab = document.querySelector('.report-section.active');
   if (activeTab) renderActiveTab(activeTab.id.replace('tab-',''));
@@ -364,9 +359,7 @@ function renderActiveTab(id) {
 
 // ── REVENUE ──
 function renderRevenue() {
-  var kpis = Utils.calcKPIs(FB, FP, SB.CACHE.clients);
-  var kpiDefs = [
-    { l:'Total Revenue',   v: Utils.fCurrency(kpis.revenue),    c:'#E91E8C' },
+  var kpis = Utils.calcKPIs(FB, FP);
     { l:'Bookings',        v: kpis.bookings,                    c:'#7C3AED' },
     { l:'Avg Ticket',      v: Utils.fCurrency(kpis.avgTicket),  c:'#0891B2' },
     { l:'Net Revenue',     v: Utils.fCurrency(kpis.netRevenue), c:'#059669' }
@@ -391,20 +384,19 @@ function renderRevenue() {
   var mLabels = mKeys.map(function(k) { return k.replace('_',' ').replace(/\b\w/g,function(c){return c.toUpperCase();}); });
   Charts.doughnut('c-rev-method', mLabels, mKeys.map(function(k){return Utils.sumRevenue(mg[k]);}), ['#10B981','#3B82F6','#8B5CF6','#F59E0B']);
 
-  // Payment detail table - use payments if available, else completed bookings
-  var tableData = FP.length > 0 ? FP : FB.filter(function(b){ return b.status==='completed'||b.payment_status==='paid'; });
-  var isFromBookings = FP.length === 0;
-  var html2 = tableData.slice(0,200).map(function(p) {
-    var amt  = isFromBookings ? parseFloat(p.service_price||0) : parseFloat(p.amount||0);
-    var comm = isFromBookings ? amt*0.25 : parseFloat(p.commission||amt*0.25);
-    var net  = isFromBookings ? amt*0.75 : parseFloat(p.net_revenue||amt*0.75);
-    var date = isFromBookings ? (p.booked_at||'') : (p.paid_at||'');
-    var method = isFromBookings ? (p.payment_method||'—') : (p.method||'—');
-    return '<tr><td class="td-muted">'+Utils.fDateTime(date)+'</td><td class="tds">'+(p.client_name||'—')+'</td><td class="td-muted">'+(p.staff_name||'—')+'</td><td class="td-muted">'+(p.service_name||'—')+'</td><td class="td-pos">'+Utils.fCurrency(amt)+'</td><td class="td-muted">'+method.replace('_',' ')+'</td><td style="color:var(--pink);font-weight:600">'+Utils.fCurrency(comm)+'</td><td class="td-pos">'+Utils.fCurrency(net)+'</td></tr>';
-  }).join('') || '<tr><td colspan="8" style="text-align:center;padding:1.5rem;color:var(--text3)">No data in this period</td></tr>';
+  // Payment table - always use FP (payments), consistent with KPIs
+  var html2 = FP.slice(0,200).map(function(p) {
+    var amt  = parseFloat(p.amount||0);
+    var comm = parseFloat(p.commission || amt*0.25);
+    var net  = parseFloat(p.net_revenue || amt*0.75);
+    return '<tr><td class="td-muted">'+Utils.fDateTime(p.paid_at)+'</td><td class="tds">'+(p.client_name||'—')+'</td>'
+      +'<td class="td-muted">'+(p.staff_name||'—')+'</td><td class="td-muted">'+(p.service_name||'—')+'</td>'
+      +'<td class="td-pos">'+Utils.fCurrency(amt)+'</td><td class="td-muted">'+(p.method||'—').replace('_',' ')+'</td>'
+      +'<td style="color:var(--pink);font-weight:600">'+Utils.fCurrency(comm)+'</td>'
+      +'<td class="td-pos">'+Utils.fCurrency(net)+'</td></tr>';
+  }).join('') || '<tr><td colspan="8" style="text-align:center;padding:1.5rem;color:var(--text3)">No payments in this period</td></tr>';
   document.getElementById('rev-tbody').innerHTML = html2;
-  var totalRev = FP.length>0 ? Utils.sumRevenue(FP) : tableData.reduce(function(s,b){return s+parseFloat(b.service_price||0);},0);
-  document.getElementById('rev-info').textContent = tableData.length + ' records · Total: ' + Utils.fCurrency(totalRev);
+  document.getElementById('rev-info').textContent = FP.length + ' payments · ' + Utils.fCurrency(kpis.revenue);
   Utils.makeSortable(document.getElementById('rev-table'));
   Utils.makeSearchable(document.getElementById('rev-search'), document.getElementById('rev-table'));
 }
@@ -416,7 +408,7 @@ function renderStaff() {
   var stgP = Utils.groupBy(FP, 'staff_name');
   var stgB = Utils.groupBy(FB, 'staff_name');
 
-  Charts.revenueBar('c-staff-rev', staffNames, staffNames.map(function(s){return Utils.sumRevenue(stgP[s]||[]);}), null, null);
+  Charts.revenueBar('c-staff-rev', staffNames, staffNames.map(function(s){var sp=stgP[s]||[];var sb=(stgB[s]||[]).filter(function(b){return b.status==='completed';});return Utils.calcRevenue(sb,sp);}), null, null);
 
   var bkData = staffNames.map(function(s){return (stgB[s]||[]).length;});
   var commData = staffNames.map(function(s){return Utils.sumCommission(stgP[s]||[]);});
@@ -512,8 +504,8 @@ function renderClients() {
 function renderCompare() {
   var range = Utils.getRange(STATE.period, STATE.customStart, STATE.customEnd);
   var cmpRange = Utils.getCompareRange(STATE.period, range);
-  var curKPIs  = Utils.calcKPIs(FB, FP, SB.CACHE.clients);
-  var prevKPIs = Utils.calcKPIs(CB, CP, SB.CACHE.clients);
+  var curKPIs  = Utils.calcKPIs(FB, FP);
+  var prevKPIs = Utils.calcKPIs(CB, CP);
 
   var kpiDefs = [
     {l:'Revenue',   cur:curKPIs.revenue,   prev:prevKPIs.revenue,   fmt:Utils.fCurrency},
@@ -576,12 +568,7 @@ function renderCompare() {
 
 // ── INTENSITY ──
 function renderIntensity() {
-  var kpis = Utils.calcKPIs(FB, FP, SB.CACHE.clients);
-  var iKpis = [
-    {l:'Busiest Day',  v:kpis.busiestDay||'—',  c:'#E91E8C'},
-    {l:'Busiest Hour', v:kpis.busiestHour||'—', c:'#7C3AED'},
-    {l:'Top Staff',    v:kpis.bestStaff||'—',   c:'#0891B2'},
-    {l:'Top Service',  v:(kpis.topService||'—').split(' ').slice(0,2).join(' '), c:'#059669'}
+  var kpis = Utils.calcKPIs(FB, FP);
   ];
   document.getElementById('intensity-kpis').innerHTML = iKpis.map(function(k) {
     return '<div class="kpi-card" style="--kpi-color:'+k.c+'"><div class="kpi-value" style="font-size:1.1rem">'+k.v+'</div><div class="kpi-label">'+k.l+'</div></div>';
@@ -621,7 +608,7 @@ function renderFallback() {
 function exportAll(type) {
   if (type === 'excel') Export.exportPayments(FP, STATE.period);
   else if (type === 'csv') Export.exportBookings(FB, STATE.period);
-  else Export.exportRevenueReport(Utils.calcKPIs(FB,FP,SB.CACHE.clients), FB, FP, STATE.period);
+  else Export.exportRevenueReport(Utils.calcKPIs(FB,FP), FB, FP, STATE.period);
 }
 </script>
 
