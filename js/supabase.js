@@ -73,16 +73,34 @@ var SB = (function() {
   function loadAll() {
     return Promise.all([
       get('bookings', 'order=booked_at.desc&limit=500').then(function(d) {
-        if (Array.isArray(d)) { CACHE.bookings = d; CACHE.loaded.bookings = true; }
+        if (Array.isArray(d) && d.length > 0) {
+          // Merge: keep demo data + add real DB bookings
+          var demoIds = (SB.DEMO ? SB.DEMO.bookings : []).map(function(b){return b.id;});
+          var newBks  = d.filter(function(b){ return demoIds.indexOf(b.id)===-1; });
+          CACHE.bookings = (SB.DEMO ? SB.DEMO.bookings : []).concat(newBks);
+          CACHE.loaded.bookings = true;
+        }
       }),
       get('clients', 'order=created_at.desc&limit=500').then(function(d) {
-        if (Array.isArray(d)) { CACHE.clients = d; CACHE.loaded.clients = true; }
+        if (Array.isArray(d) && d.length > 0) {
+          var demoIds = (SB.DEMO ? SB.DEMO.clients : []).map(function(c){return c.id;});
+          var newCs   = d.filter(function(c){ return demoIds.indexOf(c.id)===-1; });
+          CACHE.clients = (SB.DEMO ? SB.DEMO.clients : []).concat(newCs);
+          CACHE.loaded.clients = true;
+        }
       }),
       get('payments', 'order=paid_at.desc&limit=500').then(function(d) {
-        if (Array.isArray(d)) { CACHE.payments = d; CACHE.loaded.payments = true; }
+        if (Array.isArray(d) && d.length > 0) {
+          var demoIds = (SB.DEMO ? SB.DEMO.payments : []).map(function(p){return p.id;});
+          var newPs   = d.filter(function(p){ return demoIds.indexOf(p.id)===-1; });
+          CACHE.payments = (SB.DEMO ? SB.DEMO.payments : []).concat(newPs);
+          CACHE.loaded.payments = true;
+        }
       }),
       get('email_log', 'order=sent_at.desc&limit=200').then(function(d) {
-        if (Array.isArray(d)) { CACHE.email_log = d; }
+        if (Array.isArray(d) && d.length > 0) {
+          CACHE.email_log = d;
+        }
       })
     ]).catch(function(e) {
       if (String(e.message).indexOf('FILE_PROTOCOL') === -1) {
