@@ -1155,66 +1155,29 @@ function renderDayView() {
       }
     });
 
-    // Appointment blocks - overlap-aware positioning
-    // Only show bookings within working hours
-    var dow3 = STATE.date.getDay(); // 0=Sun
+    // Appointment blocks - simple rendering, all bookings shown
+    var dow3 = STATE.date.getDay();
     var wStart = (dow3 === 0) ? 10 : 9;
     var wEnd   = (dow3 === 0) ? 18 : 20;
 
-    // Calculate overlaps: group by overlapping time windows
-    var blocks = col_bks.filter(function(b){
-      if (!b.booked_at) return false;
-      var bh = new Date(b.booked_at).getHours();
-      return bh >= wStart && bh < wEnd; // only within working hours
-    }).map(function(b) {
+    col_bks.forEach(function(b) {
+      if (!b.booked_at) return;
       var dt  = new Date(b.booked_at);
+      var bh  = dt.getHours();
+      if (bh < 9) return; // never show before 9am
       var dur = parseInt(b.duration_minutes || 60);
-      var rawTop2 = ((dt.getHours() - HOURS[0]) + dt.getMinutes()/60) * HOUR_H;
-      var top = Math.max(0, rawTop2);
+      var top = Math.max(0, ((bh - HOURS[0]) + dt.getMinutes()/60) * HOUR_H);
       var ht  = Math.max(28, (dur / 60) * HOUR_H - 2);
-      if (rawTop2 < 0) ht = Math.max(0, ht + rawTop2);
-      return { b: b, dt: dt, top: top, ht: ht, startMin: dt.getHours()*60+dt.getMinutes(), endMin: dt.getHours()*60+dt.getMinutes()+dur };
-    });
-
-    // Find columns for overlapping blocks
-    blocks.forEach(function(blk) {
-      blk.col = 0; blk.cols = 1;
-    });
-    for (var bi = 0; bi < blocks.length; bi++) {
-      var overlaps = [blocks[bi]];
-      for (var bj = 0; bj < blocks.length; bj++) {
-        if (bi === bj) continue;
-        if (blocks[bj].startMin < blocks[bi].endMin && blocks[bj].endMin > blocks[bi].startMin) {
-          overlaps.push(blocks[bj]);
-        }
-      }
-      if (overlaps.length > 1) {
-        overlaps.sort(function(a,b){return a.startMin-b.startMin;});
-        overlaps.forEach(function(o, ci) { o.col = ci; o.cols = overlaps.length; });
-      }
-    }
-
-    blocks.forEach(function(blk) {
-      var b    = blk.b;
       var stCls = 'status-' + (b.status || 'pending');
       var stM  = STATUS_META[b.status] || STATUS_META.pending;
-      var colW  = 100 / blk.cols;
-      var leftPct  = blk.col * colW;
-      var rightPct = 100 - leftPct - colW;
-      var timeStr  = blk.dt.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
+      var timeStr = dt.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
 
       html += '<div class="appt-block ' + stCls + '" ' +
-        'style="top:' + blk.top + 'px;height:' + blk.ht + 'px;' +
-        'left:calc(' + leftPct + '% + 2px);right:calc(' + rightPct + '% + 2px)" ' +
+        'style="top:' + top + 'px;height:' + ht + 'px;left:3px;right:3px" ' +
         'onclick="event.stopPropagation();openDetail(\'' + b.id + '\')">' +
         '<div class="appt-client">' + (b.client_name || '?') + '</div>';
-
-      if (blk.ht > 36) {
-        html += '<div class="appt-svc">' + (b.service_name || '') + '</div>';
-      }
-      if (blk.ht > 52) {
-        html += '<div class="appt-meta">' + timeStr + ' · CA$' + (b.service_price || 0) + '</div>';
-      }
+      if (ht > 36) html += '<div class="appt-svc">' + (b.service_name || '') + '</div>';
+      if (ht > 52) html += '<div class="appt-meta">' + timeStr + ' · CA$' + (b.service_price || 0) + '</div>';
       html += '<div class="appt-status-dot" style="background:' + stM.color + '"></div>';
       html += '</div>';
     });
