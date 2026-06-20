@@ -883,7 +883,7 @@ var STATUS_META = {
   no_show:     { label:'No-show',     bg:'var(--s-noshow-bg)',    color:'var(--s-noshow)',    bd:'var(--s-noshow-bd)' }
 };
 
-var HOURS = [9,10,11,12,13,14,15,16,17,18];
+var HOURS = [8,9,10,11,12,13,14,15,16,17,18,19,20];
 var HOUR_H = 56; // px per hour
 
 /* ─── INIT ──────────────────────────────────────── */
@@ -1149,8 +1149,10 @@ function renderDayView() {
     var blocks = col_bks.filter(function(b){ return b.booked_at; }).map(function(b) {
       var dt  = new Date(b.booked_at);
       var dur = parseInt(b.duration_minutes || 60);
-      var top = ((dt.getHours() - HOURS[0]) + dt.getMinutes()/60) * HOUR_H;
+      var rawTop2 = ((dt.getHours() - HOURS[0]) + dt.getMinutes()/60) * HOUR_H;
+      var top = Math.max(0, rawTop2);
       var ht  = Math.max(28, (dur / 60) * HOUR_H - 2);
+      if (rawTop2 < 0) ht = Math.max(0, ht + rawTop2);
       return { b: b, dt: dt, top: top, ht: ht, startMin: dt.getHours()*60+dt.getMinutes(), endMin: dt.getHours()*60+dt.getMinutes()+dur };
     });
 
@@ -1269,7 +1271,7 @@ function renderWeekView() {
       var dt  = new Date(bk.booked_at);
       var hh  = dt.getHours(); var mm = dt.getMinutes();
       var dur = parseInt(bk.duration_minutes || 60);
-      var top = ((hh - HOURS[0]) + mm/60) * HOUR_H;
+      var top = Math.max(0, ((hh - HOURS[0]) + mm/60) * HOUR_H);
       var ht  = Math.max(20, (dur/60) * HOUR_H - 2);
       var stCls = 'status-' + (bk.status || 'pending');
       var sc = STAFF_CONFIG.find(function(s) { return s.name === bk.staff_name; }) || STAFF_CONFIG[0];
