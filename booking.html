@@ -895,12 +895,15 @@ window.addEventListener('DOMContentLoaded', function() {
       ' · ' + n.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
   }, 1000);
 
-  // Load demo data only if cache is empty (preserve user changes)
-  if (SB.DEMO && SB.CACHE.bookings.length === 0) {
-    SB.CACHE.clients   = JSON.parse(JSON.stringify(SB.DEMO.clients));
-    SB.CACHE.payments  = JSON.parse(JSON.stringify(SB.DEMO.payments));
-    SB.CACHE.bookings  = JSON.parse(JSON.stringify(SB.DEMO.bookings));
-    SB.CACHE.email_log = JSON.parse(JSON.stringify(SB.DEMO.email_log));
+  // Load data: localStorage first, then demo (preserves all user changes across page loads)
+  if (!SB.loadCacheFromStorage()) {
+    if (SB.DEMO) {
+      SB.CACHE.clients   = JSON.parse(JSON.stringify(SB.DEMO.clients));
+      SB.CACHE.payments  = JSON.parse(JSON.stringify(SB.DEMO.payments));
+      SB.CACHE.bookings  = JSON.parse(JSON.stringify(SB.DEMO.bookings));
+      SB.CACHE.email_log = JSON.parse(JSON.stringify(SB.DEMO.email_log));
+      SB.saveCache();
+    }
   }
 
   // Populate client select
@@ -1584,6 +1587,7 @@ function saveNewAppt() {
   };
 
   SB.CACHE.bookings.unshift(bk);
+  SB.saveCache();
   SB.insert('bookings', bk).then(function(data) {
     if (Array.isArray(data) && data[0]) {
       var idx = SB.CACHE.bookings.indexOf(bk);
@@ -1709,6 +1713,7 @@ function savePayment() {
   bk.payment_status = 'paid';
   bk.payment_method = STATE.selectedPayMethod;
   SB.update('bookings', id, {payment_status:'paid', payment_method: STATE.selectedPayMethod}).catch(function(){});
+  SB.saveCache();
 
   // Add loyalty points
   if (bk.client_id) {
@@ -1741,6 +1746,7 @@ function changeApptStatus(id, status) {
   if (!bk) return;
   bk.status = status;
   SB.update('bookings', id, {status: status}).catch(function(){});
+  SB.saveCache();
   var stM = STATUS_META[status] || STATUS_META.pending;
   toast(stM.label + ' — ' + (bk.client_name||'Appointment'), 'ok');
   if (status === 'completed') {
@@ -1767,6 +1773,7 @@ function changeApptStatus(id, status) {
     SB.CACHE.payments.unshift(pay);
     SB.insert('payments', pay).catch(function(){});
     SB.update('bookings', id, {payment_status:'paid', payment_method: method}).catch(function(){});
+    SB.saveCache();
     // Log email receipt
     if (bk.client_email) {
       SB.CACHE.email_log.unshift({id:'e_'+Date.now(),client_id:bk.client_id,client_name:bk.client_name,
