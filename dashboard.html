@@ -350,11 +350,13 @@ window.addEventListener('DOMContentLoaded', function() {
   Utils.startClock(document.getElementById('dash-greeting'), document.getElementById('tb-date'));
   setupFilterListeners();
   
-  // Load demo data IMMEDIATELY so UI is never blank
-  SB.CACHE.clients   = SB.DEMO ? SB.DEMO.clients   : [];
-  SB.CACHE.payments  = SB.DEMO ? SB.DEMO.payments  : [];
-  SB.CACHE.bookings  = SB.DEMO ? SB.DEMO.bookings  : [];
-  SB.CACHE.email_log = SB.DEMO ? SB.DEMO.email_log : [];
+  // Load demo data only if cache is empty (preserve user changes)
+  if (SB.DEMO && SB.CACHE.bookings.length === 0) {
+    SB.CACHE.clients   = JSON.parse(JSON.stringify(SB.DEMO.clients));
+    SB.CACHE.payments  = JSON.parse(JSON.stringify(SB.DEMO.payments));
+    SB.CACHE.bookings  = JSON.parse(JSON.stringify(SB.DEMO.bookings));
+    SB.CACHE.email_log = JSON.parse(JSON.stringify(SB.DEMO.email_log));
+  }
   render();
   updatePendingBadge();
 
