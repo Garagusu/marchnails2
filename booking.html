@@ -543,8 +543,6 @@ function bDate(b){return b.booked_at?lds(new Date(b.booked_at)):'';}
 function getDayBookings(dateStr){
   return SB.CACHE.bookings.filter(function(b){
     if(!b.booked_at) return false;
-    var bh=new Date(b.booked_at).getHours();
-    if(bh<9) return false;
     if(bDate(b)!==dateStr) return false;
     if(STATE.staff!=='all'&&b.staff_name!==STATE.staff) return false;
     if(STATE.status!=='all'&&b.status!==STATE.status) return false;
@@ -600,10 +598,9 @@ function renderRail(){
   var maxSlots=wh[1]-wh[0];
   var staffList=STATE.staff==='all'?STAFF:STAFF.filter(function(s){return s.name===STATE.staff;});
   var INACTIVE=['cancelled','no-show','no_show'];
-  // Same base filter as getDayBookings: bh<9 excluded, same day, no status filter
+  // Same base filter as getDayBookings: same day, no status filter
   var allDayBks=SB.CACHE.bookings.filter(function(b){
     if(!b.booked_at) return false;
-    if(new Date(b.booked_at).getHours()<9) return false;
     return bDate(b)===ds;
   });
   var html='';
@@ -665,7 +662,7 @@ function renderDay(){
     });
     // Render bookings with overlap detection
     var blocks2 = colBks.filter(function(b){
-      return b.booked_at && new Date(b.booked_at).getHours()>=9;
+      return !!b.booked_at;
     }).map(function(b){
       var dt=new Date(b.booked_at);
       var sMin=dt.getHours()*60+dt.getMinutes();
@@ -721,7 +718,7 @@ function renderWeek(){
   var dnames=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
   days.forEach(function(d,i){
     var ds=lds(d),isT=d.toDateString()===today;
-    var cnt=SB.CACHE.bookings.filter(function(b){return b.booked_at&&bDate(b)===ds&&new Date(b.booked_at).getHours()>=9;}).length;
+    var cnt=SB.CACHE.bookings.filter(function(b){return b.booked_at&&bDate(b)===ds;}).length;
     html+='<div class="wv-dh'+(isT?' today':'')+'" onclick="goDayView(\''+ds+'\')">'
       +'<div class="wv-dn">'+dnames[i]+'</div><div class="wv-dd">'+d.getDate()+'</div>'
       +(cnt>0?'<div class="wv-cnt">'+cnt+' appts</div>':'')+' </div>';
@@ -733,7 +730,7 @@ function renderWeek(){
   days.forEach(function(d){
     var ds=lds(d);
     var wh=Utils.getWorkHours(d);
-    var dBks=SB.CACHE.bookings.filter(function(b){return b.booked_at&&bDate(b)===ds&&new Date(b.booked_at).getHours()>=9;});
+    var dBks=SB.CACHE.bookings.filter(function(b){return b.booked_at&&bDate(b)===ds;});
     html+='<div class="dv-col">';
     HOURS.forEach(function(h){
       var closed=h<wh[0]||h>=wh[1];
@@ -770,7 +767,7 @@ function renderMonth(){
   for(var i=0;i<startDow;i++){var pd=new Date(yr,mo,1-startDow+i);html+='<div class="mv-day other"><div class="mv-num" style="color:var(--text3)">'+pd.getDate()+'</div></div>';}
   for(var d2=1;d2<=last.getDate();d2++){
     var dt2=new Date(yr,mo,d2),ds=lds(dt2),isT=dt2.toDateString()===today;
-    var dBks=SB.CACHE.bookings.filter(function(b){return b.booked_at&&bDate(b)===ds&&new Date(b.booked_at).getHours()>=9;});
+    var dBks=SB.CACHE.bookings.filter(function(b){return b.booked_at&&bDate(b)===ds;});
     var pays = Utils.filterPayments(SB.CACHE.payments, {day:ds});
     var rev  = Utils.calcRevenue(dBks.filter(function(b){return b.status==='completed';}), pays);
     html+='<div class="mv-day'+(isT?' today':'')+'" onclick="goDayView(\''+ds+'\')"><div class="mv-num">'+d2+'</div>';
@@ -789,7 +786,6 @@ function renderMonth(){
 function renderList(){
   var all=SB.CACHE.bookings.filter(function(b){
     if(!b.booked_at) return false;
-    if(new Date(b.booked_at).getHours()<9) return false;
     if(STATE.staff!=='all'&&b.staff_name!==STATE.staff) return false;
     if(STATE.status!=='all'&&b.status!==STATE.status) return false;
     if(STATE.svc!=='all'&&b.service_name!==STATE.svc) return false;
@@ -845,7 +841,7 @@ function renderRightPanel(){
   var ds=lds(STATE.date);
   if(STATE.rpTab==='upcoming'){
     var now=new Date();
-    var todayBks=SB.CACHE.bookings.filter(function(b){return b.booked_at&&bDate(b)===ds&&new Date(b.booked_at).getHours()>=9;});
+    var todayBks=SB.CACHE.bookings.filter(function(b){return b.booked_at&&bDate(b)===ds;});
     var maxSlots=STAFF.length*(Utils.getWorkHours(STATE.date)[1]-Utils.getWorkHours(STATE.date)[0]);
     var occ=maxSlots>0?Math.round((todayBks.length/maxSlots)*100):0;
     var html='<div style="margin-bottom:.85rem"><div class="occ-bar"><div class="occ-lbl"><span style="color:var(--text2)">Occupancy</span><span style="font-weight:600">'+occ+'%</span></div><div class="occ-track"><div class="occ-fill" style="width:'+occ+'%"></div></div></div>';
