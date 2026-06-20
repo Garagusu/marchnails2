@@ -285,49 +285,18 @@ var FP = [], FB = [], CP = [], CB = [];
 window.addEventListener('DOMContentLoaded', function() {
   Utils.startClock(null, document.getElementById('tb-date'));
   setupFilters();
-  // Always start with full demo data as base
-  if (SB.DEMO) {
-    SB.CACHE.clients   = JSON.parse(JSON.stringify(SB.DEMO.clients));
-    SB.CACHE.payments  = JSON.parse(JSON.stringify(SB.DEMO.payments));
-    SB.CACHE.bookings  = JSON.parse(JSON.stringify(SB.DEMO.bookings));
-    SB.CACHE.email_log = JSON.parse(JSON.stringify(SB.DEMO.email_log));
-  }
-  // Then apply any saved changes from localStorage on top
-  try {
-    var _ls = localStorage.getItem('mn_cache_v2');
-    if (_ls) {
-      var _d = JSON.parse(_ls);
-      // Apply status/payment changes to existing bookings
-      if (_d.bookings) {
-        _d.bookings.forEach(function(lsBk) {
-          var existing = SB.CACHE.bookings.find(function(b){ return b.id === lsBk.id; });
-          if (existing) {
-            // Apply saved status/payment changes
-            existing.status         = lsBk.status         || existing.status;
-            existing.payment_status = lsBk.payment_status || existing.payment_status;
-            existing.payment_method = lsBk.payment_method || existing.payment_method;
-          } else {
-            // New booking added by user - add it
-            SB.CACHE.bookings.unshift(lsBk);
-          }
-        });
-      }
-      // Add new payments from localStorage
-      if (_d.payments) {
-        _d.payments.forEach(function(lsPay) {
-          var exists = SB.CACHE.payments.find(function(p){ return p.id === lsPay.id; });
-          if (!exists) SB.CACHE.payments.unshift(lsPay);
-        });
-      }
-      // Add new clients from localStorage
-      if (_d.clients) {
-        _d.clients.forEach(function(lsCli) {
-          var exists = SB.CACHE.clients.find(function(c){ return c.id === lsCli.id; });
-          if (!exists) SB.CACHE.clients.push(lsCli);
-        });
-      }
+  // Data loading: localStorage = source of truth, demo = first-time fallback
+  if (!SB.loadCacheFromStorage()) {
+    // First time ever - load demo data and save to localStorage
+    if (SB.DEMO) {
+      SB.CACHE.clients   = JSON.parse(JSON.stringify(SB.DEMO.clients));
+      SB.CACHE.payments  = JSON.parse(JSON.stringify(SB.DEMO.payments));
+      SB.CACHE.bookings  = JSON.parse(JSON.stringify(SB.DEMO.bookings));
+      SB.CACHE.email_log = JSON.parse(JSON.stringify(SB.DEMO.email_log));
+      SB.saveCache(); // Persist demo data so next load uses localStorage
     }
-  } catch(e) { /* bad localStorage data - ignore */ }
+  }
+  // localStorage is now the single source of truth - all changes persist here
   if (typeof render === "function") { render(); }
   // Try Supabase in background (demo data already loaded)
   if (window.location.protocol !== 'file:') {
