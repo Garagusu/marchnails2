@@ -599,17 +599,22 @@ function renderRail(){
   var wh=Utils.getWorkHours(STATE.date);
   var maxSlots=wh[1]-wh[0]; // working hours span
   var staffList=STATE.staff==='all'?STAFF:STAFF.filter(function(s){return s.name===STATE.staff;});
+  var INACTIVE=['cancelled','no-show','no_show'];
   var html='';
   staffList.forEach(function(s){
-    var bks  = Utils.filterBookings(SB.CACHE.bookings, {day:ds, staff:s.name});
-    var pays = Utils.filterPayments(SB.CACHE.payments,  {day:ds, staff:s.name});
-    var kpis = Utils.calcKPIs(bks, pays);
+    // FIX: Use getDayBookings() so rail and header use IDENTICAL filter logic
+    var allBks = Utils.filterBookings(SB.CACHE.bookings, {day:ds, staff:s.name});
+    // Active only (exclude cancelled + no-show) — same as getDayBookings default
+    var activeBks = allBks.filter(function(b){ return INACTIVE.indexOf(b.status)===-1; });
+    var pays = Utils.filterPayments(SB.CACHE.payments, {day:ds, staff:s.name});
+    var kpis = Utils.calcKPIs(allBks, pays);
     var rev  = kpis.revenue;
-    var pct  = Math.min(100,Math.round((bks.length/maxSlots)*100));
+    var cnt  = activeBks.length; // count matches day view header
+    var pct  = Math.min(100,Math.round((cnt/maxSlots)*100));
     html+='<div class="srail-item" onclick="filterStaff(\''+s.name+'\')">'
       +'<div class="sav" style="background:'+s.grad+'">'+s.name[0]+'</div>'
       +'<div class="sinfo"><div class="sname">'+s.name+'</div>'
-      +'<div class="smeta">'+bks.length+' · CA$'+Math.round(rev)+'</div>'
+      +'<div class="smeta">'+cnt+' · CA$'+Math.round(rev)+'</div>'
       +'<div class="sload"><div class="sload-fill" style="width:'+pct+'%;background:'+s.color+'"></div></div></div>'
       +'<div class="sbadge">'+pct+'%</div></div>';
   });
@@ -629,8 +634,12 @@ function renderDay(){
   // Header
   html+='<div class="dv-hd" style="grid-template-columns:56px repeat('+staffList.length+',1fr)">';
   html+='<div class="dv-corner" style="width:56px"></div>';
+  var INACTIVE_ST=['cancelled','no-show','no_show'];
   staffList.forEach(function(s){
-    var cnt=dayBks.filter(function(b){return b.staff_name===s.name;}).length;
+    // FIX: exclude cancelled/no-show — matches rail count
+    var cnt=dayBks.filter(function(b){
+      return b.staff_name===s.name && INACTIVE_ST.indexOf(b.status)===-1;
+    }).length;
     html+='<div class="dv-sh"><div class="dv-sav" style="background:'+s.grad+'">'+s.name[0]+'</div>'
       +'<div class="dv-sname">'+s.name+'</div><div class="dv-scnt">'+cnt+' appts</div></div>';
   });
@@ -1105,14 +1114,33 @@ function changeStatus(id,status){
   if(status==='completed'){
     var amount=parseFloat(b.service_price||0);
     var method=STATE.payMethod||'cash';
-    var paidAt=b.booked_at||new Date().toISOString();
-    var pay={booking_id:id,client_id:b.client_id||null,client_name:b.client_name,
-      staff_name:b.staff_name,service_name:b.service_name,amount:amount,method:method,paid_at:paidAt};
-    b.payment_status='paid';b.payment_method=method;
-    SB.CACHE.payments.unshift(Object.assign({id:'p_'+Date.now()},pay));
-    SB.insert('payments',pay).catch(function(){});
+
+    // FIX-1: paid_at = now (not booked_at — avoids wrong period revenue)
+    // FIX-2: duplicate guard — only create payment if none exists for this booking
+    var alreadyPaid=SB.CACHE.payments.some(function(p){return p.booking_id===id;});
+    if(!alreadyPaid){
+      var pay={
+        booking_id:  id,
+        client_id:   b.client_id||null,
+        client_name: b.client_name,
+        staff_name:  b.staff_name,
+        service_name:b.service_name,
+        amount:      amount,
+        method:      method,
+        paid_at:     new Date().toISOString(),  // ← FIXED: always real payment time
+        commission:  parseFloat((amount*0.25).toFixed(2)),
+        net_revenue: parseFloat((amount*0.75).toFixed(2))
+      };
+      b.payment_status='paid'; b.payment_method=method;
+      SB.CACHE.payments.unshift(Object.assign({id:'p_'+Date.now()},pay));
+      SB.insert('payments',pay).catch(function(){});
+      // Loyalty points
+      if(b.client_id){
+        var c=SB.CACHE.clients.find(function(x){return x.id===b.client_id;});
+        if(c){c.loyalty_points=(c.loyalty_points||0)+Math.floor(amount);SB.update('clients',c.id,{loyalty_points:c.loyalty_points}).catch(function(){});}
+      }
+    }
     SB.update('bookings',id,{status:status,payment_status:'paid',payment_method:method}).catch(function(){});
-    if(b.client_id){var c=SB.CACHE.clients.find(function(x){return x.id===b.client_id;});if(c){c.loyalty_points=(c.loyalty_points||0)+Math.floor(amount);SB.update('clients',c.id,{loyalty_points:c.loyalty_points}).catch(function(){});}}
     SB.saveCache();
     Utils.toast('Completed · CA$'+amount+' · '+method.replace('_',' '),'success');
   } else {
@@ -1129,12 +1157,26 @@ function savePayment(){
   var id=STATE.selectedId;
   var b=SB.CACHE.bookings.find(function(x){return x.id===id;});
   if(!b)return;
+
+  // FIX-2: duplicate guard
+  var alreadyPaid=SB.CACHE.payments.some(function(p){return p.booking_id===id;});
+  if(alreadyPaid){Utils.toast('Payment already recorded for this appointment','warning');closeModal('det-modal');return;}
+
   var amount=parseFloat(b.service_price||0);
-  var pay={booking_id:id,client_id:b.client_id||null,client_name:b.client_name,
-    staff_name:b.staff_name,service_name:b.service_name,amount:amount,
-    method:STATE.payMethod,paid_at:b.booked_at||new Date().toISOString()};
+  var pay={
+    booking_id:  id,
+    client_id:   b.client_id||null,
+    client_name: b.client_name,
+    staff_name:  b.staff_name,
+    service_name:b.service_name,
+    amount:      amount,
+    method:      STATE.payMethod,
+    paid_at:     new Date().toISOString(),  // ← FIXED: always real payment time
+    commission:  parseFloat((amount*0.25).toFixed(2)),
+    net_revenue: parseFloat((amount*0.75).toFixed(2))
+  };
   SB.CACHE.payments.unshift(Object.assign({id:'p_'+Date.now()},pay));
-  b.payment_status='paid';b.payment_method=STATE.payMethod;
+  b.payment_status='paid'; b.payment_method=STATE.payMethod;
   SB.insert('payments',pay).catch(function(){});
   SB.update('bookings',id,{payment_status:'paid',payment_method:STATE.payMethod}).catch(function(){});
   SB.saveCache();
@@ -1144,13 +1186,21 @@ function savePayment(){
 }
 
 function deleteAppt(id){
-  if(!confirm('Delete this appointment?'))return;
-  SB.CACHE.bookings=SB.CACHE.bookings.filter(function(b){return b.id!==id;});
-  SB.remove('bookings',id).catch(function(){});
-  SB.saveCache();
-  closeModal('det-modal');
-  Utils.toast('Appointment deleted','info');
-  render();
+  var b=SB.CACHE.bookings.find(function(x){return x.id===id;});
+  var clientName=b?b.client_name:'this appointment';
+  Utils.confirmDialog(
+    'Delete Appointment',
+    'Delete appointment for '+clientName+'? This cannot be undone.',
+    function(){
+      SB.CACHE.bookings=SB.CACHE.bookings.filter(function(x){return x.id!==id;});
+      SB.remove('bookings',id).catch(function(){});
+      SB.saveCache();
+      closeModal('det-modal');
+      Utils.toast('Appointment deleted','info');
+      render();
+    },
+    true // danger = red button
+  );
 }
 
 function closeModal(id){document.getElementById(id).style.display='none';}
