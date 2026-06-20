@@ -895,12 +895,12 @@ window.addEventListener('DOMContentLoaded', function() {
       ' · ' + n.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
   }, 1000);
 
-  // Load data
-  if (SB.DEMO) {
-    SB.CACHE.clients   = SB.DEMO.clients;
-    SB.CACHE.bookings  = SB.DEMO.bookings;
-    SB.CACHE.payments  = SB.DEMO.payments;
-    SB.CACHE.email_log = SB.DEMO.email_log;
+  // Load demo data only if cache is empty (preserve user changes)
+  if (SB.DEMO && SB.CACHE.bookings.length === 0) {
+    SB.CACHE.clients   = JSON.parse(JSON.stringify(SB.DEMO.clients));
+    SB.CACHE.payments  = JSON.parse(JSON.stringify(SB.DEMO.payments));
+    SB.CACHE.bookings  = JSON.parse(JSON.stringify(SB.DEMO.bookings));
+    SB.CACHE.email_log = JSON.parse(JSON.stringify(SB.DEMO.email_log));
   }
 
   // Populate client select
@@ -1747,6 +1747,8 @@ function changeApptStatus(id, status) {
     // Auto-mark as paid and save payment with selected method
     var method = STATE.selectedPayMethod || 'cash';
     var amount  = parseFloat(bk.service_price || 0);
+    // Use booking date for paid_at so revenue shows in correct period
+    var paidAt = bk.booked_at || new Date().toISOString();
     var pay = {
       id: 'p_' + Date.now(),
       booking_id: id,
@@ -1758,7 +1760,7 @@ function changeApptStatus(id, status) {
       method: method,
       commission:   parseFloat((amount * 0.25).toFixed(2)),
       net_revenue:  parseFloat((amount * 0.75).toFixed(2)),
-      paid_at: new Date().toISOString()
+      paid_at: paidAt
     };
     bk.payment_status = 'paid';
     bk.payment_method  = method;
