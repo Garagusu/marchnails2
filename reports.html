@@ -285,16 +285,49 @@ var FP = [], FB = [], CP = [], CB = [];
 window.addEventListener('DOMContentLoaded', function() {
   Utils.startClock(null, document.getElementById('tb-date'));
   setupFilters();
-  // Load data: localStorage first, then demo (preserves all user changes across page loads)
-  if (!SB.loadCacheFromStorage()) {
-    if (SB.DEMO) {
-      SB.CACHE.clients   = JSON.parse(JSON.stringify(SB.DEMO.clients));
-      SB.CACHE.payments  = JSON.parse(JSON.stringify(SB.DEMO.payments));
-      SB.CACHE.bookings  = JSON.parse(JSON.stringify(SB.DEMO.bookings));
-      SB.CACHE.email_log = JSON.parse(JSON.stringify(SB.DEMO.email_log));
-      SB.saveCache();
-    }
+  // Always start with full demo data as base
+  if (SB.DEMO) {
+    SB.CACHE.clients   = JSON.parse(JSON.stringify(SB.DEMO.clients));
+    SB.CACHE.payments  = JSON.parse(JSON.stringify(SB.DEMO.payments));
+    SB.CACHE.bookings  = JSON.parse(JSON.stringify(SB.DEMO.bookings));
+    SB.CACHE.email_log = JSON.parse(JSON.stringify(SB.DEMO.email_log));
   }
+  // Then apply any saved changes from localStorage on top
+  try {
+    var _ls = localStorage.getItem('mn_cache_v2');
+    if (_ls) {
+      var _d = JSON.parse(_ls);
+      // Apply status/payment changes to existing bookings
+      if (_d.bookings) {
+        _d.bookings.forEach(function(lsBk) {
+          var existing = SB.CACHE.bookings.find(function(b){ return b.id === lsBk.id; });
+          if (existing) {
+            // Apply saved status/payment changes
+            existing.status         = lsBk.status         || existing.status;
+            existing.payment_status = lsBk.payment_status || existing.payment_status;
+            existing.payment_method = lsBk.payment_method || existing.payment_method;
+          } else {
+            // New booking added by user - add it
+            SB.CACHE.bookings.unshift(lsBk);
+          }
+        });
+      }
+      // Add new payments from localStorage
+      if (_d.payments) {
+        _d.payments.forEach(function(lsPay) {
+          var exists = SB.CACHE.payments.find(function(p){ return p.id === lsPay.id; });
+          if (!exists) SB.CACHE.payments.unshift(lsPay);
+        });
+      }
+      // Add new clients from localStorage
+      if (_d.clients) {
+        _d.clients.forEach(function(lsCli) {
+          var exists = SB.CACHE.clients.find(function(c){ return c.id === lsCli.id; });
+          if (!exists) SB.CACHE.clients.push(lsCli);
+        });
+      }
+    }
+  } catch(e) { /* bad localStorage data - ignore */ }
   if (typeof render === "function") { render(); }
   // Try Supabase in background (demo data already loaded)
   if (window.location.protocol !== 'file:') {
