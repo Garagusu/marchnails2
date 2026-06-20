@@ -180,7 +180,15 @@ var Utils = (function() {
     var rangeBookings = range ? bookings.filter(function(b) { return inRange(b.booked_at, range); }) : bookings;
     var rangePayments = range ? payments.filter(function(p) { return inRange(p.paid_at, range); }) : payments;
 
-    var totalRevenue   = sumRevenue(rangePayments);
+    // Fallback: if payments empty, use completed bookings service_price
+    var totalRevenue;
+    if (rangePayments.length > 0) {
+      totalRevenue = sumRevenue(rangePayments);
+    } else {
+      totalRevenue = rangeBookings
+        .filter(function(b) { return b.status === 'completed' || b.payment_status === 'paid'; })
+        .reduce(function(s, b) { return s + parseFloat(b.service_price || 0); }, 0);
+    }
     var totalBookings  = rangeBookings.length;
     var completedBk    = rangeBookings.filter(function(b) { return b.status === 'completed'; });
     var cancelledBk    = rangeBookings.filter(function(b) { return b.status === 'cancelled'; });
