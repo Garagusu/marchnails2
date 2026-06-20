@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>March Nails — Loyalty Program</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="css/core.css">
+<link rel="stylesheet" href="css/components.css">
+<script src="js/supabase.js"></script>
+<script src="js/utils.js"></script>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand"><div class="brand-name">March <span>Nails</span></div><div class="brand-sub">Business Intelligence</div></div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Analytics</div>
+      <a class="nav-item" href="dashboard.html"><i class="fa-solid fa-gauge-high"></i>Dashboard</a>
+      <a class="nav-item" href="booking.html"><i class="fa-solid fa-calendar-check"></i>Booking</a>
+      <a class="nav-item" href="reports.html"><i class="fa-solid fa-chart-column"></i>Reports</a>
+      <div class="nav-section">Operations</div>
+      <a class="nav-item" href="appointments.html"><i class="fa-solid fa-calendar-days"></i>Appointments</a>
+      <a class="nav-item" href="clients.html"><i class="fa-solid fa-users"></i>Clients</a>
+      <a class="nav-item" href="staff.html"><i class="fa-solid fa-id-badge"></i>Staff</a>
+      <div class="nav-section">Business</div>
+      <a class="nav-item" href="reports.html"><i class="fa-solid fa-money-bill-trend-up"></i>Revenue</a>
+      <a class="nav-item" href="services.html"><i class="fa-solid fa-scissors"></i>Services</a>
+      <a class="nav-item active" href="loyalty.html"><i class="fa-solid fa-crown"></i>Loyalty</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar">A</div>
+        <div><div class="user-name">Admin</div><div class="user-role">Salon Owner</div></div>
+        <button class="btn btn-ghost btn-icon" onclick="localStorage.removeItem('mn_auth');location.href='index.html'" style="margin-left:auto"><i class="fa-solid fa-right-from-bracket" style="font-size:.8rem;color:var(--text3)"></i></button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-area">
+    <div class="topbar">
+      <button class="btn btn-ghost btn-icon" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="fa-solid fa-bars"></i></button>
+      <div class="topbar-title">Loyalty Program</div>
+      <div class="topbar-date" id="tb-date"></div>
+      <div class="topbar-right">
+        <button class="btn btn-primary" onclick="exportLoyalty()"><i class="fa-solid fa-download"></i>Export</button>
+      </div>
+    </div>
+
+    <div class="page-content">
+      <div class="page-header">
+        <div>
+          <h1>Loyalty Program</h1>
+          <p>Client tiers, points and rewards management</p>
+        </div>
+      </div>
+
+      <!-- Tier Overview -->
+      <div class="grid grid-4 mb-1" id="tier-kpis"></div>
+
+      <!-- Tier Rules Card -->
+      <div class="grid grid-2 mb-1">
+        <div class="card">
+          <div class="card-header"><div class="card-title"><i class="fa-solid fa-layer-group" style="color:var(--pink)"></i> Tier Rules</div></div>
+          <div id="tier-rules"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title"><i class="fa-solid fa-gift" style="color:var(--amber)"></i> Rewards Catalogue</div></div>
+          <div id="rewards-list"></div>
+        </div>
+      </div>
+
+      <!-- Filter + Search -->
+      <div class="filter-bar mb-1">
+        <span class="filter-bar-label"><i class="fa-solid fa-filter" style="color:var(--pink)"></i></span>
+        <select class="filter-select" id="f-tier" onchange="renderTable()">
+          <option value="all">All Tiers</option>
+          <option value="platinum">💎 Platinum</option>
+          <option value="gold">⭐ Gold</option>
+          <option value="silver">✦ Silver</option>
+          <option value="standard">Standard</option>
+        </select>
+        <div class="search-box" style="min-width:200px">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="ly-search" placeholder="Search client…" oninput="renderTable()">
+        </div>
+        <select class="filter-select" id="f-sort" onchange="renderTable()">
+          <option value="pts">Most Points</option>
+          <option value="ltv">Highest LTV</option>
+          <option value="visits">Most Visits</option>
+          <option value="name">Name A-Z</option>
+        </select>
+        <div style="margin-left:auto">
+          <span style="font-size:.72rem;color:var(--text2)" id="ly-count"></span>
+        </div>
+      </div>
+
+      <!-- Loyalty Table -->
+      <div class="card" id="loyalty-wrap"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<style>
+.tier-card{padding:.75rem .9rem;border-radius:var(--r-sm);border-left:4px solid;margin-bottom:.5rem;display:flex;align-items:center;justify-content:space-between}
+.tier-platinum{background:linear-gradient(135deg,#F5F3FF,#EDE9FE);border-color:#7C3AED}
+.tier-gold{background:linear-gradient(135deg,#FFFBEB,#FEF3C7);border-color:#D97706}
+.tier-silver{background:linear-gradient(135deg,#F8FAFC,#F1F5F9);border-color:#64748B}
+.tier-standard{background:var(--s1);border-color:var(--border2)}
+.reward-row{display:flex;align-items:center;gap:.6rem;padding:.5rem 0;border-bottom:1px solid var(--s1);font-size:.8rem}
+.reward-row:last-child{border-bottom:none}
+.pts-badge{display:inline-flex;align-items:center;gap:.25rem;font-size:.65rem;font-weight:700;padding:.18rem .5rem;border-radius:50px;background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd)}
+.ly-row{display:grid;grid-template-columns:2fr 100px 80px 90px 80px auto;align-items:center;gap:.65rem;padding:.55rem .9rem;border-bottom:1px solid var(--s1);font-size:.8rem}
+.ly-row:last-child{border-bottom:none}
+.ly-row:hover{background:var(--s1)}
+.ly-head{display:grid;grid-template-columns:2fr 100px 80px 90px 80px auto;gap:.65rem;padding:.45rem .9rem;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);background:var(--s1);border-bottom:2px solid var(--border)}
+.pts-bar-wrap{width:100%;height:6px;background:var(--s1);border-radius:3px;overflow:hidden}
+.pts-bar{height:100%;border-radius:3px}
+.tier-badge-pl{background:var(--violet-bg);color:var(--violet);border:1px solid var(--violet-bd)}
+.tier-badge-go{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd)}
+.tier-badge-si{background:var(--s2);color:var(--text2);border:1px solid var(--border2)}
+.tier-badge-st{background:var(--s1);color:var(--text3);border:1px solid var(--border)}
+</style>
+
+<script>
+'use strict';
+if (!localStorage.getItem('mn_auth')) location.href='index.html';
+
+var TIER_RULES = [
+  {tier:'platinum', label:'💎 Platinum', color:'#7C3AED', minLTV:2000, minVisits:30, perks:['10% off every visit','Free nail art (monthly)','Birthday reward: free manicure','Priority booking']},
+  {tier:'gold',     label:'⭐ Gold',     color:'#D97706', minLTV:800,  minVisits:15, perks:['5% off every visit','Free nail art (quarterly)','Birthday reward: CA$20 off']},
+  {tier:'silver',   label:'✦ Silver',   color:'#64748B', minLTV:300,  minVisits:7,  perks:['Free nail art (biannual)','Birthday reward: CA$10 off']},
+  {tier:'standard', label:'Standard',   color:'#9298B5', minLTV:0,    minVisits:0,  perks:['1 point per CA$1 spent','Redeem 100pts = CA$5 off']},
+];
+
+var REWARDS = [
+  {pts:100,  reward:'CA$5 off any service',     tier:'all'},
+  {pts:200,  reward:'CA$15 off any service',    tier:'all'},
+  {pts:300,  reward:'Free Manicure Shellac',    tier:'silver'},
+  {pts:500,  reward:'Free Pedicure Shellac',    tier:'gold'},
+  {pts:800,  reward:'Free Acrylic Full Set',    tier:'gold'},
+  {pts:1000, reward:'Free Gel-X Extensions',   tier:'platinum'},
+];
+
+window.addEventListener('DOMContentLoaded', function() {
+  Utils.startClock(null, document.getElementById('tb-date'));
+  if (!SB.loadCacheFromStorage() && SB.DEMO) {
+    SB.CACHE.clients  = JSON.parse(JSON.stringify(SB.DEMO.clients));
+    SB.CACHE.bookings = JSON.parse(JSON.stringify(SB.DEMO.bookings));
+    SB.CACHE.payments = JSON.parse(JSON.stringify(SB.DEMO.payments));
+    SB.saveCache();
+  }
+  if (window.location.protocol !== 'file:') {
+    SB.loadAll().then(function(){ SB.saveCache(); renderAll(); }).catch(function(){});
+  }
+  renderAll();
+});
+
+function renderAll() {
+  renderKPIs();
+  renderTierRules();
+  renderRewards();
+  renderTable();
+}
+
+function getEnrichedClients() {
+  return SB.CACHE.clients.map(function(c) {
+    var name = (c.first_name||'')+' '+(c.last_name||'');
+    var a = Utils.clientAnalytics(c.id, name, SB.CACHE.bookings, SB.CACHE.payments);
+    var pts = c.loyalty_points || 0;
+    var calcTier = Utils.calcTier(a.ltv, a.totalVisits);
+    return Object.assign({}, c, {
+      _name: name,
+      _ltv: a.ltv,
+      _visits: a.totalVisits,
+      _pts: pts,
+      _tier: c.tier || calcTier,
+    });
+  });
+}
+
+function renderKPIs() {
+  var clients = getEnrichedClients();
+  var byCounts = {platinum:0,gold:0,silver:0,standard:0};
+  clients.forEach(function(c){ byCounts[c._tier||'standard']++; });
+  var totalPts = clients.reduce(function(s,c){return s+c._pts;},0);
+
+  document.getElementById('tier-kpis').innerHTML = [
+    {l:'💎 Platinum',   v:byCounts.platinum, c:'var(--violet)', ic:'fa-crown'},
+    {l:'⭐ Gold',       v:byCounts.gold,     c:'var(--amber)',  ic:'fa-star'},
+    {l:'✦ Silver',     v:byCounts.silver,   c:'var(--text2)',  ic:'fa-certificate'},
+    {l:'Total Points Issued', v:totalPts.toLocaleString(), c:'var(--pink)', ic:'fa-coins'},
+  ].map(function(k){
+    return '<div class="kpi-card" style="--kpi-color:'+k.c+'">'
+      +'<div class="kpi-top"><div class="kpi-icon" style="background:'+k.c+'20"><i class="fa-solid '+k.ic+'" style="color:'+k.c+'"></i></div></div>'
+      +'<div class="kpi-value">'+k.v+'</div><div class="kpi-label">'+k.l+'</div></div>';
+  }).join('');
+}
+
+function renderTierRules() {
+  var clsMap = {platinum:'tier-platinum',gold:'tier-gold',silver:'tier-silver',standard:'tier-standard'};
+  document.getElementById('tier-rules').innerHTML = TIER_RULES.map(function(t) {
+    return '<div class="tier-card '+clsMap[t.tier]+'">'
+      +'<div>'
+      +'<div style="font-weight:700;font-size:.85rem;color:'+t.color+'">'+t.label+'</div>'
+      +'<div style="font-size:.67rem;color:var(--text2);margin-top:1px">'
+      +(t.minLTV?'CA$'+t.minLTV+' LTV':'—')+' · '+(t.minVisits?t.minVisits+' visits':'—')
+      +'</div>'
+      +'</div>'
+      +'<div style="text-align:right">'
+      +t.perks.map(function(p){return '<div style="font-size:.65rem;color:var(--text2);margin-bottom:1px">✓ '+p+'</div>';}).join('')
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+
+function renderRewards() {
+  document.getElementById('rewards-list').innerHTML = REWARDS.map(function(r) {
+    return '<div class="reward-row">'
+      +'<span class="pts-badge"><i class="fa-solid fa-coins fa-xs"></i>'+r.pts+' pts</span>'
+      +'<span style="flex:1;font-weight:500">'+r.reward+'</span>'
+      +(r.tier!=='all'?'<span style="font-size:.62rem;color:var(--text3)">'+r.tier+'+</span>':'')
+      +'</div>';
+  }).join('');
+}
+
+function renderTable() {
+  var tierFilter = document.getElementById('f-tier').value;
+  var q   = (document.getElementById('ly-search').value||'').toLowerCase();
+  var srt = document.getElementById('f-sort').value;
+  var clients = getEnrichedClients();
+
+  var filtered = clients.filter(function(c) {
+    if (tierFilter !== 'all' && c._tier !== tierFilter) return false;
+    if (q && c._name.toLowerCase().indexOf(q)===-1 && (c.email||'').toLowerCase().indexOf(q)===-1) return false;
+    return true;
+  });
+
+  filtered.sort(function(a,b){
+    if (srt==='pts')    return b._pts-a._pts;
+    if (srt==='ltv')    return b._ltv-a._ltv;
+    if (srt==='visits') return b._visits-a._visits;
+    return a._name.localeCompare(b._name);
+  });
+
+  document.getElementById('ly-count').textContent = filtered.length + ' clients';
+
+  var maxPts = filtered.length ? filtered[0]._pts || 1 : 1;
+  var tierCls = {platinum:'tier-badge-pl',gold:'tier-badge-go',silver:'tier-badge-si',standard:'tier-badge-st'};
+  var tierColors = {platinum:'#7C3AED',gold:'#D97706',silver:'#64748B',standard:'#9298B5'};
+
+  var html = '<div class="ly-head"><div>Client</div><div>Tier</div><div style="text-align:right">Points</div><div style="text-align:right">Lifetime</div><div style="text-align:right">Visits</div><div>Actions</div></div>';
+
+  if (!filtered.length) {
+    html += '<div style="padding:2rem;text-align:center;color:var(--text3)">No clients found</div>';
+  } else {
+    filtered.forEach(function(c) {
+      var pct = Math.round((c._pts / maxPts)*100);
+      var initials = ((c.first_name||'?')[0]+(c.last_name||'')[0]).toUpperCase();
+      var badgeCls = tierCls[c._tier||'standard'];
+      var barColor = tierColors[c._tier||'standard'];
+      html += '<div class="ly-row">'
+        +'<div style="display:flex;align-items:center;gap:.5rem">'
+        +'<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--pink),#7C3AED);display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:700;color:#fff">'+initials+'</div>'
+        +'<div><div style="font-weight:500">'+Utils.safe(c._name)+'</div><div style="font-size:.65rem;color:var(--text2)">'+(c.email||c.phone||'')+'</div></div>'
+        +'</div>'
+        +'<div><span class="badge '+badgeCls+'">'+Utils.tierLabel(c._tier||'standard')+'</span></div>'
+        +'<div style="text-align:right">'
+        +'<div style="font-weight:700;color:var(--amber)">'+(c._pts||0)+'</div>'
+        +'<div class="pts-bar-wrap" style="margin-top:3px"><div class="pts-bar" style="width:'+pct+'%;background:'+barColor+'"></div></div>'
+        +'</div>'
+        +'<div style="text-align:right;color:var(--pink);font-weight:600">'+Utils.fCurrency(c._ltv)+'</div>'
+        +'<div style="text-align:right">'+c._visits+'</div>'
+        +'<div><button class="btn btn-sm" onclick="addPoints(\''+c.id+'\')"><i class="fa-solid fa-plus"></i>Points</button></div>'
+        +'</div>';
+    });
+  }
+
+  document.getElementById('loyalty-wrap').innerHTML = html;
+}
+
+function addPoints(clientId) {
+  var c = SB.CACHE.clients.find(function(x){return x.id===clientId;});
+  if (!c) return;
+  var name = (c.first_name||'')+' '+(c.last_name||'');
+  var pts = prompt('Add points to '+name+'\nCurrent: '+(c.loyalty_points||0)+' pts\n\nEnter points to add:');
+  if (pts===null) return;
+  var n = parseInt(pts);
+  if (isNaN(n)||n<=0) { Utils.toast('Invalid points value','warning'); return; }
+  c.loyalty_points = (c.loyalty_points||0) + n;
+  SB.update('clients', clientId, {loyalty_points: c.loyalty_points}).catch(function(){});
+  SB.saveCache();
+  Utils.toast('+'+n+' points added to '+name,'success');
+  renderAll();
+}
+
+function exportLoyalty() {
+  var clients = getEnrichedClients();
+  var csv = 'Name,Email,Tier,Points,Lifetime Value,Visits\n';
+  clients.forEach(function(c) {
+    csv += [c._name,c.email||'',Utils.tierLabel(c._tier||'standard'),c._pts,c._ltv,c._visits]
+      .map(function(v){return '"'+v+'"';}).join(',')+'\n';
+  });
+  var blob = new Blob([csv],{type:'text/csv'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'march-nails-loyalty.csv';
+  a.click();
+  Utils.toast('Loyalty data exported','success');
+}
+</script>
+</body>
+</html>
