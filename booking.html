@@ -597,26 +597,28 @@ function updateStats(){
 function renderRail(){
   var ds=lds(STATE.date);
   var wh=Utils.getWorkHours(STATE.date);
-  var maxSlots=wh[1]-wh[0]; // working hours span
+  var maxSlots=wh[1]-wh[0];
   var staffList=STATE.staff==='all'?STAFF:STAFF.filter(function(s){return s.name===STATE.staff;});
   var INACTIVE=['cancelled','no-show','no_show'];
+  // Same base filter as getDayBookings: bh<9 excluded, same day, no status filter
+  var allDayBks=SB.CACHE.bookings.filter(function(b){
+    if(!b.booked_at) return false;
+    if(new Date(b.booked_at).getHours()<9) return false;
+    return bDate(b)===ds;
+  });
   var html='';
   staffList.forEach(function(s){
-    // FIX: Use getDayBookings() so rail and header use IDENTICAL filter logic
-    var allBks = Utils.filterBookings(SB.CACHE.bookings, {day:ds, staff:s.name});
-    // Active only (exclude cancelled + no-show) — same as getDayBookings default
-    var activeBks = allBks.filter(function(b){ return INACTIVE.indexOf(b.status)===-1; });
-    var pays = Utils.filterPayments(SB.CACHE.payments, {day:ds, staff:s.name});
-    var kpis = Utils.calcKPIs(allBks, pays);
-    var rev  = kpis.revenue;
-    var cnt  = activeBks.length; // count matches day view header
-    var pct  = Math.min(100,Math.round((cnt/maxSlots)*100));
-    html+='<div class="srail-item" onclick="filterStaff(\''+s.name+'\')">'
-      +'<div class="sav" style="background:'+s.grad+'">'+s.name[0]+'</div>'
-      +'<div class="sinfo"><div class="sname">'+s.name+'</div>'
-      +'<div class="smeta">'+cnt+' · CA$'+Math.round(rev)+'</div>'
-      +'<div class="sload"><div class="sload-fill" style="width:'+pct+'%;background:'+s.color+'"></div></div></div>'
-      +'<div class="sbadge">'+pct+'%</div></div>';
+    var staffBks=allDayBks.filter(function(b){ return b.staff_name===s.name; });
+    var activeCnt=staffBks.filter(function(b){ return INACTIVE.indexOf(b.status)===-1; }).length;
+    var rev=staffBks.filter(function(b){return b.status==='completed';})
+      .reduce(function(t,b){return t+parseFloat(b.service_price||0);},0);
+    var pct=Math.min(100,Math.round((activeCnt/maxSlots)*100));
+    html+='<div class="srail-item" onclick="filterStaff(\''+s.name+'\')">';
+    html+='<div class="sav" style="background:'+s.grad+'">'+s.name[0]+'</div>';
+    html+='<div class="sinfo"><div class="sname">'+s.name+'</div>';
+    html+='<div class="smeta">'+activeCnt+' · CA$'+Math.round(rev)+'</div>';
+    html+='<div class="sload"><div class="sload-fill" style="width:'+pct+'%;background:'+s.color+'"></div></div></div>';
+    html+='<div class="sbadge">'+pct+'%</div></div>';
   });
   document.getElementById('srail-body').innerHTML=html;
 }
