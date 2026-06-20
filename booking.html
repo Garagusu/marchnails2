@@ -1093,8 +1093,8 @@ function renderDayView() {
 
   var dayBks = SB.CACHE.bookings.filter(function(b) {
     if (!b.booked_at) return false;
-    // Compare local date to avoid UTC timezone shift
     var bLocal = new Date(b.booked_at);
+    if (bLocal.getHours() < 9) return false; // skip before 9am
     var bDs = bLocal.getFullYear()+'-'+String(bLocal.getMonth()+1).padStart(2,'0')+'-'+String(bLocal.getDate()).padStart(2,'0');
     if (bDs !== dateStr) return false;
     if (STATE.statusFilter !== 'all' && b.status !== STATE.statusFilter) return false;
@@ -1156,8 +1156,17 @@ function renderDayView() {
     });
 
     // Appointment blocks - overlap-aware positioning
+    // Only show bookings within working hours
+    var dow3 = STATE.date.getDay(); // 0=Sun
+    var wStart = (dow3 === 0) ? 10 : 9;
+    var wEnd   = (dow3 === 0) ? 18 : 20;
+
     // Calculate overlaps: group by overlapping time windows
-    var blocks = col_bks.filter(function(b){ return b.booked_at; }).map(function(b) {
+    var blocks = col_bks.filter(function(b){
+      if (!b.booked_at) return false;
+      var bh = new Date(b.booked_at).getHours();
+      return bh >= wStart && bh < wEnd; // only within working hours
+    }).map(function(b) {
       var dt  = new Date(b.booked_at);
       var dur = parseInt(b.duration_minutes || 60);
       var rawTop2 = ((dt.getHours() - HOURS[0]) + dt.getMinutes()/60) * HOUR_H;
@@ -1378,6 +1387,10 @@ function renderMonthView() {
 function renderListView() {
   // Show all upcoming 30 days
   var all = SB.CACHE.bookings.filter(function(b) {
+    if (!b.booked_at) return false;
+    // Filter out bookings before 9am (bad data cleanup)
+    var bHour = new Date(b.booked_at).getHours();
+    if (bHour < 9) return false;
     if (STATE.staffFilter  !== 'all' && b.staff_name   !== STATE.staffFilter)  return false;
     if (STATE.statusFilter !== 'all' && b.status        !== STATE.statusFilter) return false;
     if (STATE.svcFilter    !== 'all' && b.service_name  !== STATE.svcFilter)    return false;
