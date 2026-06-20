@@ -152,11 +152,12 @@ var Utils = (function () {
      bookings + payments. Prefers payments; falls
      back to completed bookings. Never mixes.
   ─────────────────────────────────────────────── */
+  // Revenue = SUM of service_price for completed bookings
+  // Simple, single source, no ambiguity.
   function calcRevenue(completedBookings, payments) {
-    var fromPay = payments.reduce(function (s, p) { return s + parseFloat(p.amount || 0); }, 0);
-    if (fromPay > 0) return fromPay;
-    // Fallback: completed bookings service_price
-    return completedBookings.reduce(function (s, b) { return s + parseFloat(b.service_price || 0); }, 0);
+    return completedBookings.reduce(function (s, b) {
+      return s + parseFloat(b.service_price || 0);
+    }, 0);
   }
 
   /* ── CANONICAL KPIs ─────────────────────────
