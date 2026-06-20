@@ -920,12 +920,7 @@ window.addEventListener('DOMContentLoaded', function() {
     STATE.selectedNewStatus = btn.dataset.s;
   });
 
-  // Client select → autofill phone
-  document.getElementById('m-client').addEventListener('change', function() {
-    var client = SB.CACHE.clients.find(function(c) { return c.id === this.value; }.bind(this));
-    var phoneEl = document.getElementById('m-phone');
-    if (client && phoneEl) phoneEl.value = client.phone || '';
-  });
+  // Client autofill handled by clientSearch
 
   // Try Supabase
   if (window.location.protocol !== 'file:') {
@@ -1749,7 +1744,37 @@ function changeApptStatus(id, status) {
   var stM = STATUS_META[status] || STATUS_META.pending;
   toast(stM.label + ' — ' + (bk.client_name||'Appointment'), 'ok');
   if (status === 'completed') {
-    setTimeout(function() { openDetail(id); }, 200);
+    // Auto-mark as paid and save payment with selected method
+    var method = STATE.selectedPayMethod || 'cash';
+    var amount  = parseFloat(bk.service_price || 0);
+    var pay = {
+      id: 'p_' + Date.now(),
+      booking_id: id,
+      client_id:  bk.client_id,
+      client_name:  bk.client_name,
+      staff_name:   bk.staff_name,
+      service_name: bk.service_name,
+      amount: amount,
+      method: method,
+      commission:   parseFloat((amount * 0.25).toFixed(2)),
+      net_revenue:  parseFloat((amount * 0.75).toFixed(2)),
+      paid_at: new Date().toISOString()
+    };
+    bk.payment_status = 'paid';
+    bk.payment_method  = method;
+    SB.CACHE.payments.unshift(pay);
+    SB.insert('payments', pay).catch(function(){});
+    SB.update('bookings', id, {payment_status:'paid', payment_method: method}).catch(function(){});
+    // Log email receipt
+    if (bk.client_email) {
+      SB.CACHE.email_log.unshift({id:'e_'+Date.now(),client_id:bk.client_id,client_name:bk.client_name,
+        client_email:bk.client_email,type:'receipt',subject:'Your '+bk.service_name+' Receipt -- CA$'+amount,
+        status:'sent',sent_at:new Date().toISOString()});
+    }
+    // Re-open detail to show paid status & allow method change
+    closeModal('detail-modal');
+    render();
+    setTimeout(function() { openDetail(id); }, 100);
   } else {
     closeModal('detail-modal');
     render();
