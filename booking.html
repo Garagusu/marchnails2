@@ -1061,6 +1061,42 @@ function saveNew(){
     status:STATE.newStatus,payment_status:'unpaid',payment_method:'pending',
     booked_at:new Date(dt).toISOString(),notes:notes};
   SB.CACHE.bookings.unshift(bk);
+
+  // AUTO-ADD CLIENT: if new name typed (not from dropdown) add to clients
+  if(!cid && cname && cname !== 'Walk-in'){
+    var existingClient = SB.CACHE.clients.find(function(c){
+      return (c.first_name+' '+c.last_name).toLowerCase().trim() === cname.toLowerCase().trim();
+    });
+    if(!existingClient){
+      var nameParts = cname.trim().split(' ');
+      var newClient = {
+        id:             'c_'+Date.now(),
+        first_name:     nameParts[0]||cname,
+        last_name:      nameParts.slice(1).join(' ')||'',
+        phone:          '',
+        email:          '',
+        birthday:       null,
+        notes:          '',
+        tier:           'standard',
+        loyalty_points: 0,
+        no_show_count:  0,
+        created_at:     new Date().toISOString()
+      };
+      SB.CACHE.clients.unshift(newClient);
+      SB.insert('clients', newClient).then(function(data){
+        if(Array.isArray(data)&&data[0]&&data[0].id){
+          newClient.id=data[0].id;
+          bk.client_id=data[0].id;
+          SB.update('bookings',bk.id,{client_id:data[0].id}).catch(function(){});
+        }
+        SB.saveCache();
+      }).catch(function(){});
+    } else {
+      // Link existing client to booking
+      bk.client_id = existingClient.id;
+    }
+  }
+
   SB.saveCache();
 
   var sbPayload={client_id:cid||null,client_name:fullName,client_email:client?client.email:null,
