@@ -51,32 +51,21 @@
 <div class="app-layout">
 
   <!-- SIDEBAR -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-      <div class="brand-name">March <span>Nails</span></div>
-      <div class="brand-sub">Business Intelligence</div>
-    </div>
+    <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand"><div class="brand-name">March <span>Nails</span></div><div class="brand-sub">Business Intelligence</div></div>
     <nav class="sidebar-nav">
       <div class="nav-section">Analytics</div>
       <a class="nav-item active" href="dashboard.html"><i class="fa-solid fa-gauge-high"></i>Dashboard</a>
-      <a class="nav-item" href="booking.html"><i class="fa-solid fa-calendar-check" style="color:var(--pink)"></i>Booking</a>
-      <a class="nav-item " href="reports.html"><i class="fa-solid fa-chart-column"></i>Reports</a>
-      <div class="nav-section">Operations</div>
-      <a class="nav-item " href="appointments.html"><i class="fa-solid fa-calendar-check"></i>Appointments</a>
-      <a class="nav-item " href="clients.html"><i class="fa-solid fa-users"></i>Clients</a>
-      <a class="nav-item " href="staff.html"><i class="fa-solid fa-id-badge"></i>Staff</a>
-      <div class="nav-section">Business</div>
-      <a class="nav-item" href="reports.html"><i class="fa-solid fa-money-bill-trend-up"></i>Revenue</a>
-      <a class="nav-item" href="appointments.html"><i class="fa-solid fa-envelope"></i>Email Log</a>
-      <a class="nav-item" href="appointments.html"><i class="fa-solid fa-scissors"></i>Services</a>
-      <a class="nav-item" href="clients.html"><i class="fa-solid fa-crown"></i>Loyalty</a>
+      <a class="nav-item" href="booking.html"><i class="fa-solid fa-calendar-check"></i>Booking</a>
+      <a class="nav-item" href="reports.html"><i class="fa-solid fa-chart-column"></i>Reports</a>
+      <a class="nav-item" href="clients.html"><i class="fa-solid fa-users"></i>Clients</a>
+      <a class="nav-item" href="staff.html"><i class="fa-solid fa-id-badge"></i>Staff</a>
     </nav>
-    
     <div class="sidebar-footer">
       <div class="user-info">
         <div class="user-avatar">A</div>
         <div><div class="user-name">Admin</div><div class="user-role">Salon Owner</div></div>
-        <button class="btn btn-ghost btn-icon" onclick="logout()" title="Sign out" style="margin-left:auto"><i class="fa-solid fa-right-from-bracket" style="font-size:.8rem;color:var(--text3)"></i></button>
+        <button class="btn btn-ghost btn-icon" onclick="localStorage.removeItem('mn_auth');location.href='index.html'" style="margin-left:auto" title="Sign out"><i class="fa-solid fa-right-from-bracket" style="font-size:.8rem;color:var(--text3)"></i></button>
       </div>
     </div>
   </aside>
@@ -88,6 +77,7 @@
       <div class="topbar-title" id="tb-title">Dashboard</div>
       <div class="topbar-date" id="tb-date"></div>
       <div class="topbar-right">
+        <button class="btn btn-ghost btn-sm" onclick="toggleServicesPanel()" style="gap:.35rem"><i class="fa-solid fa-scissors" style="color:var(--pink)"></i>Services</button>
         <div id="conn-status" style="font-size:.72rem;color:var(--text3)"><i class="fa-solid fa-circle-notch fa-spin" style="font-size:.7rem"></i> Connecting…</div>
         <button class="btn btn-primary btn-sm" onclick="window.location.href='appointments.html#new'"><i class="fa-solid fa-plus"></i>New Appointment</button>
         <a href="appointments.html" class="btn btn-ghost btn-icon" title="Notifications"><i class="fa-solid fa-bell" style="font-size:.95rem"></i></a>
@@ -1248,6 +1238,319 @@ function closeKpiDrill(){document.getElementById('kpi-drill-modal').style.displa
     <div id="kdm-body" style="max-height:65vh;overflow-y:auto"></div>
   </div>
 </div>
+
+
+<!-- ═══════════════════ SERVICES PANEL ═══════════════════ -->
+<div id="services-panel" style="display:none;position:fixed;inset:0;z-index:1999;background:rgba(26,29,46,.5);backdrop-filter:blur(4px);padding:1rem;overflow-y:auto" onclick="if(event.target===this)toggleServicesPanel()">
+  <div style="background:var(--white);border-radius:var(--r-2xl);max-width:900px;margin:2rem auto;box-shadow:var(--sh-xl);overflow:hidden">
+    <div style="background:linear-gradient(135deg,var(--pink),var(--violet));padding:1.25rem 1.5rem;display:flex;align-items:center;gap:.85rem">
+      <div style="width:42px;height:42px;border-radius:var(--r-sm);background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center"><i class="fa-solid fa-scissors" style="color:#fff;font-size:1.1rem"></i></div>
+      <div><div style="font-family:var(--fontd);font-size:1.05rem;font-weight:700;color:#fff">Services & Pricing</div><div style="font-size:.72rem;color:rgba(255,255,255,.75);margin-top:1px">Manage your service menu · Changes save instantly</div></div>
+      <div style="margin-left:auto;display:flex;gap:.5rem;align-items:center">
+        <button onclick="openSvcEdit(null)" style="padding:.38rem .85rem;border-radius:50px;border:1.5px solid rgba(255,255,255,.5);background:rgba(255,255,255,.15);color:#fff;font-size:.75rem;font-weight:600;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:.35rem"><i class="fa-solid fa-plus"></i>Add Service</button>
+        <button onclick="toggleServicesPanel()" style="width:32px;height:32px;border-radius:50%;border:none;background:rgba(255,255,255,.2);color:#fff;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center">×</button>
+      </div>
+    </div>
+    <div id="svc-kpi-strip" style="display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--border)"></div>
+    <div style="padding:.6rem 1.25rem;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.6rem;flex-wrap:wrap">
+      <div style="position:relative;flex:1;min-width:160px;max-width:240px"><i class="fa-solid fa-magnifying-glass" style="position:absolute;left:.65rem;top:50%;transform:translateY(-50%);color:var(--text3);font-size:.72rem"></i><input type="text" id="svc-search-inp" placeholder="Search services…" oninput="renderSvcTable()" style="width:100%;padding:.32rem .65rem .32rem 2rem;border:1.5px solid var(--border);border-radius:50px;font-size:.75rem;color:var(--text);background:var(--white);outline:none;font-family:var(--font)"></div>
+      <select id="svc-cat-f" onchange="renderSvcTable()" style="padding:.32rem .65rem;border:1.5px solid var(--border);border-radius:50px;font-size:.72rem;color:var(--text);background:var(--white);outline:none;cursor:pointer;font-family:var(--font)"><option value="all">All Categories</option><option value="Nails">💅 Nails</option><option value="Lashes">👁 Lashes</option><option value="Other">Other</option></select>
+      <span id="svc-count-lbl" style="font-size:.72rem;color:var(--text2);margin-left:auto"></span>
+      <button onclick="exportSvcCSV()" style="padding:.3rem .7rem;border-radius:50px;border:1.5px solid var(--border);background:var(--white);font-size:.72rem;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:.3rem"><i class="fa-solid fa-download" style="color:var(--pink)"></i>Export</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="background:var(--s1)">
+          <th style="padding:.5rem 1.25rem;text-align:left;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3)">Service</th>
+          <th style="padding:.5rem .85rem;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3)">Category</th>
+          <th style="padding:.5rem .85rem;text-align:right;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3)">Price</th>
+          <th style="padding:.5rem .85rem;text-align:center;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3)">Duration</th>
+          <th style="padding:.5rem .85rem;text-align:right;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3)">Bookings</th>
+          <th style="padding:.5rem .85rem;text-align:right;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3)">Revenue</th>
+          <th style="padding:.5rem .85rem;text-align:center;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3)">Status</th>
+          <th style="padding:.5rem .85rem;text-align:center;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3)">Actions</th>
+        </tr></thead>
+        <tbody id="svc-tbody"></tbody>
+      </table>
+    </div>
+    <div style="padding:.65rem 1.25rem;border-top:1px solid var(--border);text-align:center;font-size:.68rem;color:var(--text3)"><i class="fa-solid fa-circle-info"></i> Price & duration changes apply to new bookings only</div>
+  </div>
+</div>
+
+<!-- SERVICE ADD/EDIT MODAL -->
+<div id="svc-edit-modal" style="display:none;position:fixed;inset:0;z-index:2100;background:rgba(26,29,46,.6);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:1rem" onclick="if(event.target===this)closeSvcEdit()">
+  <div style="background:var(--white);border-radius:var(--r-xl);width:100%;max-width:460px;box-shadow:var(--sh-xl);overflow:hidden">
+    <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div id="svc-edit-title" style="font-family:var(--fontd);font-size:.95rem;font-weight:700">Add Service</div>
+      <button onclick="closeSvcEdit()" style="width:28px;height:28px;border-radius:50%;border:none;background:var(--s1);color:var(--text2);cursor:pointer;font-size:1.1rem">×</button>
+    </div>
+    <div id="svc-edit-body" style="padding:1.1rem 1.25rem"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// SERVICES MANAGEMENT — dashboard inline
+// ═══════════════════════════════════════════════
+var SERVICES = (function(){
+  var DEFAULT = [
+    {id:'s1', name:'Acrylic Full Set',   category:'Nails',  price:75,  duration:90,  active:true,  description:'Full acrylic set with shape & design'},
+    {id:'s2', name:'Acrylic Refill',     category:'Nails',  price:60,  duration:60,  active:true,  description:'2–3 week fill'},
+    {id:'s3', name:'Gel-X Extensions',  category:'Nails',  price:80,  duration:90,  active:true,  description:'Soft gel extension system'},
+    {id:'s4', name:'Pedicure Shellac',   category:'Nails',  price:55,  duration:60,  active:true,  description:'Gel pedicure with foot care'},
+    {id:'s5', name:'Manicure Shellac',  category:'Nails',  price:35,  duration:45,  active:true,  description:'Shellac gel manicure'},
+    {id:'s6', name:'Lash Extensions',   category:'Lashes', price:89,  duration:120, active:true,  description:'Classic or volume lash set'},
+    {id:'s7', name:'Nail Art',          category:'Nails',  price:45,  duration:60,  active:true,  description:'Custom designs'},
+    {id:'s8', name:'Acrylic Removal',   category:'Nails',  price:25,  duration:30,  active:true,  description:'Safe removal'},
+    {id:'s9', name:'Gel Overlay',       category:'Nails',  price:65,  duration:75,  active:true,  description:'Hard gel overlay'},
+    {id:'s10',name:'Lash Fill',         category:'Lashes', price:55,  duration:75,  active:true,  description:'2–3 week refill'},
+    {id:'s11',name:'Nail Repair',       category:'Nails',  price:10,  duration:15,  active:true,  description:'Per nail'},
+    {id:'s12',name:'French Tip',        category:'Nails',  price:15,  duration:15,  active:true,  description:'Add-on'},
+  ];
+  var stored = localStorage.getItem('mn_services');
+  return stored ? JSON.parse(stored) : DEFAULT;
+})();
+
+function saveSVCS(){ localStorage.setItem('mn_services', JSON.stringify(SERVICES)); }
+
+function toggleServicesPanel(){
+  var p = document.getElementById('services-panel');
+  var open = p.style.display !== 'none';
+  p.style.display = open ? 'none' : 'block';
+  if (!open){ renderSvcKPIs(); renderSvcTable(); }
+  // Update button style
+  var btn = document.querySelector('[onclick="toggleServicesPanel()"]');
+  if(btn){ btn.style.background = open ? '' : 'var(--pink-bg)'; btn.style.color = open ? '' : 'var(--pink)'; btn.style.borderColor = open ? '' : 'var(--pink-bd)'; }
+}
+
+function renderSvcKPIs(){
+  var active = SERVICES.filter(function(s){return s.active;});
+  var avgP = active.length ? active.reduce(function(s,x){return s+x.price;},0)/active.length : 0;
+  var avgD = active.length ? active.reduce(function(s,x){return s+x.duration;},0)/active.length : 0;
+  var cats = {};
+  SERVICES.forEach(function(s){cats[s.category]=(cats[s.category]||0)+1;});
+  var kpis = [
+    {l:'Total Services',  v:SERVICES.length, c:'#E91E8C', i:'fa-scissors'},
+    {l:'Active',          v:active.length,   c:'#059669', i:'fa-check-circle'},
+    {l:'Avg Price',       v:'CA$'+Math.round(avgP), c:'#7C3AED', i:'fa-tag'},
+    {l:'Avg Duration',    v:Math.round(avgD)+'min', c:'#D97706', i:'fa-clock'},
+  ];
+  document.getElementById('svc-kpi-strip').innerHTML = kpis.map(function(k){
+    return '<div style="padding:.85rem 1.25rem;border-right:1px solid var(--border)">'
+      +'<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.2rem">'
+      +'<div style="width:26px;height:26px;border-radius:6px;background:'+k.c+'18;display:flex;align-items:center;justify-content:center">'
+      +'<i class="fa-solid '+k.i+'" style="color:'+k.c+';font-size:.72rem"></i></div>'
+      +'<div style="font-size:.65rem;color:var(--text2)">'+k.l+'</div></div>'
+      +'<div style="font-size:1.1rem;font-weight:800;color:var(--text);font-family:var(--fontd)">'+k.v+'</div>'
+      +'</div>';
+  }).join('');
+}
+
+function renderSvcTable(){
+  var q   = (document.getElementById('svc-search-inp').value||'').toLowerCase();
+  var cat = document.getElementById('svc-cat-f').value;
+
+  // Booking counts from cache
+  var bkCounts = {}, bkRevenue = {};
+  (SB.CACHE.bookings||[]).filter(function(b){return b.status==='completed';}).forEach(function(b){
+    if(!b.service_name) return;
+    bkCounts[b.service_name]  = (bkCounts[b.service_name]||0)+1;
+    bkRevenue[b.service_name] = (bkRevenue[b.service_name]||0)+parseFloat(b.service_price||0);
+  });
+
+  var filtered = SERVICES.filter(function(s){
+    if(cat!=='all' && s.category!==cat) return false;
+    if(q && s.name.toLowerCase().indexOf(q)===-1 && (s.description||'').toLowerCase().indexOf(q)===-1) return false;
+    return true;
+  }).sort(function(a,b){ return (bkRevenue[b.name]||0)-(bkRevenue[a.name]||0); });
+
+  document.getElementById('svc-count-lbl').textContent = filtered.length+' services';
+
+  var catStyle = {Nails:'background:#FDF2F8;color:#E91E8C;border:1px solid #F9A8D4', Lashes:'background:#F5F3FF;color:#7C3AED;border:1px solid #C4B5FD', Other:'background:var(--s1);color:var(--text2);border:1px solid var(--border)'};
+
+  var html = '';
+  var tbody = document.getElementById('svc-tbody');
+  tbody.innerHTML = '';
+  filtered.forEach(function(s){
+    var cnt = bkCounts[s.name]||0;
+    var rev = bkRevenue[s.name]||0;
+    var cs  = catStyle[s.category]||catStyle.Other;
+    var tr  = document.createElement('tr');
+    tr.className = 'kdm-row';
+    tr.style.cssText = 'border-bottom:1px solid var(--s1);opacity:'+(s.active?'1':'.55');
+    var activeColor  = s.active ? '#059669' : '#9CA3AF';
+    var activeBorder = s.active ? '#6EE7B7' : '#D1D5DB';
+    var activeLabel  = s.active ? 'Active'  : 'Inactive';
+    var revStr = rev > 0 ? 'CA$'+Math.round(rev) : '—';
+    tr.innerHTML = ''
+      +'<td style="padding:.55rem 1.25rem">'
+      +'<div style="display:flex;align-items:center;gap:.5rem">'
+      +'<div style="width:8px;height:8px;border-radius:50%;background:'+activeColor+';flex-shrink:0"></div>'
+      +'<div><div style="font-weight:600;font-size:.8rem">'+s.name+'</div>'
+      +(s.description ? '<div style="font-size:.65rem;color:var(--text2)">'+s.description+'</div>' : '')
+      +'</div></div></td>'
+      +'<td style="padding:.55rem .85rem"><span style="'+cs+';border-radius:50px;padding:.12rem .45rem;font-size:.62rem;font-weight:600">'+s.category+'</span></td>'
+      +'<td style="padding:.55rem .85rem;text-align:right;font-weight:800;color:var(--pink);font-size:.85rem">CA$'+s.price+'</td>'
+      +'<td style="padding:.55rem .85rem;text-align:center;font-size:.75rem;color:var(--text2)">'+s.duration+' min</td>'
+      +'<td style="padding:.55rem .85rem;text-align:right;font-weight:600;font-size:.78rem">'+cnt+'</td>'
+      +'<td style="padding:.55rem .85rem;text-align:right;font-weight:600;font-size:.78rem;color:var(--green)">'+revStr+'</td>'
+      +'<td style="padding:.55rem .85rem;text-align:center">'
+      +'<button class="svc-tb" style="padding:.18rem .55rem;border-radius:50px;border:1.5px solid '+activeBorder+';font-size:.62rem;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:'+activeColor+'">'+activeLabel+'</button></td>'
+      +'<td style="padding:.55rem .85rem;text-align:center">'
+      +'<div style="display:flex;gap:.25rem;justify-content:center">'
+      +'<button class="svc-eb" style="width:26px;height:26px;border-radius:6px;border:1.5px solid var(--border);background:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center" title="Edit"><i class="fa-solid fa-pen" style="font-size:.65rem;color:var(--text2)"></i></button>'
+      +'<button class="svc-db" style="width:26px;height:26px;border-radius:6px;border:1.5px solid var(--border);background:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center" title="Delete"><i class="fa-solid fa-trash" style="font-size:.65rem;color:var(--red)"></i></button>'
+      +'</div></td></tr>';
+    (function(id){
+      tr.querySelector('.svc-tb').onclick = function(){ toggleSvcActive(id); };
+      tr.querySelector('.svc-eb').onclick = function(){ openSvcEdit(id); };
+      tr.querySelector('.svc-db').onclick = function(){ deleteSvc(id); };
+    })(s.id);
+    tbody.appendChild(tr);
+  });
+  if(!filtered.length){
+    var empty = document.createElement('tr');
+    empty.innerHTML = '<td colspan="8" style="padding:2.5rem;text-align:center;color:var(--text3)"><i class="fa-solid fa-scissors" style="font-size:1.5rem;display:block;margin-bottom:.5rem"></i>No services found</td>';
+    tbody.appendChild(empty);
+  }
+}
+
+function openSvcEdit(id){
+  var s = id ? SERVICES.find(function(x){return x.id===id;}) : null;
+  document.getElementById('svc-edit-title').textContent = s ? 'Edit Service' : 'Add Service';
+  var m = document.getElementById('svc-edit-modal');
+  var body = document.getElementById('svc-edit-body');
+
+  // Build form via DOM — avoids quote conflicts
+  body.innerHTML = '';
+  var f = document.createElement('div');
+  f.style.cssText = 'display:flex;flex-direction:column;gap:.65rem';
+
+  function fRow(lbl, el){
+    var w=document.createElement('div');
+    var l=document.createElement('label');
+    l.style.cssText='font-size:.63rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:.25rem';
+    l.textContent=lbl; w.appendChild(l); w.appendChild(el); return w;
+  }
+  function inp(id2, type, val, placeholder, min, step){
+    var i=document.createElement('input');
+    i.id=id2; i.type=type||'text'; i.value=val||''; i.placeholder=placeholder||'';
+    if(min!==undefined) i.min=min;
+    if(step!==undefined) i.step=step;
+    i.style.cssText='width:100%;padding:.6rem .8rem;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:.82rem;font-family:var(--font);outline:none;color:var(--text);box-sizing:border-box';
+    i.onfocus=function(){this.style.borderColor='var(--pink)';};
+    i.onblur=function(){this.style.borderColor='var(--border)';};
+    return i;
+  }
+  function sel(id2, opts, curVal){
+    var s2=document.createElement('select');
+    s2.id=id2;
+    s2.style.cssText='width:100%;padding:.6rem .8rem;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:.82rem;font-family:var(--font);outline:none;background:var(--white);box-sizing:border-box';
+    opts.forEach(function(o){var op=document.createElement('option');op.value=o.v||o.l;op.textContent=o.l;if((o.v||o.l)===curVal)op.selected=true;s2.appendChild(op);});
+    return s2;
+  }
+
+  f.appendChild(fRow('Service Name', inp('fe-name','text',s?s.name:'','e.g. Acrylic Full Set')));
+
+  var grid1=document.createElement('div');
+  grid1.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:.6rem';
+  grid1.appendChild(fRow('Category', sel('fe-cat',[{l:'Nails'},{l:'Lashes'},{l:'Other'}], s?s.category:'Nails')));
+  grid1.appendChild(fRow('Status', sel('fe-active',[{l:'Active',v:'1'},{l:'Inactive',v:'0'}], s?(s.active?'1':'0'):'1')));
+  f.appendChild(grid1);
+
+  var grid2=document.createElement('div');
+  grid2.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:.6rem';
+  grid2.appendChild(fRow('Price (CA$)', inp('fe-price','number',s?s.price:'','75',0,5)));
+  grid2.appendChild(fRow('Duration (min)', inp('fe-dur','number',s?s.duration:60,'60',15,15)));
+  f.appendChild(grid2);
+
+  var ta=document.createElement('textarea');
+  ta.id='fe-desc'; ta.placeholder='Short description…';
+  ta.style.cssText='width:100%;padding:.6rem .8rem;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:.82rem;font-family:var(--font);outline:none;resize:none;height:56px;box-sizing:border-box';
+  ta.onfocus=function(){this.style.borderColor='var(--pink)';};
+  ta.onblur=function(){this.style.borderColor='var(--border)';};
+  ta.value=(s&&s.description)||'';
+  f.appendChild(fRow('Description', ta));
+
+  var footer=document.createElement('div');
+  footer.style.cssText='display:flex;gap:.5rem;justify-content:flex-end;padding-top:.5rem;border-top:1px solid var(--border)';
+  var btnCancel=document.createElement('button');
+  btnCancel.textContent='Cancel';
+  btnCancel.style.cssText='padding:.45rem .9rem;border-radius:50px;border:1.5px solid var(--border);background:var(--white);font-size:.78rem;cursor:pointer;font-family:var(--font)';
+  btnCancel.onclick=closeSvcEdit;
+  var btnSave=document.createElement('button');
+  btnSave.innerHTML='<i class="fa-solid fa-check"></i> Save';
+  btnSave.style.cssText='padding:.45rem .9rem;border-radius:50px;border:none;background:linear-gradient(135deg,var(--pink),var(--violet));color:#fff;font-size:.78rem;font-weight:600;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:.35rem';
+  (function(editId, mode){ btnSave.onclick=function(){saveSvcEdit(editId,mode);}; })(id||null, s?'edit':'add');
+  footer.appendChild(btnCancel);
+  footer.appendChild(btnSave);
+  f.appendChild(footer);
+
+  body.appendChild(f);
+  m.style.display='flex';
+}
+
+function saveSvcEdit(id, mode){
+  var name  = (document.getElementById('fe-name').value||'').trim();
+  var price = parseFloat(document.getElementById('fe-price').value||0);
+  var dur   = parseInt(document.getElementById('fe-dur').value||60);
+  var cat   = document.getElementById('fe-cat').value;
+  var desc  = (document.getElementById('fe-desc').value||'').trim();
+  var active= document.getElementById('fe-active').value==='1';
+
+  if(!name){ Utils.toast('Service name required','warning'); return; }
+  if(price<0){ Utils.toast('Price cannot be negative','warning'); return; }
+  if(dur<15){ Utils.toast('Minimum 15 minutes','warning'); return; }
+
+  if(mode==='edit'){
+    var s=SERVICES.find(function(x){return x.id===id;});
+    if(s){ s.name=name; s.price=price; s.duration=dur; s.category=cat; s.description=desc; s.active=active; }
+    Utils.toast(name+' updated','success');
+  } else {
+    SERVICES.push({id:'s'+Date.now(),name:name,price:price,duration:dur,category:cat,description:desc,active:active});
+    Utils.toast(name+' added','success');
+  }
+  saveSVCS();
+  closeSvcEdit();
+  renderSvcKPIs();
+  renderSvcTable();
+}
+
+function closeSvcEdit(){
+  document.getElementById('svc-edit-modal').style.display='none';
+}
+
+function toggleSvcActive(id){
+  var s=SERVICES.find(function(x){return x.id===id;});
+  if(!s) return;
+  s.active=!s.active;
+  saveSVCS();
+  renderSvcKPIs();
+  renderSvcTable();
+  Utils.toast(s.name+' '+(s.active?'activated':'deactivated'),s.active?'success':'info');
+}
+
+function deleteSvc(id){
+  var s=SERVICES.find(function(x){return x.id===id;});
+  if(!s) return;
+  Utils.confirmDialog('Delete Service','Delete "'+s.name+'"? This cannot be undone.',function(){
+    SERVICES=SERVICES.filter(function(x){return x.id!==id;});
+    saveSVCS();
+    renderSvcKPIs();
+    renderSvcTable();
+    Utils.toast('Deleted: '+s.name,'info');
+  },true);
+}
+
+function exportSvcCSV(){
+  var rows=SERVICES.map(function(s){return [s.name,s.category,'CA$'+s.price,s.duration+'min',s.active?'Active':'Inactive',s.description||''];});
+  var csv='Service,Category,Price,Duration,Status,Description\n'+rows.map(function(r){return r.map(function(c){return '"'+c+'"';}).join(',');}).join('');
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='march-nails-services.csv'; a.click();
+  Utils.toast('Services exported','success');
+}
+</script>
 
 </body>
 </html>
