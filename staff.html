@@ -120,6 +120,7 @@ function renderOverview(){
       +'<span>'+analytics.totalClients+' clients</span></div>'
       +'<div style="margin-top:.6rem;display:flex;gap:.3rem">'
       +'<button class="btn btn-sm" onclick="event.stopPropagation();openStaffModal(\''+sc.id+'\''+')"><i class="fa-solid fa-pen"></i>Edit</button>'
+      +'<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openScheduleManager(\''+sc.id+'\''+')"><i class="fa-solid fa-calendar-days"></i>Schedule</button>'
       +(sc.status&&sc.status!=='active'?'<span style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);border-radius:50px;padding:.05rem .35rem;font-size:.62rem;font-weight:600">'+sc.status.replace(/_/g,' ')+'</span>':'')
       +'</div></div>';
   });
@@ -197,6 +198,7 @@ function renderStaffDetail(name){
     +'</div>'
     +'<div style="margin-left:auto;display:flex;gap:.5rem">'
     +'<button class="btn btn-sm" onclick="openStaffModal(\''+sc.id+'\''+')"><i class="fa-solid fa-pen"></i>Edit</button>'
+    +'<button class="btn btn-ghost btn-sm" onclick="openScheduleManager(\''+sc.id+'\''+')"><i class="fa-solid fa-calendar-days"></i>Schedule</button>'
     +'<div style="text-align:center;background:white;border-radius:var(--r);padding:.6rem .85rem;min-width:80px">'
     +'<div style="font-size:1rem;font-weight:700;color:'+sc.color+'">'+Utils.fCurrency(all.revenue)+'</div>'
     +'<div style="font-size:.62rem;color:var(--text2)">Lifetime Revenue</div></div>'
@@ -500,5 +502,361 @@ function confirmDelStaff(){
   renderPage();
 }
 </script>
+
+<!-- ════════════════════════════════════════════════
+     STAFF SCHEDULE MANAGER
+     - Calendar date picker
+     - 21 vacation days/year (resets Jan 1)
+     - Types: vacation, day_off, sick, personal, paperwork, training, busy_hours
+     - Only vacation + day_off deduct from 21-day balance
+     - Busy hours block booking in calendar
+════════════════════════════════════════════════ -->
+
+<div id="schedule-modal" style="display:none;position:fixed;inset:0;z-index:3000;background:rgba(26,29,46,.6);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:1rem" onclick="if(event.target===this)closeSchedule()">
+  <div style="background:var(--white);border-radius:var(--r-2xl);width:100%;max-width:760px;max-height:94vh;display:flex;flex-direction:column;box-shadow:var(--sh-xl);overflow:hidden">
+
+    <!-- Header -->
+    <div id="sch-hd" style="padding:1.1rem 1.5rem;background:linear-gradient(135deg,var(--pink),var(--violet));display:flex;align-items:center;gap:.85rem;flex-shrink:0">
+      <div id="sch-av" style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;color:#fff"></div>
+      <div style="flex:1">
+        <div id="sch-name" style="font-family:var(--fontd);font-size:1rem;font-weight:700;color:#fff"></div>
+        <div id="sch-bal" style="font-size:.72rem;color:rgba(255,255,255,.85);margin-top:1px"></div>
+      </div>
+      <button onclick="closeSchedule()" style="width:32px;height:32px;border-radius:50%;border:none;background:rgba(255,255,255,.2);color:#fff;cursor:pointer;font-size:1.1rem">×</button>
+    </div>
+
+    <!-- Body -->
+    <div style="display:flex;flex:1;overflow:hidden;min-height:0">
+
+      <!-- Left: Calendar -->
+      <div style="flex:1;display:flex;flex-direction:column;border-right:1px solid var(--border);min-width:0">
+        <div style="padding:.75rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg)">
+          <button onclick="schPrevMonth()" style="width:30px;height:30px;border-radius:50%;border:1.5px solid var(--border);background:var(--white);cursor:pointer;font-size:.8rem">‹</button>
+          <div id="sch-month-lbl" style="font-family:var(--fontd);font-weight:700;font-size:.9rem"></div>
+          <button onclick="schNextMonth()" style="width:30px;height:30px;border-radius:50%;border:1.5px solid var(--border);background:var(--white);cursor:pointer;font-size:.8rem">›</button>
+        </div>
+        <!-- Day headers -->
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);padding:.5rem .75rem .25rem;gap:2px">
+          <div style="text-align:center;font-size:.6rem;font-weight:700;color:var(--text3)">Mon</div>
+          <div style="text-align:center;font-size:.6rem;font-weight:700;color:var(--text3)">Tue</div>
+          <div style="text-align:center;font-size:.6rem;font-weight:700;color:var(--text3)">Wed</div>
+          <div style="text-align:center;font-size:.6rem;font-weight:700;color:var(--text3)">Thu</div>
+          <div style="text-align:center;font-size:.6rem;font-weight:700;color:var(--text3)">Fri</div>
+          <div style="text-align:center;font-size:.6rem;font-weight:700;color:var(--text3)">Sat</div>
+          <div style="text-align:center;font-size:.6rem;font-weight:700;color:var(--text3)">Sun</div>
+        </div>
+        <div id="sch-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);padding:.25rem .75rem .75rem;gap:3px;overflow-y:auto;flex:1"></div>
+      </div>
+
+      <!-- Right: Form + Event List -->
+      <div style="width:280px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden">
+        <!-- Add event form -->
+        <div style="padding:.85rem;border-bottom:1px solid var(--border);background:var(--bg)">
+          <div style="font-size:.68rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.5rem">Add Schedule Entry</div>
+          <div style="margin-bottom:.45rem">
+            <label style="font-size:.62rem;color:var(--text2);font-weight:600;display:block;margin-bottom:.2rem">Date *</label>
+            <input type="date" id="sch-date" style="width:100%;padding:.45rem .65rem;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:.78rem;font-family:var(--font);outline:none;box-sizing:border-box">
+          </div>
+          <div style="margin-bottom:.45rem">
+            <label style="font-size:.62rem;color:var(--text2);font-weight:600;display:block;margin-bottom:.2rem">Type *</label>
+            <select id="sch-type" onchange="schTypeChanged()" style="width:100%;padding:.45rem .65rem;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:.78rem;font-family:var(--font);outline:none;background:var(--white);box-sizing:border-box">
+              <optgroup label="Time Off (deducts from 21 days)">
+                <option value="vacation">🌴 Vacation Day</option>
+                <option value="day_off">🏠 Day Off</option>
+              </optgroup>
+              <optgroup label="Other Leave (does NOT deduct)">
+                <option value="sick">🤒 Sick Day</option>
+                <option value="personal">👤 Personal Day</option>
+                <option value="training">📚 Training / Education</option>
+                <option value="paperwork">📋 Paperwork / Admin</option>
+                <option value="appointment">🏥 Medical Appointment</option>
+              </optgroup>
+              <optgroup label="Partial Day (blocks booking hours)">
+                <option value="busy_hours">⏰ Busy Hours (blocks calendar)</option>
+              </optgroup>
+            </select>
+          </div>
+          <!-- Busy hours inputs (shown only for busy_hours type) -->
+          <div id="sch-hours-row" style="display:none;margin-bottom:.45rem;display:flex;gap:.4rem;align-items:center;margin-bottom:.45rem">
+            <div style="flex:1">
+              <label style="font-size:.62rem;color:var(--text2);font-weight:600;display:block;margin-bottom:.2rem">From</label>
+              <input type="time" id="sch-from" value="12:00" style="width:100%;padding:.45rem .65rem;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:.78rem;font-family:var(--font);outline:none;box-sizing:border-box">
+            </div>
+            <div style="padding-top:1.2rem;color:var(--text3)">–</div>
+            <div style="flex:1">
+              <label style="font-size:.62rem;color:var(--text2);font-weight:600;display:block;margin-bottom:.2rem">To</label>
+              <input type="time" id="sch-to" value="14:00" style="width:100%;padding:.45rem .65rem;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:.78rem;font-family:var(--font);outline:none;box-sizing:border-box">
+            </div>
+          </div>
+          <div style="margin-bottom:.6rem">
+            <label style="font-size:.62rem;color:var(--text2);font-weight:600;display:block;margin-bottom:.2rem">Notes (optional)</label>
+            <input type="text" id="sch-note" placeholder="e.g. Dental appointment 2pm" style="width:100%;padding:.45rem .65rem;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:.78rem;font-family:var(--font);outline:none;box-sizing:border-box">
+          </div>
+          <button onclick="addScheduleEntry()" style="width:100%;padding:.5rem;border-radius:var(--r-sm);border:none;background:linear-gradient(135deg,var(--pink),var(--violet));color:#fff;font-size:.78rem;font-weight:600;cursor:pointer;font-family:var(--font)">
+            Add Entry
+          </button>
+        </div>
+
+        <!-- Event list for selected month -->
+        <div style="flex:1;overflow-y:auto">
+          <div style="padding:.5rem .85rem;border-bottom:1px solid var(--border);font-size:.68rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;background:var(--bg);display:flex;justify-content:space-between;align-items:center">
+            <span>This Month</span>
+            <span id="sch-month-count" style="font-weight:400;color:var(--text3)"></span>
+          </div>
+          <div id="sch-event-list" style="padding:.5rem"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer: balance summary -->
+    <div id="sch-footer" style="padding:.75rem 1.5rem;border-top:1px solid var(--border);background:var(--bg);display:flex;align-items:center;gap:1.5rem;flex-shrink:0;flex-wrap:wrap">
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+// STAFF SCHEDULE SYSTEM
+// ════════════════════════════════════════
+var SCH_STAFF_ID = null;
+var SCH_YEAR = new Date().getFullYear();
+var SCH_MONTH = new Date().getMonth(); // 0-indexed
+
+var TYPE_CFG = {
+  vacation:    {label:'Vacation',      icon:'🌴', color:'#7C3AED', bg:'#F5F3FF', deducts:true,  blocks:true},
+  day_off:     {label:'Day Off',       icon:'🏠', color:'#0891B2', bg:'#ECFEFF', deducts:true,  blocks:true},
+  sick:        {label:'Sick Day',      icon:'🤒', color:'#EF4444', bg:'#FEF2F2', deducts:false, blocks:true},
+  personal:    {label:'Personal Day',  icon:'👤', color:'#D97706', bg:'#FFFBEB', deducts:false, blocks:true},
+  training:    {label:'Training',      icon:'📚', color:'#059669', bg:'#ECFDF5', deducts:false, blocks:false},
+  paperwork:   {label:'Paperwork',     icon:'📋', color:'#6B7280', bg:'#F9FAFB', deducts:false, blocks:false},
+  appointment: {label:'Appointment',   icon:'🏥', color:'#EC4899', bg:'#FDF2F8', deducts:false, blocks:false},
+  busy_hours:  {label:'Busy Hours',    icon:'⏰', color:'#F59E0B', bg:'#FFFBEB', deducts:false, blocks:true},
+};
+var ANNUAL_ALLOWANCE = 21; // vacation + day_off days per year
+
+function getSchedule(staffId){ try{ return JSON.parse(localStorage.getItem('mn_sch_'+staffId)||'[]'); }catch(e){return[];} }
+function saveSchedule(staffId, entries){ localStorage.setItem('mn_sch_'+staffId, JSON.stringify(entries)); }
+
+function getVacationBalance(staffId){
+  var year = SCH_YEAR;
+  var entries = getSchedule(staffId);
+  var used = entries.filter(function(e){
+    return (e.type==='vacation'||e.type==='day_off') && e.date && e.date.startsWith(year+'');
+  }).length;
+  return {used:used, remaining:Math.max(0,ANNUAL_ALLOWANCE-used), allowance:ANNUAL_ALLOWANCE};
+}
+
+function openScheduleManager(staffId){
+  SCH_STAFF_ID = staffId;
+  var s = STAFF_CFG.find(function(x){return x.id===staffId;});
+  if(!s) return;
+
+  var av = document.getElementById('sch-av');
+  av.textContent = s.name[0];
+  av.style.background = s.grad;
+  document.getElementById('sch-name').textContent = s.name + ' — Schedule';
+
+  SCH_MONTH = new Date().getMonth();
+  SCH_YEAR  = new Date().getFullYear();
+
+  document.getElementById('schedule-modal').style.display='flex';
+  schTypeChanged();
+  renderSchCalendar();
+}
+function closeSchedule(){ document.getElementById('schedule-modal').style.display='none'; }
+
+function schTypeChanged(){
+  var type = document.getElementById('sch-type').value;
+  var hoursRow = document.getElementById('sch-hours-row');
+  hoursRow.style.display = type==='busy_hours' ? 'flex' : 'none';
+}
+
+function renderSchCalendar(){
+  var year=SCH_YEAR, month=SCH_MONTH;
+  var monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('sch-month-lbl').textContent = monthNames[month]+' '+year;
+
+  var entries = getSchedule(SCH_STAFF_ID);
+  var balance = getVacationBalance(SCH_STAFF_ID);
+  document.getElementById('sch-bal').textContent =
+    'Vacation balance: '+balance.remaining+' / '+balance.allowance+' days remaining ('+year+')';
+
+  // Footer summary
+  var bal = balance;
+  var totalSick=entries.filter(function(e){return e.type==='sick'&&e.date&&e.date.startsWith(year+'');}).length;
+  document.getElementById('sch-footer').innerHTML =
+    '<div style="display:flex;gap:1.5rem;flex-wrap:wrap">'
+    +'<div style="text-align:center"><div style="font-size:1.2rem;font-weight:800;color:var(--violet)">'+bal.remaining+'</div><div style="font-size:.62rem;color:var(--text2)">Vacation Days Left</div></div>'
+    +'<div style="text-align:center"><div style="font-size:1.2rem;font-weight:800;color:var(--blue)">'+bal.used+'</div><div style="font-size:.62rem;color:var(--text2)">Used This Year</div></div>'
+    +'<div style="text-align:center"><div style="font-size:1.2rem;font-weight:800;color:var(--red)">'+totalSick+'</div><div style="font-size:.62rem;color:var(--text2)">Sick Days</div></div>'
+    +'<div style="margin-left:auto;font-size:.7rem;color:var(--text3)">Vacation & Day Off deduct from '+ANNUAL_ALLOWANCE+' day allowance</div>'
+    +'</div>';
+
+  // Calendar grid
+  var firstDay = new Date(year, month, 1).getDay(); // 0=Sun
+  var firstMon = (firstDay === 0 ? 6 : firstDay - 1); // offset for Mon start
+  var daysInMonth = new Date(year, month+1, 0).getDate();
+  var today = new Date();
+  var todayStr = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+
+  // Build day→entries map
+  var dayMap = {};
+  entries.forEach(function(e){
+    if(e.date) { if(!dayMap[e.date]) dayMap[e.date]=[]; dayMap[e.date].push(e); }
+  });
+
+  var cells = '';
+  // Empty cells before day 1
+  for(var i=0;i<firstMon;i++) cells += '<div></div>';
+
+  for(var d=1;d<=daysInMonth;d++){
+    var ds = year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    var dayEntries = dayMap[ds]||[];
+    var isToday = ds===todayStr;
+    var isPast  = ds < todayStr;
+    var hasBlock = dayEntries.some(function(e){return TYPE_CFG[e.type]&&TYPE_CFG[e.type].blocks;});
+    var dayType  = dayEntries.length ? dayEntries[0].type : null;
+    var cfg      = dayType ? TYPE_CFG[dayType] : null;
+
+    var bg = cfg ? cfg.bg : 'var(--white)';
+    var border = isToday ? '2px solid var(--pink)' : '1.5px solid var(--border)';
+    var opacity = isPast ? '.55' : '1';
+    var icons = dayEntries.map(function(e){ return TYPE_CFG[e.type]?TYPE_CFG[e.type].icon:''; }).join('');
+
+    cells += '<div onclick="schDayClick(\''+ds+'\')" style="aspect-ratio:1;border-radius:var(--r-sm);border:'+border
+      +';background:'+bg+';cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:all .1s;opacity:'+opacity
+      +';position:relative;overflow:hidden;min-height:34px" '
+      +'onmouseover="this.style.boxShadow=\'0 0 0 2px var(--pink)\'" onmouseout="this.style.boxShadow=\'\'">'
+      +'<div style="font-size:.72rem;font-weight:'+(isToday?'800':'500')+';color:'+(isToday?'var(--pink)':'var(--text)')+'">'+d+'</div>'
+      +(icons?'<div style="font-size:.65rem;line-height:1">'+icons+'</div>':'')
+      +(hasBlock&&dayType!=='busy_hours'?'':dayEntries.some(function(e){return e.type==='busy_hours';})?'<div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--amber)"></div>':'')
+      +'</div>';
+  }
+
+  document.getElementById('sch-cal-grid').innerHTML = cells;
+
+  // Event list for this month
+  var prefix = year+'-'+String(month+1).padStart(2,'0');
+  var monthEntries = entries.filter(function(e){ return e.date && e.date.startsWith(prefix); })
+    .sort(function(a,b){return a.date.localeCompare(b.date);});
+
+  document.getElementById('sch-month-count').textContent = monthEntries.length+' entries';
+
+  var listHtml = '';
+  if(!monthEntries.length){
+    listHtml = '<div style="padding:1.5rem;text-align:center;color:var(--text3);font-size:.78rem">No entries this month</div>';
+  } else {
+    monthEntries.forEach(function(e,idx){
+      var cfg2 = TYPE_CFG[e.type]||{label:e.type,icon:'📅',color:'#666',bg:'#f5f5f5'};
+      var dateStr = new Date(e.date+'T12:00:00').toLocaleDateString('en-CA',{weekday:'short',month:'short',day:'numeric'});
+      listHtml += '<div style="display:flex;align-items:flex-start;gap:.5rem;padding:.45rem .5rem;border-radius:var(--r-sm);border:1px solid var(--border);margin-bottom:.35rem;background:'+cfg2.bg+'">'
+        +'<div style="font-size:1rem;margin-top:1px">'+cfg2.icon+'</div>'
+        +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:.72rem;font-weight:700;color:'+cfg2.color+'">'+cfg2.label+'</div>'
+        +'<div style="font-size:.67rem;color:var(--text2)">'+dateStr+(e.from&&e.to?' · '+e.from+'–'+e.to:'')+'</div>'
+        +(e.note?'<div style="font-size:.65rem;color:var(--text3)">'+e.note+'</div>':'')
+        +'</div>'
+        +'<button onclick="removeSchEntry(\''+e.id+'\')" style="width:20px;height:20px;border-radius:4px;border:none;background:rgba(220,38,38,.12);color:var(--red);cursor:pointer;font-size:.7rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">×</button>'
+        +'</div>';
+    });
+  }
+  document.getElementById('sch-event-list').innerHTML = listHtml;
+}
+
+function schDayClick(dateStr){
+  document.getElementById('sch-date').value = dateStr;
+}
+
+function schPrevMonth(){ if(SCH_MONTH===0){SCH_MONTH=11;SCH_YEAR--;} else SCH_MONTH--; renderSchCalendar(); }
+function schNextMonth(){ if(SCH_MONTH===11){SCH_MONTH=0;SCH_YEAR++;} else SCH_MONTH++; renderSchCalendar(); }
+
+function addScheduleEntry(){
+  var date  = document.getElementById('sch-date').value;
+  var type  = document.getElementById('sch-type').value;
+  var note  = document.getElementById('sch-note').value.trim();
+  var from  = document.getElementById('sch-from').value;
+  var to    = document.getElementById('sch-to').value;
+
+  if(!date){ Utils.toast('Please select a date','warning'); return; }
+  if(type==='busy_hours'&&(!from||!to)){ Utils.toast('Please enter time range','warning'); return; }
+  if(type==='busy_hours'&&from>=to){ Utils.toast('End time must be after start','warning'); return; }
+
+  var cfg = TYPE_CFG[type];
+
+  // Check vacation balance
+  if(cfg.deducts){
+    var bal = getVacationBalance(SCH_STAFF_ID);
+    if(bal.remaining<=0){
+      Utils.toast('No vacation days remaining for '+SCH_YEAR,'error'); return;
+    }
+    // Check duplicate
+    var existing = getSchedule(SCH_STAFF_ID);
+    if(existing.some(function(e){return e.date===date&&(e.type==='vacation'||e.type==='day_off');})){
+      Utils.toast('Already has a time-off entry on this date','warning'); return;
+    }
+  }
+
+  var entry = {
+    id:   'sch_'+Date.now(),
+    date: date,
+    type: type,
+    note: note||'',
+    from: type==='busy_hours'?from:'',
+    to:   type==='busy_hours'?to:'',
+  };
+
+  var entries = getSchedule(SCH_STAFF_ID);
+  entries.push(entry);
+  saveSchedule(SCH_STAFF_ID, entries);
+
+  // Navigate to entry month
+  var d = new Date(date+'T12:00:00');
+  SCH_MONTH = d.getMonth();
+  SCH_YEAR  = d.getFullYear();
+
+  document.getElementById('sch-note').value = '';
+
+  Utils.toast(cfg.icon+' '+cfg.label+' added'+(cfg.deducts?' (1 vacation day deducted)':''),'success');
+  renderSchCalendar();
+
+  // Also update booking system cache so it blocks
+  updateBookingBlocks();
+}
+
+function removeSchEntry(id){
+  var entries = getSchedule(SCH_STAFF_ID).filter(function(e){return e.id!==id;});
+  saveSchedule(SCH_STAFF_ID, entries);
+  renderSchCalendar();
+  updateBookingBlocks();
+  Utils.toast('Entry removed','info');
+}
+
+// ── Export schedule blocks to a format booking.html can read ──
+function updateBookingBlocks(){
+  // Build a combined block map for ALL staff and save to localStorage
+  var blockMap = {};
+  STAFF_CFG.forEach(function(s){
+    var entries = getSchedule(s.id);
+    entries.forEach(function(e){
+      var cfg = TYPE_CFG[e.type];
+      if(!cfg||!cfg.blocks) return; // only blocking types
+      var key = s.name+'|'+e.date;
+      if(!blockMap[key]) blockMap[key]=[];
+      blockMap[key].push({type:e.type, from:e.from, to:e.to, note:e.note});
+    });
+  });
+  localStorage.setItem('mn_booking_blocks', JSON.stringify(blockMap));
+}
+
+// ── Called from staff detail: open schedule for a specific staff ──
+function openStaffSchedule(staffId){
+  openScheduleManager(staffId);
+}
+
+// Expose globally
+window.openScheduleManager = openScheduleManager;
+window.openStaffSchedule = openStaffSchedule;
+</script>
+
 </body>
 </html>
