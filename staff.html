@@ -35,6 +35,9 @@
       <button class="btn btn-ghost btn-icon" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="fa-solid fa-bars"></i></button>
       <div class="topbar-title" id="page-title">Staff Performance</div>
       <div class="topbar-date" id="tb-date"></div>
+      <div style="margin-left:auto;display:flex;gap:.4rem">
+        <button class="btn btn-primary" onclick="openStaffModal(null)"><i class="fa-solid fa-user-plus"></i>Add Staff</button>
+      </div>
     </div>
     <div class="page-content" id="page-content">
       <!-- Loaded dynamically -->
@@ -46,12 +49,18 @@
 'use strict';
 if (!localStorage.getItem('mn_auth')) location.href='index.html';
 
-var STAFF_CFG = [
-  {name:'Happy', role:'Acrylic & Nail Art',    color:'#E91E8C', grad:'linear-gradient(135deg,#E91E8C,#C9184A)'},
-  {name:'Flower',role:'Gel Extensions & Ombré', color:'#7C3AED', grad:'linear-gradient(135deg,#7C3AED,#4F46E5)'},
-  {name:'Daisy', role:'Shellac & Chrome',       color:'#0891B2', grad:'linear-gradient(135deg,#06B6D4,#0284C7)'},
-  {name:'Hannah',role:'Pedicure Specialist',    color:'#D97706', grad:'linear-gradient(135deg,#D97706,#B45309)'},
+var DEFAULT_STAFF = [
+  {id:'st1',name:'Happy', role:'Acrylic & Nail Art',    color:'#E91E8C', grad:'linear-gradient(135deg,#E91E8C,#C9184A)', phone:'', email:'', start_date:'2022-01-01', commission:25, days_off:[], notes:'', status:'active'},
+  {id:'st2',name:'Flower',role:'Gel Extensions & Ombre',color:'#7C3AED', grad:'linear-gradient(135deg,#7C3AED,#4F46E5)', phone:'', email:'', start_date:'2022-03-01', commission:25, days_off:[], notes:'', status:'active'},
+  {id:'st3',name:'Daisy', role:'Shellac & Chrome',      color:'#0891B2', grad:'linear-gradient(135deg,#06B6D4,#0284C7)', phone:'', email:'', start_date:'2023-01-01', commission:25, days_off:[], notes:'', status:'active'},
+  {id:'st4',name:'Hannah',role:'Pedicure Specialist',   color:'#D97706', grad:'linear-gradient(135deg,#D97706,#B45309)', phone:'', email:'', start_date:'2023-06-01', commission:25, days_off:[], notes:'', status:'active'},
 ];
+var STAFF_CFG = (function(){
+  var stored = localStorage.getItem('mn_staff_cfg');
+  if(stored){ try{ return JSON.parse(stored); }catch(e){} }
+  return JSON.parse(JSON.stringify(DEFAULT_STAFF));
+})();
+function saveStaffCfg(){ localStorage.setItem('mn_staff_cfg', JSON.stringify(STAFF_CFG)); }
 
 var STATE = {view:'overview', selectedStaff:null, period:'this_month', customStart:null, customEnd:null, svcFilter:'all'};
 
@@ -97,7 +106,7 @@ function renderOverview(){
     html+='<div class="card" style="cursor:pointer;transition:transform .15s,box-shadow .15s" onclick="openStaff(\''+sc.name+'\')" onmouseover="this.style.transform=\'translateY(-3px)\';this.style.boxShadow=\'0 8px 24px rgba(0,0,0,.12)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'\'">'
       +'<div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.85rem">'
       +'<div style="width:44px;height:44px;border-radius:50%;background:'+sc.grad+';display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;color:#fff">'+sc.name[0]+'</div>'
-      +'<div><div style="font-size:.9rem;font-weight:700">'+sc.name+'</div><div style="font-size:.7rem;color:var(--text2)">'+sc.role+'</div></div>'
+      +'<div><div style="font-size:.9rem;font-weight:700">'+sc.name+(sc.status&&sc.status!=='active'?' <span style="font-size:.62rem;background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);border-radius:50px;padding:.05rem .35rem;font-weight:600;">'+sc.status.replace('_',' ')+'</span>':'')+'</div><div style="font-size:.7rem;color:var(--text2)">'+sc.role+'</div></div>'
       +'<div style="margin-left:auto"><i class="fa-solid fa-arrow-right" style="color:var(--text3);font-size:.8rem"></i></div></div>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.75rem">'
       +kpiMini('Revenue',Utils.fCurrency(p.revenue),sc.color)
@@ -106,9 +115,13 @@ function renderOverview(){
       +kpiMini('Avg Ticket',Utils.fCurrency(p.avgTicket),sc.color)+'</div>'
       +'<div style="height:4px;background:var(--s1);border-radius:4px;overflow:hidden;margin-bottom:.5rem">'
       +'<div style="height:100%;border-radius:4px;background:'+sc.grad+';width:'+Math.min(100,Math.round((p.completed/(p.bookings||1))*100))+'%"></div></div>'
-      +'<div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--text2)">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;font-size:.68rem;color:var(--text2)">'
       +'<span>'+Math.round((p.completed/(p.bookings||1))*100)+'% completion</span>'
-      +'<span>'+analytics.totalClients+' clients</span></div></div>';
+      +'<span>'+analytics.totalClients+' clients</span></div>'
+      +'<div style="margin-top:.6rem;display:flex;gap:.3rem">'
+      +'<button class="btn btn-sm" onclick="event.stopPropagation();openStaffModal(\''+sc.id+'\''+')"><i class="fa-solid fa-pen"></i>Edit</button>'
+      +(sc.status&&sc.status!=='active'?'<span style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);border-radius:50px;padding:.05rem .35rem;font-size:.62rem;font-weight:600">'+sc.status.replace(/_/g,' ')+'</span>':'')
+      +'</div></div>';
   });
   html+='</div>';
 
@@ -177,8 +190,13 @@ function renderStaffDetail(name){
     +'<div style="width:60px;height:60px;border-radius:50%;background:'+sc.grad+';display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700;color:#fff">'+sc.name[0]+'</div>'
     +'<div><div style="font-family:\'Syne\',sans-serif;font-size:1.2rem;font-weight:700">'+sc.name+'</div>'
     +'<div style="font-size:.8rem;color:var(--text2)">'+sc.role+'</div>'
-    +'<div style="font-size:.72rem;color:var(--text2);margin-top:2px">'+analytics.totalClients+' total clients · '+analytics.totalBookings+' total bookings</div></div>'
+    +'<div style="font-size:.72rem;color:var(--text2);margin-top:2px">'+analytics.totalClients+' total clients · '+analytics.totalBookings+' total bookings</div>'
+    +(sc.days_off&&sc.days_off.length?'<div style="font-size:.7rem;color:var(--amber);margin-top:2px"><i class="fa-solid fa-calendar-xmark fa-xs"></i> Days off: '+sc.days_off.join(', ')+'</div>':'')
+    +(sc.notes?'<div style="font-size:.7rem;color:var(--text2);margin-top:2px"><i class="fa-solid fa-note-sticky fa-xs"></i> '+sc.notes+'</div>':'')
+    +(sc.phone?'<div style="font-size:.7rem;color:var(--text2);margin-top:1px"><i class="fa-solid fa-phone fa-xs"></i> '+sc.phone+'</div>':'')
+    +'</div>'
     +'<div style="margin-left:auto;display:flex;gap:.5rem">'
+    +'<button class="btn btn-sm" onclick="openStaffModal(\''+sc.id+'\''+')"><i class="fa-solid fa-pen"></i>Edit</button>'
     +'<div style="text-align:center;background:white;border-radius:var(--r);padding:.6rem .85rem;min-width:80px">'
     +'<div style="font-size:1rem;font-weight:700;color:'+sc.color+'">'+Utils.fCurrency(all.revenue)+'</div>'
     +'<div style="font-size:.62rem;color:var(--text2)">Lifetime Revenue</div></div>'
@@ -325,5 +343,162 @@ function renderStaffDetail(name){
 })();
 </script>
 
+
+<!-- STAFF ADD/EDIT MODAL -->
+<div id="staff-modal" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(26,29,46,.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:1rem" onclick="if(event.target===this)closeStaffModal()">
+  <div style="background:var(--white);border-radius:var(--r-xl);width:100%;max-width:540px;max-height:92vh;display:flex;flex-direction:column;box-shadow:var(--sh-xl);overflow:hidden">
+    <div style="padding:1.1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.65rem;background:linear-gradient(135deg,var(--pink),var(--violet));flex-shrink:0">
+      <div style="width:36px;height:36px;border-radius:var(--r-sm);background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center"><i class="fa-solid fa-id-badge" style="color:#fff"></i></div>
+      <div><div id="sm-title" style="font-family:var(--fontd);font-size:.95rem;font-weight:700;color:#fff">Staff Member</div><div style="font-size:.68rem;color:rgba(255,255,255,.75)">Profile, schedule & commission</div></div>
+      <button onclick="closeStaffModal()" style="margin-left:auto;width:30px;height:30px;border-radius:50%;border:none;background:rgba(255,255,255,.2);color:#fff;cursor:pointer;font-size:1.1rem">x</button>
+    </div>
+    <div id="sm-body" style="padding:1.1rem 1.25rem;overflow-y:auto;flex:1"></div>
+  </div>
+</div>
+
+<!-- DELETE STAFF -->
+<div id="del-staff-modal" style="display:none;position:fixed;inset:0;z-index:2200;background:rgba(26,29,46,.6);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:1rem" onclick="if(event.target===this)closeDelStaff()">
+  <div style="background:var(--white);border-radius:var(--r-xl);width:100%;max-width:380px;box-shadow:var(--sh-xl);overflow:hidden">
+    <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div style="font-family:var(--fontd);font-weight:700;color:var(--red)">Remove Staff Member?</div>
+      <button onclick="closeDelStaff()" style="width:28px;height:28px;border-radius:50%;border:none;background:var(--s1);cursor:pointer">x</button>
+    </div>
+    <div style="padding:1rem 1.25rem"><p id="del-staff-msg" style="font-size:.82rem;color:var(--text2);line-height:1.6"></p></div>
+    <div style="padding:.75rem 1.25rem;border-top:1px solid var(--border);display:flex;gap:.5rem;justify-content:flex-end">
+      <button onclick="closeDelStaff()" style="padding:.45rem .9rem;border-radius:50px;border:1.5px solid var(--border);background:var(--white);font-size:.78rem;cursor:pointer;font-family:var(--font)">Cancel</button>
+      <button onclick="confirmDelStaff()" style="padding:.45rem 1rem;border-radius:50px;border:none;background:var(--red);color:#fff;font-size:.78rem;font-weight:600;cursor:pointer;font-family:var(--font)">Remove</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var EDITING_STAFF_ID=null, DELETING_STAFF_ID=null;
+
+var STAFF_COLORS = ['#E91E8C','#7C3AED','#0891B2','#D97706','#059669','#EF4444','#F59E0B','#06B6D4'];
+var DAY_NAMES = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+function openStaffModal(id){
+  EDITING_STAFF_ID=id||null;
+  var s=id?STAFF_CFG.find(function(x){return x.id===id;}):null;
+  document.getElementById('sm-title').textContent=s?'Edit: '+s.name:'New Staff Member';
+  var body=document.getElementById('sm-body'); body.innerHTML='';
+
+  function fl(lbl,el){var d=document.createElement('div');d.style.marginBottom='.6rem';var l=document.createElement('label');l.style.cssText='font-size:.63rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:.25rem';l.textContent=lbl;d.appendChild(l);d.appendChild(el);return d;}
+  function ti(id2,type,val,ph){var i=document.createElement('input');i.id=id2;i.type=type||'text';i.value=val||'';i.placeholder=ph||'';i.style.cssText='width:100%;padding:.6rem .8rem;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:.82rem;font-family:var(--font);outline:none;color:var(--text);box-sizing:border-box';i.onfocus=function(){this.style.borderColor='var(--pink)';};i.onblur=function(){this.style.borderColor='var(--border)';};return i;}
+  function se(id2,opts,cur){var s2=document.createElement('select');s2.id=id2;s2.style.cssText='width:100%;padding:.6rem .8rem;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:.82rem;font-family:var(--font);outline:none;background:var(--white);box-sizing:border-box';opts.forEach(function(o){var op=document.createElement('option');op.value=o.v||o.l;op.textContent=o.l;if((o.v||o.l)===cur)op.selected=true;s2.appendChild(op);});return s2;}
+  function tx(id2,val,ph,h){var t=document.createElement('textarea');t.id=id2;t.value=val||'';t.placeholder=ph||'';t.style.cssText='width:100%;padding:.6rem .8rem;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:.82rem;font-family:var(--font);outline:none;resize:vertical;min-height:'+(h||52)+'px;box-sizing:border-box';t.onfocus=function(){this.style.borderColor='var(--pink)';};t.onblur=function(){this.style.borderColor='var(--border)';};return t;}
+
+  // Name + Role
+  var r1=document.createElement('div');r1.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:.6rem';
+  r1.appendChild(fl('Full Name *',ti('sf-name','text',s?s.name:'','e.g. Happy')));
+  r1.appendChild(fl('Role / Specialty',ti('sf-role','text',s?s.role:'','e.g. Acrylic & Nail Art')));
+  body.appendChild(r1);
+
+  // Phone + Email
+  var r2=document.createElement('div');r2.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:.6rem';
+  r2.appendChild(fl('Phone',ti('sf-phone','tel',s?s.phone:'','613-555-0100')));
+  r2.appendChild(fl('Email',ti('sf-email','email',s?s.email:'','staff@email.com')));
+  body.appendChild(r2);
+
+  // Start date + Commission
+  var r3=document.createElement('div');r3.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:.6rem';
+  r3.appendChild(fl('Start Date',ti('sf-start','date',s?s.start_date:'')));
+  r3.appendChild(fl('Commission %',ti('sf-comm','number',s?s.commission:'25','25')));
+  body.appendChild(r3);
+
+  // Status + Color
+  var r4=document.createElement('div');r4.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:.6rem';
+  r4.appendChild(fl('Status',se('sf-status',[{l:'Active',v:'active'},{l:'On Leave',v:'on_leave'},{l:'Vacation',v:'vacation'},{l:'Day Off',v:'day_off'},{l:'Inactive',v:'inactive'}],s?s.status:'active')));
+  // Color picker
+  var colorDiv=document.createElement('div');colorDiv.style.marginBottom='.6rem';
+  var colorLbl=document.createElement('label');colorLbl.style.cssText='font-size:.63rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:.25rem';colorLbl.textContent='Color';
+  var colorGrid=document.createElement('div');colorGrid.style.cssText='display:flex;flex-wrap:wrap;gap:.4rem';
+  STAFF_COLORS.forEach(function(clr){
+    var btn=document.createElement('button');btn.type='button';
+    btn.style.cssText='width:28px;height:28px;border-radius:50%;background:'+clr+';border:3px solid '+(s&&s.color===clr?'#1A1D2E':'transparent')+';cursor:pointer;transition:border .1s';
+    btn.onclick=function(){document.querySelectorAll('#sm-body .color-btn').forEach(function(b){b.style.border='3px solid transparent';});this.style.border='3px solid #1A1D2E';document.getElementById('sf-color').value=clr;};
+    btn.className='color-btn';
+    colorGrid.appendChild(btn);
+  });
+  var colorHidden=document.createElement('input');colorHidden.type='hidden';colorHidden.id='sf-color';colorHidden.value=s?s.color:STAFF_COLORS[0];
+  colorDiv.appendChild(colorLbl);colorDiv.appendChild(colorGrid);colorDiv.appendChild(colorHidden);
+  r4.appendChild(colorDiv);
+  body.appendChild(r4);
+
+  // Days off this week (checkboxes)
+  var daysDiv=document.createElement('div');daysDiv.style.marginBottom='.6rem';
+  var daysLbl=document.createElement('label');daysLbl.style.cssText='font-size:.63rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:.35rem';daysLbl.textContent='Days Off / Non-working Days';
+  var daysGrid=document.createElement('div');daysGrid.style.cssText='display:flex;flex-wrap:wrap;gap:.35rem';
+  var daysOff=s?s.days_off||[]:[];
+  DAY_NAMES.forEach(function(day,i){
+    var lbl=document.createElement('label');lbl.style.cssText='display:flex;align-items:center;gap:.25rem;padding:.25rem .55rem;border-radius:50px;border:1.5px solid var(--border);cursor:pointer;font-size:.72rem;font-weight:500;user-select:none;transition:all .12s';
+    var chk=document.createElement('input');chk.type='checkbox';chk.value=day;chk.id='sf-day-'+i;chk.checked=daysOff.indexOf(day)!==-1;chk.style.display='none';
+    if(chk.checked){lbl.style.background='var(--pink-bg)';lbl.style.borderColor='var(--pink)';lbl.style.color='var(--pink)';}
+    chk.addEventListener('change',function(){if(this.checked){lbl.style.background='var(--pink-bg)';lbl.style.borderColor='var(--pink)';lbl.style.color='var(--pink)';}else{lbl.style.background='';lbl.style.borderColor='var(--border)';lbl.style.color='';}});
+    lbl.appendChild(chk);lbl.appendChild(document.createTextNode(day.slice(0,3)));
+    lbl.onclick=function(){chk.checked=!chk.checked;chk.dispatchEvent(new Event('change'));};
+    daysGrid.appendChild(lbl);
+  });
+  daysDiv.appendChild(daysLbl);daysDiv.appendChild(daysGrid);body.appendChild(daysDiv);
+
+  // Notes (vacation dates etc)
+  body.appendChild(fl('Notes (vacation dates, schedule info...)',tx('sf-notes',s?s.notes:'','e.g. Vacation Jul 15-22, No Mondays until Aug...',52)));
+
+  // Footer
+  var ft=document.createElement('div');ft.style.cssText='display:flex;gap:.5rem;justify-content:flex-end;margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--border)';
+  if(s){var bd=document.createElement('button');bd.style.cssText='padding:.45rem .9rem;border-radius:50px;border:1.5px solid var(--red-bd);background:var(--red-bg);color:var(--red);font-size:.78rem;cursor:pointer;font-family:var(--font);margin-right:auto';bd.textContent='Remove Staff';bd.onclick=function(){closeStaffModal();askDelStaff(id);};ft.appendChild(bd);}
+  var bc=document.createElement('button');bc.style.cssText='padding:.45rem .9rem;border-radius:50px;border:1.5px solid var(--border);background:var(--white);font-size:.78rem;cursor:pointer;font-family:var(--font)';bc.textContent='Cancel';bc.onclick=closeStaffModal;ft.appendChild(bc);
+  var bs=document.createElement('button');bs.style.cssText='padding:.45rem 1rem;border-radius:50px;border:none;background:linear-gradient(135deg,var(--pink),var(--violet));color:#fff;font-size:.78rem;font-weight:600;cursor:pointer;font-family:var(--font)';bs.textContent=s?'Save Changes':'Add Staff Member';bs.onclick=saveStaffModal;ft.appendChild(bs);
+  body.appendChild(ft);
+
+  document.getElementById('staff-modal').style.display='flex';
+  document.getElementById('sf-name').focus();
+}
+
+function closeStaffModal(){document.getElementById('staff-modal').style.display='none';}
+
+function saveStaffModal(){
+  var name=(document.getElementById('sf-name').value||'').trim();
+  var role=(document.getElementById('sf-role').value||'').trim();
+  if(!name){Utils.toast('Name required','warning');return;}
+
+  var daysOff=[];
+  DAY_NAMES.forEach(function(d,i){var chk=document.getElementById('sf-day-'+i);if(chk&&chk.checked)daysOff.push(d);});
+  var color=document.getElementById('sf-color').value||STAFF_COLORS[0];
+  var grad='linear-gradient(135deg,'+color+','+color+'BB)';
+
+  var data={name:name,role:role||'Staff',phone:(document.getElementById('sf-phone').value||'').trim(),email:(document.getElementById('sf-email').value||'').trim(),start_date:document.getElementById('sf-start').value||null,commission:parseInt(document.getElementById('sf-comm').value)||25,status:document.getElementById('sf-status').value,color:color,grad:grad,days_off:daysOff,notes:(document.getElementById('sf-notes').value||'').trim()};
+
+  if(EDITING_STAFF_ID){
+    var s=STAFF_CFG.find(function(x){return x.id===EDITING_STAFF_ID;});
+    if(s)Object.assign(s,data);
+    Utils.toast(name+' updated','success');
+  } else {
+    data.id='staff_'+Date.now();
+    STAFF_CFG.push(data);
+    Utils.toast(name+' added to team!','success');
+  }
+  saveStaffCfg();
+  closeStaffModal();
+  renderPage();
+}
+
+function askDelStaff(id){
+  DELETING_STAFF_ID=id;
+  var s=STAFF_CFG.find(function(x){return x.id===id;});
+  document.getElementById('del-staff-msg').textContent='Remove '+( s?s.name:'this staff member')+'? Their historical booking data will be kept.';
+  document.getElementById('del-staff-modal').style.display='flex';
+}
+function closeDelStaff(){document.getElementById('del-staff-modal').style.display='none';DELETING_STAFF_ID=null;}
+function confirmDelStaff(){
+  if(!DELETING_STAFF_ID)return;
+  STAFF_CFG=STAFF_CFG.filter(function(x){return x.id!==DELETING_STAFF_ID;});
+  saveStaffCfg();
+  Utils.toast('Staff member removed','info');
+  closeDelStaff();
+  if(STATE.selectedStaff){STATE.selectedStaff=null;}
+  renderPage();
+}
+</script>
 </body>
 </html>
