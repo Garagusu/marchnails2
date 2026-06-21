@@ -49,6 +49,7 @@ if (!localStorage.getItem('mn_auth')) location.href='index.html';
 var STATE = {view:'list', selectedClient:null, search:'', tier:'all', staff:'all', svc:'all', minSpend:'', maxSpend:'', sortBy:'ltv', sortDir:-1};
 
 window.addEventListener('DOMContentLoaded', function() {
+  populateStaffDropdowns();
   Utils.startClock(null, document.getElementById('tb-date'));
   if (!SB.loadCacheFromStorage()) {
     if (SB.DEMO) {
@@ -488,6 +489,22 @@ function askDeleteClient(id){DELETING_CLIENT_ID=id;var c=SB.CACHE.clients.find(f
 function closeDeleteClient(){document.getElementById('del-client-modal').style.display='none';DELETING_CLIENT_ID=null;}
 function confirmDeleteClient(){if(!DELETING_CLIENT_ID)return;SB.CACHE.clients=SB.CACHE.clients.filter(function(x){return x.id!==DELETING_CLIENT_ID;});SB.remove('clients',DELETING_CLIENT_ID).catch(function(){});SB.saveCache();Utils.toast('Client deleted','info');closeDeleteClient();if(STATE.selectedClient===DELETING_CLIENT_ID)backToList();else renderClientList();}
 function exportClients(){var rows=SB.CACHE.clients.map(function(c){var a=Utils.clientAnalytics(c.id,(c.first_name||'')+' '+(c.last_name||''),SB.CACHE.bookings,SB.CACHE.payments);return [c.first_name,c.last_name,c.phone,c.email,c.birthday,c.tier,a.ltv,a.totalVisits,c.loyalty_points,c.allergy_notes,c.preferences,c.notes,c.referred_by,c.instagram];});var csv='First Name,Last Name,Phone,Email,Birthday,Tier,LTV,Visits,Points,Allergies,Preferences,Notes,Referred By,Instagram\n'+rows.map(function(r){return r.map(function(v){return '"'+(v||'')+'"';}).join(',');}).join('\n');var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='clients-'+new Date().toISOString().slice(0,10)+'.csv';a.click();Utils.toast('Exported','success');}
+
+// Populate staff dropdowns from localStorage (syncs with staff.html)
+function populateStaffDropdowns(){
+  var staffList = (function(){
+    try{ var s=localStorage.getItem('mn_staff_cfg'); if(s){ var p=JSON.parse(s); if(p&&p.length) return p.filter(function(x){return x.status==='active'||!x.status;}); } }catch(e){}
+    return [{name:'Happy'},{name:'Flower'},{name:'Daisy'},{name:'Hannah'}];
+  })();
+  document.querySelectorAll('select#f-staff, select#f-stafff').forEach(function(sel){
+    var cur = sel.value;
+    var opts = '<option value="all">All Staff</option>'
+      + staffList.map(function(s){return '<option value="'+s.name+'"'+(cur===s.name?' selected':'')+'>'+s.name+'</option>';}).join('');
+    sel.innerHTML = opts;
+    if(cur) sel.value = cur;
+  });
+}
+
 </script>
 </body>
 </html>
