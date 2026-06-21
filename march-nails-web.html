@@ -2114,7 +2114,7 @@ textarea.bk-input { resize:vertical; min-height:70px; }
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem;">
           <div class="bk-field">
             <label class="bk-label">Preferred Date <span style="color:var(--hot-pink)">*</span></label>
-            <input type="date" id="bk-date" class="bk-input">
+            <input type="date" id="bk-date" class="bk-input" id="bk-date-inp" onchange="bkData.date=this.value;bkRenderSlots()">
           </div>
           <div class="bk-field">
             <label class="bk-label">Select Time <span style="color:var(--hot-pink)">*</span></label>
@@ -2773,7 +2773,31 @@ const BK_ARTISTS = [
 ];
 const BK_SLOTS = ['9:00 AM','9:30 AM','10:00 AM','10:30 AM','11:00 AM','11:30 AM','12:00 PM','12:30 PM','1:00 PM','1:30 PM','2:00 PM','2:30 PM','3:00 PM','3:30 PM','4:00 PM','4:30 PM','5:00 PM','5:30 PM','6:00 PM'];
 
-function bkGetBookings() { try { return JSON.parse(localStorage.getItem('march_bookings') || '[]'); } catch(e) { return []; } }
+function bkGetBookings() {
+  const local = [];
+  // Source 1: web bookings
+  try { const a = JSON.parse(localStorage.getItem('march_bookings')||'[]'); local.push(...a); } catch(e){}
+  // Source 2: admin panel cache (mn_sb_cache) — same Supabase data
+  try {
+    const cache = JSON.parse(localStorage.getItem('mn_sb_cache')||'{}');
+    const adminBks = (cache.bookings||[]).filter(b => b.source !== 'web_dedup');
+    adminBks.forEach(b => {
+      // Convert admin format to web format for availability check
+      if (b.booked_at) {
+        const dt = new Date(b.booked_at);
+        const dateStr = dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+        let hh = dt.getHours(), mm = dt.getMinutes();
+        const ampm = hh >= 12 ? 'PM' : 'AM';
+        if (hh > 12) hh -= 12; if (hh === 0) hh = 12;
+        const timeStr = hh + ':' + String(mm).padStart(2,'0') + ' ' + ampm;
+        if (!local.some(l => l.date === dateStr && l.time === timeStr && l.status !== 'cancelled')) {
+          local.push({ id: b.id, date: dateStr, time: timeStr, status: b.status || 'confirmed', source: 'admin' });
+        }
+      }
+    });
+  } catch(e){}
+  return local;
+}
 function bkSaveBookings(arr) { try { localStorage.setItem('march_bookings', JSON.stringify(arr)); } catch(e) { console.warn('localStorage error:', e); } }
 
 function bkInit() {
@@ -2828,20 +2852,74 @@ function bkSelArtist(name, el) {
   document.querySelectorAll('.bk-artist').forEach(a => a.classList.remove('sel'));
   el.classList.add('sel');
   bkData.artist = name;
+  if(bkData.date) bkRenderSlots(); // refresh slots when artist changes
 }
 
 function bkRenderSlots() {
   const grid = document.getElementById('bk-slots');
   if (!grid || !bkData.date) return;
-  const busy = new Set(bkGetBookings().filter(b => b.date===bkData.date && b.status!=='cancelled').map(b=>b.time));
-  grid.innerHTML = BK_SLOTS.map(s => `
-    <div class="bk-slot${busy.has(s)?' busy':''}" ${busy.has(s)?'':` onclick="bkSelSlot('${s}',this)"`}>${s}</div>`).join('');
+  // Show loading state
+  grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:1rem;color:#B8A8D0;font-size:0.82rem">Checking availability...</div>';
+  // Fetch from Supabase for real-time availability
+  bkFetchAvailability(bkData.date, bkData.artist).then(busySet => {
+    const busy = new Set([
+      ...busySet,
+      ...bkGetBookings().filter(b => b.date===bkData.date && b.status!=='cancelled').map(b=>b.time)
+    ]);
+    const available = BK_SLOTS.filter(s => !busy.has(s));
+    if (!available.length) {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:1.5rem;color:#B8A8D0;font-size:0.85rem">No slots available on this date. Please try another day.</div>';
+      return;
+    }
+    grid.innerHTML = BK_SLOTS.map(s => {
+      const isBusy = busy.has(s);
+      return `<div class="bk-slot${isBusy?' busy':''}" ${isBusy?'title="Already booked"':` onclick="bkSelSlot('${s}',this)"`}>${s}${isBusy?'<div style="font-size:0.55rem;opacity:.6">Taken</div>':''}</div>`;
+    }).join('');
+    // Sync time select
+    bkSyncTimeSelect(busy);
+  });
 }
 
-function bkSyncTimeSelect() {
+async function bkFetchAvailability(dateStr, staffName) {
+  const busyTimes = new Set();
+  try {
+    // Build date range for query (full day in UTC)
+    const dateFrom = dateStr + 'T00:00:00';
+    const dateTo   = dateStr + 'T23:59:59';
+    let url = SUPABASE_URL + '/rest/v1/bookings?booked_at=gte.' + encodeURIComponent(dateFrom) + '&booked_at=lte.' + encodeURIComponent(dateTo) + '&status=neq.cancelled&select=booked_at,duration_minutes,staff_name';
+    if (staffName && staffName !== 'Any') url += '&staff_name=eq.' + encodeURIComponent(staffName);
+    const res = await fetch(url, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    });
+    if (!res.ok) return busyTimes;
+    const rows = await res.json();
+    rows.forEach(b => {
+      if (!b.booked_at) return;
+      // Convert to local time string matching BK_SLOTS format
+      const dt = new Date(b.booked_at);
+      let hh = dt.getHours(), mm = dt.getMinutes();
+      const ampm = hh >= 12 ? 'PM' : 'AM';
+      if (hh > 12) hh -= 12; if (hh === 0) hh = 12;
+      const slotStr = hh + ':' + String(mm).padStart(2, '0') + ' ' + ampm;
+      busyTimes.add(slotStr);
+      // Also block slots during duration (e.g. 90min booking blocks next slot too)
+      const dur = parseInt(b.duration_minutes) || 60;
+      if (dur > 30) {
+        const next = new Date(dt.getTime() + 30*60000);
+        let nh = next.getHours(), nm = next.getMinutes();
+        const nap = nh >= 12 ? 'PM' : 'AM';
+        if (nh > 12) nh -= 12; if (nh === 0) nh = 12;
+        busyTimes.add(nh + ':' + String(nm).padStart(2,'0') + ' ' + nap);
+      }
+    });
+  } catch(e) { console.warn('Could not fetch availability:', e.message); }
+  return busyTimes;
+}
+
+function bkSyncTimeSelect(busySet) {
   const sel = document.getElementById('bk-time-sel');
   if (!sel || !bkData.date) return;
-  const busy = new Set(bkGetBookings().filter(b => b.date===bkData.date && b.status!=='cancelled').map(b=>b.time));
+  const busy = busySet || new Set(bkGetBookings().filter(b => b.date===bkData.date && b.status!=='cancelled').map(b=>b.time));
   sel.innerHTML = '<option value="">-- Choose a time --</option>' +
     BK_SLOTS.filter(s=>!busy.has(s)).map(s=>`<option>${s}</option>`).join('');
   sel.onchange = () => { bkData.time = sel.value; bkHiliteSlot(sel.value); };
@@ -3019,7 +3097,15 @@ async function bkSubmit() {
 }
 
 // Initialize booking on DOM ready
-document.addEventListener('DOMContentLoaded', () => { bkInit(); });
+document.addEventListener('DOMContentLoaded', () => {
+  bkInit();
+  // Set min date to today
+  const dateInp = document.getElementById('bk-date-inp') || document.getElementById('bk-date');
+  if (dateInp) {
+    const today = new Date();
+    dateInp.min = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  }
+});
 
 </script>
 
