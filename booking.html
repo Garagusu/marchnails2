@@ -571,6 +571,48 @@ function hasConflictLocal(bookings, staffName, newDt, durationMin, excludeId){
   });
 }
 
+// ── STAFF SCHEDULE BLOCKS (from Staff Schedule Manager) ──
+function getStaffBlocks(){
+  try{ return JSON.parse(localStorage.getItem('mn_booking_blocks')||'{}'); }
+  catch(e){ return {}; }
+}
+
+function isStaffBlockedAllDay(staffName, dateStr){
+  var blocks = getStaffBlocks();
+  var key = staffName+'|'+dateStr;
+  if(!blocks[key]) return false;
+  // Blocked all day if has vacation/day_off/sick/personal/appointment
+  return blocks[key].some(function(b){
+    return ['vacation','day_off','sick','personal','appointment'].indexOf(b.type)!==-1;
+  });
+}
+
+function getStaffBusyHours(staffName, dateStr){
+  // Returns array of {from, to} busy ranges for partial-day blocks
+  var blocks = getStaffBlocks();
+  var key = staffName+'|'+dateStr;
+  if(!blocks[key]) return [];
+  return blocks[key].filter(function(b){ return b.type==='busy_hours'; })
+    .map(function(b){ return {from:b.from, to:b.to}; });
+}
+
+function isInBusyHours(timeStr, staffName, dateStr){
+  // timeStr = "HH:MM"
+  var ranges = getStaffBusyHours(staffName, dateStr);
+  return ranges.some(function(r){
+    return timeStr >= r.from && timeStr < r.to;
+  });
+}
+
+function getBlockLabel(staffName, dateStr){
+  var blocks = getStaffBlocks();
+  var key = staffName+'|'+dateStr;
+  if(!blocks[key]||!blocks[key].length) return null;
+  var TYPE_ICONS = {vacation:'🌴',day_off:'🏠',sick:'🤒',personal:'👤',training:'📚',paperwork:'📋',appointment:'🏥',busy_hours:'⏰'};
+  return blocks[key].map(function(b){ return (TYPE_ICONS[b.type]||'')+(b.from?b.from+'–'+b.to:''); }).join(', ');
+}
+
+
 
 /* ── UNIFIED DAY FILTER ── */
 function getDayBookings(dateStr){
@@ -688,12 +730,27 @@ function renderDay(){
     var colBks=dayBks.filter(function(b){return b.staff_name===s.name;});
     html+='<div class="dv-col">';
     HOURS.forEach(function(h){
-      var closed=h<wh[0]||h>=wh[1];
-      if(closed){html+='<div class="dv-cell-closed"></div>';}
-      else{html+='<div class="dv-cell" onclick="openNewAt(\''+s.name+'\','+h+')">'
-        +'<div class="dv-cell-half"></div>'
-        +'<div class="add-hint"><i class="fa-solid fa-plus" style="font-size:.58rem"></i>Book</div>'
-        +'</div>';}
+      var cellDateStr=lds(STATE.date);
+      var cellTimeStr=String(h).padStart(2,'0')+':00';
+      var allDayBlock=isStaffBlockedAllDay(s.name,cellDateStr);
+      var busyBlock=!allDayBlock&&isInBusyHours(cellTimeStr,s.name,cellDateStr);
+      if(closed||allDayBlock){
+        var blkLbl=allDayBlock?(getBlockLabel(s.name,cellDateStr)||'Off'):'';
+        html+='<div class="dv-cell-closed" title="'+( allDayBlock?s.name+': '+blkLbl:'Outside hours')+'" style="cursor:not-allowed;position:relative">';
+        if(allDayBlock&&h===HOURS[0]) html+='<div style="position:absolute;top:2px;left:3px;font-size:.56rem;color:#9CA3AF;white-space:nowrap;overflow:hidden;max-width:90%;font-style:italic">'+blkLbl+'</div>';
+        html+='</div>';
+      } else if(busyBlock){
+        html+='<div class="dv-cell" style="background:#FFFBEB;cursor:not-allowed" title="'+s.name+' is busy — check schedule">';
+        html+='<div style="position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(245,158,11,.15),rgba(245,158,11,.15) 3px,transparent 3px,transparent 9px)"></div>';
+        html+='<div class="dv-cell-half"></div>';
+        html+='<div style="position:absolute;inset:2px;display:flex;align-items:center;justify-content:center;font-size:.58rem;color:var(--amber);opacity:.7">⏰ Busy</div>';
+        html+='</div>';
+      } else{
+        html+='<div class="dv-cell" onclick="openNewAt(\''+s.name+'\','+h+')">';
+        html+='<div class="dv-cell-half"></div>';
+        html+='<div class="add-hint"><i class="fa-solid fa-plus" style="font-size:.58rem"></i>Book</div>';
+        html+='</div>';
+      }
     });
     // Render bookings with overlap detection
     var blocks2 = colBks.filter(function(b){
@@ -1049,6 +1106,19 @@ function saveNew(){
     Utils.toast(staff+' already has a booking that overlaps this time. Please choose a different slot.','error');
     document.getElementById('conflict-banner').style.display='flex';
     document.getElementById('conflict-msg').textContent=staff+' is busy at this time (overlap with existing booking)';
+    return;
+  }
+
+  // Schedule block check
+  var bookDateStr=lds(d);
+  var bookTimeStr=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  if(isStaffBlockedAllDay(staff,bookDateStr)){
+    var blockLbl=getBlockLabel(staff,bookDateStr)||'off';
+    Utils.toast(staff+' is not available on this day ('+blockLbl+')','error');
+    return;
+  }
+  if(isInBusyHours(bookTimeStr,staff,bookDateStr)){
+    Utils.toast(staff+' is busy at this time. Check their schedule.','error');
     return;
   }
 
