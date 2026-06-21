@@ -1,0 +1,494 @@
+/* ═══════════════════════════════════════════════════════════════
+   MARCH NAILS — RESPONSIVE.CSS
+   Mobile-first responsive overrides for all pages
+   Breakpoints:
+     1200px  — Large tablet landscape / small desktop
+      980px  — iPad landscape / tablet
+      768px  — iPad portrait
+      600px  — Large phone landscape / small tablet
+      480px  — iPhone / Android portrait
+      380px  — Small phones (iPhone SE etc.)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── SAFE AREA (notch phones) ── */
+:root {
+  --safe-top:    env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left:   env(safe-area-inset-left, 0px);
+  --safe-right:  env(safe-area-inset-right, 0px);
+}
+
+/* ── TOUCH TARGETS ── */
+@media (max-width: 980px) {
+  button, .nav-item, .period-pill, .filter-select {
+    min-height: 40px;
+  }
+  .btn-icon { width: 40px !important; height: 40px !important; }
+}
+
+/* ════════════════════════════════════════════
+   SIDEBAR — OVERLAY ON MOBILE/TABLET
+   ════════════════════════════════════════════ */
+@media (max-width: 980px) {
+  .sidebar {
+    position: fixed !important;
+    left: 0; top: 0; bottom: 0;
+    z-index: 500;
+    transform: translateX(-100%);
+    transition: transform .25s cubic-bezier(.4,0,.2,1), box-shadow .25s;
+    box-shadow: none;
+  }
+  .sidebar.open {
+    transform: translateX(0) !important;
+    box-shadow: 4px 0 32px rgba(0,0,0,.18) !important;
+  }
+  /* Dimmer overlay behind sidebar */
+  .sidebar-dimmer {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(26,29,46,.45);
+    backdrop-filter: blur(2px);
+    z-index: 499;
+  }
+  .sidebar.open ~ .sidebar-dimmer,
+  .sidebar-dimmer.visible {
+    display: block;
+  }
+  /* Hamburger always visible */
+  .hamburger-btn {
+    display: flex !important;
+  }
+  /* Main area takes full width */
+  .main-area {
+    width: 100% !important;
+  }
+}
+
+@media (min-width: 981px) {
+  .hamburger-btn { display: none !important; }
+}
+
+/* ════════════════════════════════════════════
+   TOPBAR
+   ════════════════════════════════════════════ */
+@media (max-width: 600px) {
+  .topbar {
+    padding: 0 .75rem !important;
+    gap: .5rem !important;
+  }
+  .topbar-date {
+    display: none !important;
+  }
+  .topbar-title {
+    font-size: .8rem !important;
+  }
+  .topbar-right {
+    gap: .3rem !important;
+  }
+  /* Hide text labels on small buttons, keep icons */
+  .topbar-right .btn span,
+  .topbar-right .btn-text {
+    display: none;
+  }
+}
+
+/* ════════════════════════════════════════════
+   PAGE CONTENT PADDING
+   ════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .page-content { padding: 1rem !important; }
+}
+@media (max-width: 480px) {
+  .page-content { padding: .75rem .65rem !important; }
+}
+
+/* ════════════════════════════════════════════
+   GRID SYSTEM — RESPONSIVE COLLAPSE
+   ════════════════════════════════════════════ */
+@media (max-width: 1200px) {
+  .grid-6, .grid-5 { grid-template-columns: repeat(3, 1fr) !important; }
+}
+@media (max-width: 980px) {
+  .grid-4         { grid-template-columns: repeat(2, 1fr) !important; }
+  .grid-3         { grid-template-columns: repeat(2, 1fr) !important; }
+  .grid-3-1,
+  .grid-2-1,
+  .grid-1-2       { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 600px) {
+  .grid-4,
+  .grid-3,
+  .grid-2,
+  .grid-6,
+  .grid-5         { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 480px) {
+  .kpi-card { padding: .85rem !important; }
+  .kpi-value { font-size: 1.4rem !important; }
+}
+
+/* ════════════════════════════════════════════
+   FILTER BAR
+   ════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .filter-bar {
+    gap: .5rem !important;
+    padding: .6rem .75rem !important;
+  }
+  .filter-bar-label { display: none; }
+  .filter-sep { display: none; }
+}
+@media (max-width: 480px) {
+  .filter-bar { flex-direction: column; align-items: stretch !important; }
+  .filter-group { flex-wrap: wrap; }
+  .period-pill { font-size: .68rem !important; padding: .22rem .55rem !important; }
+  .filter-select { min-width: unset !important; width: 100% !important; }
+  .date-range-wrap { flex-direction: column; gap: .25rem !important; }
+  .date-range-sep { display: none; }
+  .date-input { width: 100% !important; }
+}
+
+/* ════════════════════════════════════════════
+   PAGE HEADER
+   ════════════════════════════════════════════ */
+@media (max-width: 600px) {
+  .page-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: .5rem !important;
+  }
+  .page-header h1 { font-size: 1.05rem !important; }
+  .page-actions { width: 100%; }
+  .page-actions .btn { flex: 1; justify-content: center; }
+}
+
+/* ════════════════════════════════════════════
+   CARDS & TABLES
+   ════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .card { border-radius: var(--r) !important; }
+}
+@media (max-width: 600px) {
+  /* Make tables scrollable horizontally */
+  .card-table-wrap,
+  .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  table { min-width: 480px; }
+}
+
+/* ════════════════════════════════════════════
+   BOOKING PAGE — CALENDAR
+   ════════════════════════════════════════════ */
+
+/* Mobile: stack staff rail below topbar as horizontal scroll */
+@media (max-width: 768px) {
+  /* Staff nav becomes icon-only on mobile */
+  .snav {
+    width: 52px !important;
+    padding: .35rem 0 !important;
+  }
+  .snav .sni span {
+    display: none !important;
+  }
+
+  /* Staff rail: horizontal strip at top on mobile */
+  .srail {
+    width: 100% !important;
+    max-height: 72px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    display: flex !important;
+    flex-direction: row !important;
+    border-right: none !important;
+    border-bottom: 1px solid var(--border) !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  .srail-hd { display: none !important; }
+  .srail-item {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: .2rem !important;
+    padding: .4rem .65rem !important;
+    border-bottom: none !important;
+    border-right: 1px solid var(--s1) !important;
+    min-width: 68px;
+    flex-shrink: 0;
+  }
+  .sinfo .sname { font-size: .62rem !important; text-align: center; }
+  .smeta { font-size: .55rem !important; }
+  .sload, .sbadge { display: none !important; }
+
+  /* Calendar area full width */
+  .cal-layout {
+    flex-direction: column !important;
+  }
+
+  /* Topbar controls wrap */
+  .tb-controls {
+    flex-wrap: wrap !important;
+    gap: .3rem !important;
+  }
+
+  /* Day view scrollable */
+  .dv { min-width: 320px !important; }
+  .dv-ts { font-size: .56rem !important; padding-right: 4px !important; }
+  .dv-times { width: 44px !important; }
+  .dv-sname { font-size: .6rem !important; }
+
+  /* Right panel hidden on mobile, shown as bottom sheet */
+  .rp {
+    display: none !important;
+  }
+  .rp.mobile-open {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 0; left: 0; right: 0;
+    z-index: 400;
+    max-height: 60vh !important;
+    border-radius: var(--r-xl) var(--r-xl) 0 0 !important;
+    border-top: 2px solid var(--border) !important;
+    box-shadow: 0 -8px 32px rgba(0,0,0,.12) !important;
+  }
+
+  /* Appointment blocks */
+  .ab-meta { display: none !important; }
+  .ab { padding: 2px 4px !important; }
+  .ab-name { font-size: .62rem !important; }
+  .ab-svc  { font-size: .56rem !important; }
+  .ab-time-tag { display: none !important; }
+}
+
+@media (max-width: 480px) {
+  .srail-item { min-width: 58px !important; padding: .3rem .5rem !important; }
+  .snav { width: 44px !important; }
+  .snav .sni { padding: .5rem .3rem !important; }
+}
+
+/* ════════════════════════════════════════════
+   BOOKING — MODALS
+   ════════════════════════════════════════════ */
+@media (max-width: 600px) {
+  .modal-overlay,
+  [id$="-modal"][style*="position:fixed"] {
+    padding: .5rem !important;
+    align-items: flex-end !important;
+  }
+  .modal,
+  [id$="-modal"] > div {
+    max-width: 100% !important;
+    border-radius: var(--r-xl) var(--r-xl) 0 0 !important;
+    max-height: 92vh !important;
+  }
+  /* Full bottom sheet */
+  .new-modal-inner,
+  .det-modal-inner {
+    border-radius: var(--r-xl) var(--r-xl) 0 0 !important;
+  }
+}
+
+/* ════════════════════════════════════════════
+   DASHBOARD — KPI DRILL MODAL
+   ════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  #kpi-drill-modal {
+    padding: .5rem !important;
+    align-items: flex-end !important;
+  }
+  #kpi-drill-modal > div {
+    max-height: 88vh !important;
+    border-radius: var(--r-xl) var(--r-xl) 0 0 !important;
+    margin: 0 !important;
+  }
+  #kdm-body { max-height: 55vh !important; }
+  /* KPI cards 2-col on tablet */
+  .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}
+@media (max-width: 480px) {
+  .kpi-grid { grid-template-columns: 1fr !important; }
+}
+
+/* ════════════════════════════════════════════
+   SERVICES PANEL
+   ════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  #services-panel {
+    padding: .5rem !important;
+    align-items: flex-end !important;
+  }
+  #services-panel > div {
+    margin: 0 !important;
+    max-width: 100% !important;
+    border-radius: var(--r-xl) var(--r-xl) 0 0 !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+  #svc-edit-modal {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+  #svc-edit-modal > div {
+    border-radius: var(--r-xl) var(--r-xl) 0 0 !important;
+    max-width: 100% !important;
+  }
+}
+
+/* ════════════════════════════════════════════
+   CLIENTS PAGE
+   ════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  #add-client-modal {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+  #add-client-modal > div {
+    border-radius: var(--r-xl) var(--r-xl) 0 0 !important;
+    max-width: 100% !important;
+    max-height: 92vh !important;
+    overflow-y: auto !important;
+  }
+  /* Client cards responsive */
+  .client-card-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ════════════════════════════════════════════
+   REPORTS PAGE
+   ════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .report-tabs {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap !important;
+    padding-bottom: 2px;
+  }
+  .report-tab {
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+  /* Charts: reduce height on mobile */
+  canvas { max-height: 220px !important; }
+}
+@media (max-width: 480px) {
+  canvas { max-height: 180px !important; }
+}
+
+/* ════════════════════════════════════════════
+   STAFF PAGE
+   ════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .staff-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ════════════════════════════════════════════
+   BOOKING TOPBAR — CALENDAR CONTROLS
+   ════════════════════════════════════════════ */
+@media (max-width: 980px) {
+  .bk-topbar {
+    flex-wrap: wrap !important;
+    height: auto !important;
+    padding: .5rem .75rem !important;
+    gap: .4rem !important;
+  }
+  .bk-topbar .view-tabs { order: 3; width: 100%; justify-content: center; }
+  .bk-topbar .date-nav  { order: 1; }
+  .bk-topbar .bk-filters { order: 2; margin-left: auto; }
+}
+@media (max-width: 600px) {
+  .bk-topbar .bk-filters {
+    display: none !important;
+  }
+  /* Filter toggle button shows on mobile */
+  .bk-filter-toggle {
+    display: flex !important;
+  }
+}
+
+/* ════════════════════════════════════════════
+   LOGIN PAGE
+   ════════════════════════════════════════════ */
+@media (max-width: 720px) {
+  .login-left { display: none !important; }
+  .login-wrap { justify-content: center !important; padding: 1rem !important; }
+  .login-card {
+    width: 100% !important;
+    max-width: 400px !important;
+    padding: 1.75rem !important;
+  }
+}
+@media (max-width: 400px) {
+  .login-card { padding: 1.25rem !important; }
+  .login-logo { font-size: 1.2rem !important; }
+}
+
+/* ════════════════════════════════════════════
+   UTILITY: HIDE/SHOW BY BREAKPOINT
+   ════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .hide-mobile  { display: none !important; }
+}
+@media (min-width: 769px) {
+  .show-mobile  { display: none !important; }
+}
+@media (max-width: 980px) {
+  .hide-tablet  { display: none !important; }
+}
+@media (min-width: 981px) {
+  .show-tablet  { display: none !important; }
+}
+
+/* ════════════════════════════════════════════
+   SCROLL IMPROVEMENT (touch momentum)
+   ════════════════════════════════════════════ */
+.page-content,
+.sidebar-nav,
+#kdm-body,
+.cal,
+.srail {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ════════════════════════════════════════════
+   TABLES ON MOBILE — CARD LAYOUT OPTION
+   ════════════════════════════════════════════ */
+@media (max-width: 600px) {
+  /* Tables inside .card become scrollable */
+  .card { overflow: hidden; }
+  .card > table,
+  .card > div > table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* KDM table inside modal */
+  #kdm-body table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    min-width: 480px;
+  }
+}
+
+/* ════════════════════════════════════════════
+   BOTTOM PADDING for phones with home bar
+   ════════════════════════════════════════════ */
+@media (max-width: 600px) {
+  .page-content {
+    padding-bottom: calc(.75rem + var(--safe-bottom)) !important;
+  }
+}
+
+/* ════════════════════════════════════════════
+   FOCUS STATES (accessibility on touch)
+   ════════════════════════════════════════════ */
+@media (hover: none) {
+  /* Remove hover-only effects on touch devices */
+  .nav-item:hover { background: transparent !important; }
+  .dv-cell:hover  { background: transparent !important; }
+  .srail-item:hover { background: transparent !important; }
+}
