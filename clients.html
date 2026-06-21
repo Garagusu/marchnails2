@@ -149,9 +149,7 @@ function renderClientList(){
       +'<td>'+c._visits+'</td>'
       +'<td class="td-pos">'+Utils.fCurrency(c._ltv)+'</td>'
       +'<td>'+Utils.fCurrency(c._avgTicket)+'</td>'
-      +'<td class="td-muted">'+(c._last?Utils.fDate(c._last,{month:'short',day:'numeric',year:'numeric'}):'—')+'</td>'
-      +'<td class="td-muted">'+(c._first?Utils.fDate(c._first,{month:'short',day:'numeric',year:'numeric'}):'—')+'</td>'
-      +'<td class="td-muted" style="max-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(c._topSvc||'—')+'</td>'
+      +'<td class="td-muted">'+(c._last?Utils.fDate(c._last,{month:'short',day:'numeric'}):'—')+'</td>'
       +'<td class="td-muted">'+(c._topStaff||'—')+'</td>'
       +'<td style="color:var(--amber);font-weight:600">'+(c.loyalty_points||0)+'</td>'
       +'<td style="text-align:center" onclick="event.stopPropagation()">'
@@ -160,7 +158,7 @@ function renderClientList(){
       +'<button title="Delete" onclick="askDeleteClient(\''+c.id+'\''+')" style="width:26px;height:26px;border-radius:6px;border:1.5px solid var(--border);background:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center"><i class="fa-solid fa-trash" style="font-size:.62rem;color:var(--red)"></i></button>'
       +'</div></td></tr>';
   });
-  if(!filtered.length)html+='<tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--text3)">No clients match filters</td></tr>';
+  if(!filtered.length)html+='<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--text3)">No clients match filters</td></tr>';
   html+='</tbody></table></div></div>';
 
   document.getElementById('page-content').innerHTML=html;
