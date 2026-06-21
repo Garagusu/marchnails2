@@ -553,9 +553,28 @@ function confirmDelStaff(){
         <!-- Add event form -->
         <div style="padding:.85rem;border-bottom:1px solid var(--border);background:var(--bg)">
           <div style="font-size:.68rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.5rem">Add Schedule Entry</div>
-          <div style="margin-bottom:.45rem">
+          <!-- Single date (default) -->
+          <div id="sch-single-date" style="margin-bottom:.45rem">
             <label style="font-size:.62rem;color:var(--text2);font-weight:600;display:block;margin-bottom:.2rem">Date *</label>
             <input type="date" id="sch-date" style="width:100%;padding:.45rem .65rem;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:.78rem;font-family:var(--font);outline:none;box-sizing:border-box">
+          </div>
+          <!-- Date range (vacation only) -->
+          <div id="sch-range-dates" style="display:none;margin-bottom:.45rem">
+            <label style="font-size:.62rem;color:var(--text2);font-weight:600;display:block;margin-bottom:.35rem">Vacation Period *</label>
+            <div style="display:flex;gap:.4rem;align-items:center">
+              <div style="flex:1">
+                <div style="font-size:.58rem;color:var(--text3);margin-bottom:.15rem">From</div>
+                <input type="date" id="sch-range-from" style="width:100%;padding:.45rem .65rem;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:.78rem;font-family:var(--font);outline:none;box-sizing:border-box" oninput="schCalcDays()">
+              </div>
+              <div style="padding-top:1rem;color:var(--text3);font-size:.8rem">→</div>
+              <div style="flex:1">
+                <div style="font-size:.58rem;color:var(--text3);margin-bottom:.15rem">To</div>
+                <input type="date" id="sch-range-to" style="width:100%;padding:.45rem .65rem;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:.78rem;font-family:var(--font);outline:none;box-sizing:border-box" oninput="schCalcDays()">
+              </div>
+            </div>
+            <!-- Day count + balance preview -->
+            <div id="sch-day-preview" style="margin-top:.4rem;padding:.4rem .6rem;border-radius:var(--r-sm);background:var(--violet-bg);border:1px solid var(--violet-bd);font-size:.72rem;color:var(--violet);display:none">
+            </div>
           </div>
           <div style="margin-bottom:.45rem">
             <label style="font-size:.62rem;color:var(--text2);font-weight:600;display:block;margin-bottom:.2rem">Type *</label>
@@ -667,8 +686,44 @@ function closeSchedule(){ document.getElementById('schedule-modal').style.displa
 
 function schTypeChanged(){
   var type = document.getElementById('sch-type').value;
-  var hoursRow = document.getElementById('sch-hours-row');
-  hoursRow.style.display = type==='busy_hours' ? 'flex' : 'none';
+  var hoursRow    = document.getElementById('sch-hours-row');
+  var singleDate  = document.getElementById('sch-single-date');
+  var rangeDates  = document.getElementById('sch-range-dates');
+  var isVacation  = type === 'vacation';
+  var isBusy      = type === 'busy_hours';
+
+  hoursRow.style.display   = isBusy     ? 'flex'  : 'none';
+  singleDate.style.display = isVacation ? 'none'  : '';
+  rangeDates.style.display = isVacation ? ''      : 'none';
+  document.getElementById('sch-day-preview').style.display = 'none';
+}
+
+function schCalcDays(){
+  var from = document.getElementById('sch-range-from').value;
+  var to   = document.getElementById('sch-range-to').value;
+  var preview = document.getElementById('sch-day-preview');
+  if(!from || !to){ preview.style.display='none'; return; }
+  if(to < from){ preview.style.display=''; preview.innerHTML='⚠️ End date must be after start date'; preview.style.background='var(--red-bg)'; preview.style.borderColor='var(--red-bd)'; preview.style.color='var(--red)'; return; }
+
+  // Count working days (Mon-Sat, skip Sun)
+  var days = 0;
+  var cur = new Date(from+'T12:00:00');
+  var end = new Date(to+'T12:00:00');
+  while(cur <= end){
+    if(cur.getDay() !== 0) days++; // skip Sunday
+    cur.setDate(cur.getDate()+1);
+  }
+
+  var bal = getVacationBalance(SCH_STAFF_ID);
+  var willRemain = bal.remaining - days;
+  var isOver = willRemain < 0;
+
+  preview.style.display = '';
+  preview.style.background = isOver ? 'var(--red-bg)' : 'var(--violet-bg)';
+  preview.style.borderColor = isOver ? 'var(--red-bd)' : 'var(--violet-bd)';
+  preview.style.color = isOver ? 'var(--red)' : 'var(--violet)';
+  preview.innerHTML = '🌴 <strong>'+days+' working days</strong>'
+    +' · Balance: '+bal.remaining+' → '+(isOver?'<strong style="color:var(--red)">Exceeds by '+(days-bal.remaining)+'</strong>':willRemain+' remaining');
 }
 
 function renderSchCalendar(){
@@ -735,6 +790,27 @@ function renderSchCalendar(){
 
   document.getElementById('sch-cal-grid').innerHTML = cells;
 
+  // Highlight vacation range on calendar
+  var selType = document.getElementById('sch-type')?document.getElementById('sch-type').value:'';
+  if(selType==='vacation'){
+    var selFrom = document.getElementById('sch-range-from')?document.getElementById('sch-range-from').value:'';
+    var selTo   = document.getElementById('sch-range-to')?document.getElementById('sch-range-to').value:'';
+    if(selFrom){
+      var cells2 = document.getElementById('sch-cal-grid').children;
+      Array.from(cells2).forEach(function(cell,idx){
+        var day = idx - firstMon + 1;
+        if(day < 1 || day > daysInMonth) return;
+        var ds2 = year+'-'+String(month+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+        if(ds2===selFrom) cell.style.outline='2px solid var(--pink)';
+        if(selTo && ds2>selFrom && ds2<=selTo){
+          if(!dayMap[ds2]||!dayMap[ds2].length) cell.style.background='rgba(124,58,237,.12)';
+          cell.style.outline='1px solid rgba(124,58,237,.3)';
+        }
+        if(ds2===selTo) cell.style.outline='2px solid var(--violet)';
+      });
+    }
+  }
+
   // Event list for this month
   var prefix = year+'-'+String(month+1).padStart(2,'0');
   var monthEntries = entries.filter(function(e){ return e.date && e.date.startsWith(prefix); })
@@ -764,62 +840,118 @@ function renderSchCalendar(){
 }
 
 function schDayClick(dateStr){
-  document.getElementById('sch-date').value = dateStr;
+  var type = document.getElementById('sch-type').value;
+  if(type === 'vacation'){
+    var from = document.getElementById('sch-range-from').value;
+    var to   = document.getElementById('sch-range-to').value;
+    if(!from || (from && to)){
+      // Start fresh: set from, clear to
+      document.getElementById('sch-range-from').value = dateStr;
+      document.getElementById('sch-range-to').value   = '';
+      document.getElementById('sch-day-preview').style.display = 'none';
+    } else {
+      // from is set, set to (ensure to >= from)
+      if(dateStr >= from){
+        document.getElementById('sch-range-to').value = dateStr;
+      } else {
+        // Clicked before from — swap
+        document.getElementById('sch-range-to').value   = from;
+        document.getElementById('sch-range-from').value = dateStr;
+      }
+      schCalcDays();
+    }
+    // Highlight selection on calendar
+    renderSchCalendar();
+  } else {
+    document.getElementById('sch-date').value = dateStr;
+  }
 }
 
 function schPrevMonth(){ if(SCH_MONTH===0){SCH_MONTH=11;SCH_YEAR--;} else SCH_MONTH--; renderSchCalendar(); }
 function schNextMonth(){ if(SCH_MONTH===11){SCH_MONTH=0;SCH_YEAR++;} else SCH_MONTH++; renderSchCalendar(); }
 
 function addScheduleEntry(){
-  var date  = document.getElementById('sch-date').value;
   var type  = document.getElementById('sch-type').value;
   var note  = document.getElementById('sch-note').value.trim();
   var from  = document.getElementById('sch-from').value;
   var to    = document.getElementById('sch-to').value;
+  var cfg   = TYPE_CFG[type];
 
-  if(!date){ Utils.toast('Please select a date','warning'); return; }
-  if(type==='busy_hours'&&(!from||!to)){ Utils.toast('Please enter time range','warning'); return; }
-  if(type==='busy_hours'&&from>=to){ Utils.toast('End time must be after start','warning'); return; }
+  if(type === 'vacation'){
+    // ── VACATION: date range ──
+    var rangeFrom = document.getElementById('sch-range-from').value;
+    var rangeTo   = document.getElementById('sch-range-to').value;
+    if(!rangeFrom||!rangeTo){ Utils.toast('Please select start and end date','warning'); return; }
+    if(rangeTo < rangeFrom){ Utils.toast('End date must be after start date','error'); return; }
 
-  var cfg = TYPE_CFG[type];
+    // Build list of working days in range (skip Sundays)
+    var days = [];
+    var cur = new Date(rangeFrom+'T12:00:00');
+    var end = new Date(rangeTo+'T12:00:00');
+    while(cur <= end){
+      if(cur.getDay() !== 0){ // skip Sunday
+        days.push(cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0')+'-'+String(cur.getDate()).padStart(2,'0'));
+      }
+      cur.setDate(cur.getDate()+1);
+    }
 
-  // Check vacation balance
-  if(cfg.deducts){
+    // Check balance
     var bal = getVacationBalance(SCH_STAFF_ID);
-    if(bal.remaining<=0){
-      Utils.toast('No vacation days remaining for '+SCH_YEAR,'error'); return;
+    if(days.length > bal.remaining){
+      Utils.toast('Not enough vacation days. Need '+days.length+', have '+bal.remaining,'error'); return;
     }
-    // Check duplicate
-    var existing = getSchedule(SCH_STAFF_ID);
-    if(existing.some(function(e){return e.date===date&&(e.type==='vacation'||e.type==='day_off');})){
-      Utils.toast('Already has a time-off entry on this date','warning'); return;
+
+    // Add one entry per day
+    var entries = getSchedule(SCH_STAFF_ID);
+    var existing = entries.map(function(e){return e.date;});
+    var added = 0;
+    days.forEach(function(ds){
+      if(existing.indexOf(ds) === -1){ // skip if already has entry
+        entries.push({id:'sch_'+Date.now()+'_'+added, date:ds, type:'vacation', note:note||'Vacation', from:'', to:''});
+        added++;
+      }
+    });
+    saveSchedule(SCH_STAFF_ID, entries);
+
+    // Navigate to start month
+    var startD = new Date(rangeFrom+'T12:00:00');
+    SCH_MONTH = startD.getMonth();
+    SCH_YEAR  = startD.getFullYear();
+
+    document.getElementById('sch-note').value = '';
+    document.getElementById('sch-day-preview').style.display = 'none';
+    Utils.toast('🌴 '+added+' vacation days added ('+days.length+' deducted from balance)','success');
+
+  } else {
+    // ── SINGLE DAY / BUSY HOURS ──
+    var date = document.getElementById('sch-date').value;
+    if(!date){ Utils.toast('Please select a date','warning'); return; }
+    if(type==='busy_hours'&&(!from||!to)){ Utils.toast('Please enter time range','warning'); return; }
+    if(type==='busy_hours'&&from>=to){ Utils.toast('End time must be after start time','error'); return; }
+
+    // Check balance for day_off
+    if(cfg.deducts){
+      var bal2 = getVacationBalance(SCH_STAFF_ID);
+      if(bal2.remaining<=0){ Utils.toast('No vacation days remaining for '+SCH_YEAR,'error'); return; }
+      var existing2 = getSchedule(SCH_STAFF_ID);
+      if(existing2.some(function(e){return e.date===date&&(e.type==='vacation'||e.type==='day_off');})){
+        Utils.toast('Already has a time-off entry on this date','warning'); return;
+      }
     }
+
+    var entry = {id:'sch_'+Date.now(), date:date, type:type, note:note||'', from:type==='busy_hours'?from:'', to:type==='busy_hours'?to:''};
+    var entries = getSchedule(SCH_STAFF_ID);
+    entries.push(entry);
+    saveSchedule(SCH_STAFF_ID, entries);
+
+    var d = new Date(date+'T12:00:00');
+    SCH_MONTH = d.getMonth();
+    SCH_YEAR  = d.getFullYear();
+    document.getElementById('sch-note').value = '';
+    Utils.toast(cfg.icon+' '+cfg.label+' added'+(cfg.deducts?' (1 vacation day deducted)':''),'success');
   }
 
-  var entry = {
-    id:   'sch_'+Date.now(),
-    date: date,
-    type: type,
-    note: note||'',
-    from: type==='busy_hours'?from:'',
-    to:   type==='busy_hours'?to:'',
-  };
-
-  var entries = getSchedule(SCH_STAFF_ID);
-  entries.push(entry);
-  saveSchedule(SCH_STAFF_ID, entries);
-
-  // Navigate to entry month
-  var d = new Date(date+'T12:00:00');
-  SCH_MONTH = d.getMonth();
-  SCH_YEAR  = d.getFullYear();
-
-  document.getElementById('sch-note').value = '';
-
-  Utils.toast(cfg.icon+' '+cfg.label+' added'+(cfg.deducts?' (1 vacation day deducted)':''),'success');
   renderSchCalendar();
-
-  // Also update booking system cache so it blocks
   updateBookingBlocks();
 }
 
