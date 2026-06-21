@@ -35,7 +35,7 @@
       <div class="topbar-title" id="page-title">Clients</div>
       <div class="topbar-date" id="tb-date"></div>
       <div style="margin-left:auto;display:flex;gap:.4rem">
-        <button class="btn btn-primary" onclick="openAddClient()"><i class="fa-solid fa-user-plus"></i>Add Client</button>
+        <button class="btn btn-primary" onclick="openEditClient(null)"><i class="fa-solid fa-user-plus"></i>Add Client</button>
       </div>
     </div>
     <div class="page-content" id="page-content"></div>
@@ -135,7 +135,7 @@ function renderClientList(){
   // Table
   html+='<div class="table-wrap"><table class="data-table"><thead><tr>'
     +'<th>Client</th><th>Tier</th><th>Visits</th><th>Total Spent</th><th>Avg Ticket</th>'
-    +'<th>Last Visit</th><th>First Visit</th><th>Fav Service</th><th>Fav Staff</th><th>Points</th></tr></thead><tbody>';
+    +'<th>Last Visit</th><th>Fav Staff</th><th>Points</th><th>Actions</th></tr></thead><tbody>';
 
   var tierBadge={standard:'<span class="badge badge-blue">Standard</span>',silver:'<span class="badge badge-violet">★ Silver</span>',gold:'<span class="badge badge-gold">★★ Gold</span>',platinum:'<span class="badge badge-pink">Platinum</span>'};
   filtered.forEach(function(c){
@@ -153,7 +153,12 @@ function renderClientList(){
       +'<td class="td-muted">'+(c._first?Utils.fDate(c._first,{month:'short',day:'numeric',year:'numeric'}):'—')+'</td>'
       +'<td class="td-muted" style="max-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(c._topSvc||'—')+'</td>'
       +'<td class="td-muted">'+(c._topStaff||'—')+'</td>'
-      +'<td style="color:var(--amber);font-weight:600">'+(c.loyalty_points||0)+'</td></tr>';
+      +'<td style="color:var(--amber);font-weight:600">'+(c.loyalty_points||0)+'</td>'
+      +'<td style="text-align:center" onclick="event.stopPropagation()">'
+      +'<div style="display:flex;gap:.2rem;justify-content:center">'
+      +'<button title="Edit" onclick="openEditClient(\''+c.id+'\''+')" style="width:26px;height:26px;border-radius:6px;border:1.5px solid var(--border);background:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center"><i class="fa-solid fa-pen" style="font-size:.62rem;color:var(--text2)"></i></button>'
+      +'<button title="Delete" onclick="askDeleteClient(\''+c.id+'\''+')" style="width:26px;height:26px;border-radius:6px;border:1.5px solid var(--border);background:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center"><i class="fa-solid fa-trash" style="font-size:.62rem;color:var(--red)"></i></button>'
+      +'</div></td></tr>';
   });
   if(!filtered.length)html+='<tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--text3)">No clients match filters</td></tr>';
   html+='</tbody></table></div></div>';
@@ -403,5 +408,88 @@ document.addEventListener('keydown',function(e){
 })();
 </script>
 
+
+<!-- EDIT/ADD CLIENT MODAL -->
+<div id="edit-client-modal" style="display:none;position:fixed;inset:0;z-index:2100;background:rgba(26,29,46,.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:1rem" onclick="if(event.target===this)closeEditClient()">
+  <div style="background:var(--white);border-radius:var(--r-xl);width:100%;max-width:540px;max-height:92vh;display:flex;flex-direction:column;box-shadow:var(--sh-xl);overflow:hidden">
+    <div style="padding:1.1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.65rem;flex-shrink:0;background:linear-gradient(135deg,var(--pink),var(--violet))">
+      <div style="width:36px;height:36px;border-radius:var(--r-sm);background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center"><i class="fa-solid fa-user-pen" style="color:#fff"></i></div>
+      <div><div id="ecm-title" style="font-family:var(--fontd);font-size:.95rem;font-weight:700;color:#fff">Edit Client</div><div style="font-size:.68rem;color:rgba(255,255,255,.75)">All changes sync instantly</div></div>
+      <button onclick="closeEditClient()" style="margin-left:auto;width:30px;height:30px;border-radius:50%;border:none;background:rgba(255,255,255,.2);color:#fff;cursor:pointer;font-size:1.1rem">x</button>
+    </div>
+    <div id="ecm-body" style="padding:1.1rem 1.25rem;overflow-y:auto;flex:1"></div>
+  </div>
+</div>
+<div id="del-client-modal" style="display:none;position:fixed;inset:0;z-index:2200;background:rgba(26,29,46,.6);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:1rem" onclick="if(event.target===this)closeDeleteClient()">
+  <div style="background:var(--white);border-radius:var(--r-xl);width:100%;max-width:380px;box-shadow:var(--sh-xl);overflow:hidden">
+    <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div style="font-family:var(--fontd);font-weight:700;color:var(--red)"><i class="fa-solid fa-triangle-exclamation" style="margin-right:.4rem"></i>Delete Client?</div>
+      <button onclick="closeDeleteClient()" style="width:28px;height:28px;border-radius:50%;border:none;background:var(--s1);cursor:pointer;font-size:1rem">x</button>
+    </div>
+    <div style="padding:1rem 1.25rem"><p id="del-client-msg" style="font-size:.82rem;color:var(--text2);line-height:1.6"></p></div>
+    <div style="padding:.75rem 1.25rem;border-top:1px solid var(--border);display:flex;gap:.5rem;justify-content:flex-end">
+      <button onclick="closeDeleteClient()" style="padding:.45rem .9rem;border-radius:50px;border:1.5px solid var(--border);background:var(--white);font-size:.78rem;cursor:pointer;font-family:var(--font)">Cancel</button>
+      <button onclick="confirmDeleteClient()" style="padding:.45rem 1rem;border-radius:50px;border:none;background:var(--red);color:#fff;font-size:.78rem;font-weight:600;cursor:pointer;font-family:var(--font)">Delete</button>
+    </div>
+  </div>
+</div>
+<script>
+var EDITING_CLIENT_ID=null,DELETING_CLIENT_ID=null;
+function openEditClient(id){
+  EDITING_CLIENT_ID=id||null;
+  var c=id?SB.CACHE.clients.find(function(x){return x.id===id;}):null;
+  document.getElementById('ecm-title').textContent=c?'Edit: '+(c.first_name||'')+' '+(c.last_name||''):'New Client';
+  var body=document.getElementById('ecm-body'); body.innerHTML='';
+  function fl(lbl,el){var d=document.createElement('div');d.style.marginBottom='.6rem';var l=document.createElement('label');l.style.cssText='font-size:.63rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:.25rem';l.textContent=lbl;d.appendChild(l);d.appendChild(el);return d;}
+  function ti(id2,type,val,ph){var i=document.createElement('input');i.id=id2;i.type=type||'text';i.value=val||'';i.placeholder=ph||'';i.style.cssText='width:100%;padding:.6rem .8rem;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:.82rem;font-family:var(--font);outline:none;color:var(--text);box-sizing:border-box';i.onfocus=function(){this.style.borderColor='var(--pink)';};i.onblur=function(){this.style.borderColor='var(--border)';};return i;}
+  function se(id2,opts,cur){var s=document.createElement('select');s.id=id2;s.style.cssText='width:100%;padding:.6rem .8rem;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:.82rem;font-family:var(--font);outline:none;background:var(--white);box-sizing:border-box';opts.forEach(function(o){var op=document.createElement('option');op.value=o.v||o.l;op.textContent=o.l;if((o.v||o.l)===cur)op.selected=true;s.appendChild(op);});return s;}
+  function tx(id2,val,ph,h){var t=document.createElement('textarea');t.id=id2;t.value=val||'';t.placeholder=ph||'';t.style.cssText='width:100%;padding:.6rem .8rem;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:.82rem;font-family:var(--font);outline:none;resize:vertical;min-height:'+(h||52)+'px;box-sizing:border-box';t.onfocus=function(){this.style.borderColor='var(--pink)';};t.onblur=function(){this.style.borderColor='var(--border)';};return t;}
+  var r1=document.createElement('div');r1.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:.6rem';
+  r1.appendChild(fl('First Name *',ti('ef-first','text',c?c.first_name:'','Jane')));
+  r1.appendChild(fl('Last Name *',ti('ef-last','text',c?c.last_name:'','Smith')));
+  body.appendChild(r1);
+  var r2=document.createElement('div');r2.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:.6rem';
+  r2.appendChild(fl('Phone',ti('ef-phone','tel',c?c.phone:'','613-555-0100')));
+  r2.appendChild(fl('Email',ti('ef-email','email',c?c.email:'','jane@email.com')));
+  body.appendChild(r2);
+  var r3=document.createElement('div');r3.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:.6rem';
+  r3.appendChild(fl('Birthday',ti('ef-bday','date',c?c.birthday:'')));
+  r3.appendChild(fl('Instagram',ti('ef-ig','text',c?c.instagram:'','@username')));
+  body.appendChild(r3);
+  var r4=document.createElement('div');r4.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:.6rem';
+  r4.appendChild(fl('Referred By',ti('ef-ref','text',c?c.referred_by:'','Client name')));
+  r4.appendChild(fl('Tier',se('ef-tier',[{l:'Standard',v:'standard'},{l:'Silver',v:'silver'},{l:'Gold',v:'gold'},{l:'Platinum',v:'platinum'}],c?c.tier:'standard')));
+  body.appendChild(r4);
+  body.appendChild(fl('Allergies / Sensitivities',tx('ef-allergy',c?c.allergy_notes:'','e.g. Latex allergy, sensitive skin...')));
+  body.appendChild(fl('Preferences',tx('ef-pref',c?c.preferences:'','e.g. Prefers short nails, likes French tip...')));
+  body.appendChild(fl('Internal Notes',tx('ef-notes',c?c.notes:'','Private notes for staff...')));
+  var r5=document.createElement('div');r5.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:.6rem';
+  r5.appendChild(fl('Loyalty Points',ti('ef-pts','number',c?c.loyalty_points:'0')));
+  r5.appendChild(fl('No-show Count',ti('ef-ns','number',c?c.no_show_count:'0')));
+  body.appendChild(r5);
+  var ft=document.createElement('div');ft.style.cssText='display:flex;gap:.5rem;justify-content:flex-end;margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--border)';
+  if(c){var bd=document.createElement('button');bd.style.cssText='padding:.45rem .9rem;border-radius:50px;border:1.5px solid var(--red-bd);background:var(--red-bg);color:var(--red);font-size:.78rem;cursor:pointer;font-family:var(--font);margin-right:auto';bd.textContent='Delete';bd.onclick=function(){closeEditClient();askDeleteClient(id);};ft.appendChild(bd);}
+  var bc=document.createElement('button');bc.style.cssText='padding:.45rem .9rem;border-radius:50px;border:1.5px solid var(--border);background:var(--white);font-size:.78rem;cursor:pointer;font-family:var(--font)';bc.textContent='Cancel';bc.onclick=closeEditClient;ft.appendChild(bc);
+  var bs=document.createElement('button');bs.style.cssText='padding:.45rem 1rem;border-radius:50px;border:none;background:linear-gradient(135deg,var(--pink),var(--violet));color:#fff;font-size:.78rem;font-weight:600;cursor:pointer;font-family:var(--font)';bs.textContent=c?'Save Changes':'Add Client';bs.onclick=saveEditClient;ft.appendChild(bs);
+  body.appendChild(ft);
+  var m=document.getElementById('edit-client-modal');m.style.display='flex';
+  document.getElementById('ef-first').focus();
+}
+function closeEditClient(){document.getElementById('edit-client-modal').style.display='none';}
+function saveEditClient(){
+  var first=(document.getElementById('ef-first').value||'').trim();
+  var last=(document.getElementById('ef-last').value||'').trim();
+  if(!first||!last){Utils.toast('First and last name required','warning');return;}
+  var data={first_name:first,last_name:last,phone:(document.getElementById('ef-phone').value||'').trim(),email:(document.getElementById('ef-email').value||'').trim(),birthday:document.getElementById('ef-bday').value||null,instagram:(document.getElementById('ef-ig').value||'').trim(),referred_by:(document.getElementById('ef-ref').value||'').trim(),tier:document.getElementById('ef-tier').value,allergy_notes:(document.getElementById('ef-allergy').value||'').trim(),preferences:(document.getElementById('ef-pref').value||'').trim(),notes:(document.getElementById('ef-notes').value||'').trim(),loyalty_points:parseInt(document.getElementById('ef-pts').value)||0,no_show_count:parseInt(document.getElementById('ef-ns').value)||0};
+  if(EDITING_CLIENT_ID){var c=SB.CACHE.clients.find(function(x){return x.id===EDITING_CLIENT_ID;});if(c)Object.assign(c,data);SB.update('clients',EDITING_CLIENT_ID,data).catch(function(){});Utils.toast(first+' '+last+' updated','success');}
+  else{data.id='c_'+Date.now();data.created_at=new Date().toISOString();SB.CACHE.clients.unshift(data);SB.insert('clients',data).catch(function(){});Utils.toast(first+' added!','success');}
+  SB.saveCache();closeEditClient();
+  if(STATE.selectedClient)renderClientDetail(STATE.selectedClient);else renderClientList();
+}
+function askDeleteClient(id){DELETING_CLIENT_ID=id;var c=SB.CACHE.clients.find(function(x){return x.id===id;});var name=c?(c.first_name+' '+c.last_name):'this client';document.getElementById('del-client-msg').textContent='Delete "'+name+'"? Booking history will be kept but the client profile will be removed.';document.getElementById('del-client-modal').style.display='flex';}
+function closeDeleteClient(){document.getElementById('del-client-modal').style.display='none';DELETING_CLIENT_ID=null;}
+function confirmDeleteClient(){if(!DELETING_CLIENT_ID)return;SB.CACHE.clients=SB.CACHE.clients.filter(function(x){return x.id!==DELETING_CLIENT_ID;});SB.remove('clients',DELETING_CLIENT_ID).catch(function(){});SB.saveCache();Utils.toast('Client deleted','info');closeDeleteClient();if(STATE.selectedClient===DELETING_CLIENT_ID)backToList();else renderClientList();}
+function exportClients(){var rows=SB.CACHE.clients.map(function(c){var a=Utils.clientAnalytics(c.id,(c.first_name||'')+' '+(c.last_name||''),SB.CACHE.bookings,SB.CACHE.payments);return [c.first_name,c.last_name,c.phone,c.email,c.birthday,c.tier,a.ltv,a.totalVisits,c.loyalty_points,c.allergy_notes,c.preferences,c.notes,c.referred_by,c.instagram];});var csv='First Name,Last Name,Phone,Email,Birthday,Tier,LTV,Visits,Points,Allergies,Preferences,Notes,Referred By,Instagram\n'+rows.map(function(r){return r.map(function(v){return '"'+(v||'')+'"';}).join(',');}).join('\n');var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='clients-'+new Date().toISOString().slice(0,10)+'.csv';a.click();Utils.toast('Exported','success');}
+</script>
 </body>
 </html>
