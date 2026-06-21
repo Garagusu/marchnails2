@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="theme-color" content="#E91E8C">
 <title>March Nails — Staff</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -260,5 +261,69 @@ function renderStaffDetail(name){
   Utils.makeSortable(document.getElementById('staff-bk-table'));
 }
 </script>
+
+<script>
+// ── Responsive sidebar ──
+(function(){
+  function initSidebar(){
+    var sb  = document.getElementById('sidebar');
+    if(!sb) return;
+    // Add dimmer
+    var dimmer = document.createElement('div');
+    dimmer.className = 'sidebar-dimmer';
+    dimmer.id = 'sb-dimmer';
+    dimmer.onclick = closeSidebar;
+    document.body.appendChild(dimmer);
+
+    // Hamburger buttons toggle
+    document.querySelectorAll('[onclick*="sidebar.*classList.toggle"]').forEach(function(btn){
+      btn.onclick = function(){ toggleSidebar(); };
+    });
+  }
+
+  function toggleSidebar(){
+    var sb = document.getElementById('sidebar');
+    var d  = document.getElementById('sb-dimmer');
+    if(!sb) return;
+    var isOpen = sb.classList.contains('open');
+    if(isOpen){ closeSidebar(); } else { openSidebar(); }
+  }
+
+  function openSidebar(){
+    var sb = document.getElementById('sidebar');
+    var d  = document.getElementById('sb-dimmer');
+    if(sb) sb.classList.add('open');
+    if(d)  d.classList.add('visible');
+  }
+
+  function closeSidebar(){
+    var sb = document.getElementById('sidebar');
+    var d  = document.getElementById('sb-dimmer');
+    if(sb) sb.classList.remove('open');
+    if(d)  d.classList.remove('visible');
+  }
+
+  // Close sidebar when a nav link is clicked (mobile)
+  document.addEventListener('click', function(e){
+    var link = e.target.closest('.nav-item');
+    if(link && window.innerWidth <= 980) closeSidebar();
+  });
+
+  // Swipe to close sidebar
+  var touchStartX = 0;
+  document.addEventListener('touchstart', function(e){ touchStartX = e.touches[0].clientX; }, {passive:true});
+  document.addEventListener('touchend', function(e){
+    var dx = e.changedTouches[0].clientX - touchStartX;
+    if(dx < -60 && window.innerWidth <= 980) closeSidebar();
+  }, {passive:true});
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', initSidebar);
+  } else {
+    initSidebar();
+  }
+})();
+</script>
+
 </body>
 </html>
