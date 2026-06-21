@@ -60,6 +60,8 @@
       <a class="nav-item" href="reports.html"><i class="fa-solid fa-chart-column"></i>Reports</a>
       <a class="nav-item" href="clients.html"><i class="fa-solid fa-users"></i>Clients</a>
       <a class="nav-item" href="staff.html"><i class="fa-solid fa-id-badge"></i>Staff</a>
+      <div class="nav-section">Settings</div>
+      <a class="nav-item" onclick="toggleServicesPanel();return false" href="#" id="services-nav-link"><i class="fa-solid fa-scissors"></i>Services</a>
     </nav>
     <div class="sidebar-footer">
       <div class="user-info">
@@ -77,7 +79,6 @@
       <div class="topbar-title" id="tb-title">Dashboard</div>
       <div class="topbar-date" id="tb-date"></div>
       <div class="topbar-right">
-        <button class="btn btn-ghost btn-sm" onclick="toggleServicesPanel()" style="gap:.35rem"><i class="fa-solid fa-scissors" style="color:var(--pink)"></i>Services</button>
         <div id="conn-status" style="font-size:.72rem;color:var(--text3)"><i class="fa-solid fa-circle-notch fa-spin" style="font-size:.7rem"></i> Connecting…</div>
         <button class="btn btn-primary btn-sm" onclick="window.location.href='appointments.html#new'"><i class="fa-solid fa-plus"></i>New Appointment</button>
         <a href="appointments.html" class="btn btn-ghost btn-icon" title="Notifications"><i class="fa-solid fa-bell" style="font-size:.95rem"></i></a>
@@ -1330,9 +1331,8 @@ function toggleServicesPanel(){
   var open = p.style.display !== 'none';
   p.style.display = open ? 'none' : 'block';
   if (!open){ renderSvcKPIs(); renderSvcTable(); }
-  // Update button style
-  var btn = document.querySelector('[onclick="toggleServicesPanel()"]');
-  if(btn){ btn.style.background = open ? '' : 'var(--pink-bg)'; btn.style.color = open ? '' : 'var(--pink)'; btn.style.borderColor = open ? '' : 'var(--pink-bd)'; }
+  var navLink = document.getElementById('services-nav-link');
+  if(navLink){ navLink.className = open ? 'nav-item' : 'nav-item active'; }
 }
 
 function renderSvcKPIs(){
