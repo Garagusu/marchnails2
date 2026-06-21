@@ -263,7 +263,7 @@ input,select,textarea{font-family:var(--font);outline:none}
   <div class="tbar-r">
     <div class="fc"><i class="fa-solid fa-id-badge" style="font-size:.65rem"></i>
       <select id="f-staff" onchange="STATE.staff=this.value;render()">
-        <option value="all">All Staff</option><option>Happy</option><option>Flower</option><option>Daisy</option><option>Hannah</option>
+        <option value="all">All Staff</option>
       </select>
     </div>
     <div class="fc"><i class="fa-solid fa-circle-dot" style="font-size:.65rem"></i>
@@ -347,10 +347,7 @@ input,select,textarea{font-family:var(--font);outline:none}
         <div class="fg">
           <label class="fl">Staff</label>
           <select class="fi" id="n-staff" onchange="checkConflict()">
-            <option value="Happy">Happy — Acrylic & Nail Art</option>
-            <option value="Flower">Flower — Gel Extensions</option>
-            <option value="Daisy">Daisy — Shellac & Chrome</option>
-            <option value="Hannah">Hannah — Pedicure</option>
+            <!-- populated by initStaffDropdowns() -->
           </select>
         </div>
       </div>
@@ -457,12 +454,23 @@ input,select,textarea{font-family:var(--font);outline:none}
 'use strict';
 if (!localStorage.getItem('mn_auth')) location.href='index.html';
 
-var STAFF = [
-  {name:'Happy', role:'Acrylic & Nail Art',   color:'#E91E8C', grad:'linear-gradient(135deg,#E91E8C,#C9184A)'},
-  {name:'Flower',role:'Gel Extensions & Ombré',color:'#7C3AED', grad:'linear-gradient(135deg,#7C3AED,#4F46E5)'},
-  {name:'Daisy', role:'Shellac & Chrome',      color:'#0891B2', grad:'linear-gradient(135deg,#06B6D4,#0284C7)'},
-  {name:'Hannah',role:'Pedicure Specialist',   color:'#D97706', grad:'linear-gradient(135deg,#D97706,#B45309)'},
+var DEFAULT_STAFF_BK = [
+  {id:'st1',name:'Happy', role:'Acrylic & Nail Art',   color:'#E91E8C', grad:'linear-gradient(135deg,#E91E8C,#C9184A)', status:'active'},
+  {id:'st2',name:'Flower',role:'Gel Extensions & Ombré',color:'#7C3AED', grad:'linear-gradient(135deg,#7C3AED,#4F46E5)', status:'active'},
+  {id:'st3',name:'Daisy', role:'Shellac & Chrome',      color:'#0891B2', grad:'linear-gradient(135deg,#06B6D4,#0284C7)', status:'active'},
+  {id:'st4',name:'Hannah',role:'Pedicure Specialist',   color:'#D97706', grad:'linear-gradient(135deg,#D97706,#B45309)', status:'active'},
 ];
+// Load staff from localStorage (set by staff.html) — includes newly added staff
+var STAFF = (function(){
+  try {
+    var stored = localStorage.getItem('mn_staff_cfg');
+    if(stored){
+      var parsed = JSON.parse(stored);
+      if(parsed && parsed.length) return parsed.filter(function(s){ return s.status === 'active' || !s.status; });
+    }
+  } catch(e){}
+  return DEFAULT_STAFF_BK;
+})();
 var SM = {
   pending:    {lbl:'Pending',    bg:'#FFF7ED',color:'#C2410C',bd:'#FED7AA'},
   confirmed:  {lbl:'Confirmed',  bg:'#EFF6FF',color:'#1D4ED8',bd:'#BFDBFE'},
@@ -479,6 +487,37 @@ var HH = 60; // px per hour
 var STATE = {view:'day',date:new Date(),staff:'all',status:'all',svc:'all',rpTab:'upcoming',payMethod:'cash',newStatus:'confirmed',selectedId:null};
 
 /* ── INIT ── */
+function initStaffDropdowns(){
+  // Reload STAFF from localStorage in case staff.html added new members
+  try {
+    var stored = localStorage.getItem('mn_staff_cfg');
+    if(stored){
+      var parsed = JSON.parse(stored);
+      if(parsed && parsed.length){
+        STAFF = parsed.filter(function(s){ return s.status==='active'||!s.status; });
+      }
+    }
+  } catch(e){}
+
+  // Populate f-staff filter
+  var fStaff = document.getElementById('f-staff');
+  if(fStaff){
+    var cur = fStaff.value;
+    fStaff.innerHTML = '<option value="all">All Staff</option>'
+      + STAFF.map(function(s){ return '<option value="'+s.name+'"'+(cur===s.name?' selected':'')+'>'+s.name+'</option>'; }).join('');
+  }
+
+  // Populate n-staff new booking dropdown
+  var nStaff = document.getElementById('n-staff');
+  if(nStaff){
+    var curN = nStaff.value;
+    nStaff.innerHTML = '<option value="">Select staff…</option>'
+      + STAFF.map(function(s){
+          return '<option value="'+s.name+'"'+(curN===s.name?' selected':'')+'>'+s.name+' — '+s.role+'</option>';
+        }).join('');
+  }
+}
+
 window.addEventListener('DOMContentLoaded', function() {
   setInterval(function(){
     var n=new Date();
@@ -512,9 +551,10 @@ window.addEventListener('DOMContentLoaded', function() {
 
   // Try Supabase in background
   if (window.location.protocol !== 'file:') {
-    SB.loadAll().then(function(){ SB.saveCache(); render(); }).catch(function(){});
+    SB.loadAll().then(function(){ SB.saveCache(); initStaffDropdowns(); render(); }).catch(function(){});
   }
 
+  initStaffDropdowns();
   render();
 });
 
