@@ -90,7 +90,7 @@
           <button class="btn btn-primary btn-sm" onclick="applyCustom()">Apply</button>
         </div>
         <div class="filter-sep"></div>
-        <select class="filter-select" id="f-staff"><option value="all">All Staff</option><option>Happy</option><option>Flower</option><option>Daisy</option><option>Hannah</option></select>
+        <select class="filter-select" id="f-staff"><option value="all">All Staff</option></select>
         <select class="filter-select" id="f-service"><option value="all">All Services</option><option>Acrylic Full Set</option><option>Acrylic Refill</option><option>Gel-X Extensions</option><option>Pedicure Shellac</option><option>Manicure Shellac</option></select>
       </div>
 
@@ -276,6 +276,7 @@ var FP = [], FB = [], CP = [], CB = [];
 // clock in DOMContentLoaded
 
 window.addEventListener('DOMContentLoaded', function() {
+  populateStaffDropdowns();
   Utils.startClock(null, document.getElementById('tb-date'));
   setupFilters();
   // Data loading: localStorage = source of truth, demo = first-time fallback
@@ -691,6 +692,22 @@ function exportAll(type) {
     initSidebar();
   }
 })();
+
+// Populate staff dropdowns from localStorage (syncs with staff.html)
+function populateStaffDropdowns(){
+  var staffList = (function(){
+    try{ var s=localStorage.getItem('mn_staff_cfg'); if(s){ var p=JSON.parse(s); if(p&&p.length) return p.filter(function(x){return x.status==='active'||!x.status;}); } }catch(e){}
+    return [{name:'Happy'},{name:'Flower'},{name:'Daisy'},{name:'Hannah'}];
+  })();
+  document.querySelectorAll('select#f-staff, select#f-stafff').forEach(function(sel){
+    var cur = sel.value;
+    var opts = '<option value="all">All Staff</option>'
+      + staffList.map(function(s){return '<option value="'+s.name+'"'+(cur===s.name?' selected':'')+'>'+s.name+'</option>';}).join('');
+    sel.innerHTML = opts;
+    if(cur) sel.value = cur;
+  });
+}
+
 </script>
 
 </body>
