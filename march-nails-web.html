@@ -2732,15 +2732,38 @@ function bkToSlot(bookedAt) {
   return hh+':'+String(mm).padStart(2,'0')+' '+ap;
 }
 
-// Get busy slots for a specific staff on a date (from Supabase + local cache)
+// Parse slot string "H:MM AM/PM" → minutes since midnight
+function bkSlotToMin(slot) {
+  const tp = slot.split(' '); const [h,m] = tp[0].split(':').map(Number);
+  let hh = h; if(tp[1]==='PM'&&hh!==12)hh+=12; if(tp[1]==='AM'&&hh===12)hh=0;
+  return hh*60+(m||0);
+}
+
+// Check if a proposed slot overlaps any existing booking
+// overlap = newStart < existingEnd AND newEnd > existingStart
+function bkOverlaps(newStartMin, newDurMin, existingStartMin, existingDurMin) {
+  const newEnd      = newStartMin + newDurMin;
+  const existingEnd = existingStartMin + existingDurMin;
+  return newStartMin < existingEnd && newEnd > existingStartMin;
+}
+
+// Get busy slots for a specific staff on a date
+// A slot is busy if booking it (with the selected service duration)
+// would overlap any existing booking on that staff
 async function bkGetBusyForStaff(dateStr, staffName) {
   const busy = new Set();
-  const svcDur = bkState.service ? bkState.service.dur : 30;
+  const newDur = bkState.service ? bkState.service.dur : 60; // selected service duration
+
+  // Collect existing bookings (start minutes + their own duration)
+  const existingBookings = []; // [{startMin, dur}]
 
   // From local cache
   bkGetBookings()
-    .filter(b => b.date===dateStr && b.status!=='cancelled' && (!staffName||b.staff===staffName||b.artist===staffName))
-    .forEach(b => busy.add(b.time));
+    .filter(b => b.date===dateStr && b.status!=='cancelled'
+      && (!staffName || b.staff===staffName || b.artist===staffName))
+    .forEach(b => {
+      existingBookings.push({ startMin: bkSlotToMin(b.time), dur: b.svcDur||60 });
+    });
 
   // From Supabase
   try {
@@ -2754,20 +2777,24 @@ async function bkGetBusyForStaff(dateStr, staffName) {
     if (res.ok) {
       (await res.json()).forEach(b => {
         if (!b.booked_at) return;
-        const ts = bkToSlot(b.booked_at);
-        busy.add(ts);
-        // Block all 30-min slots covered by this booking's duration
+        const dt = new Date(b.booked_at);
+        const startMin = dt.getHours()*60 + dt.getMinutes();
         const dur = parseInt(b.duration_minutes)||60;
-        for (let offset=30; offset<dur; offset+=30) {
-          const nt = new Date(new Date(b.booked_at).getTime()+offset*60000);
-          busy.add(bkToSlot(nt.toISOString()));
-        }
-        // Also block the slot BEFORE if existing booking's duration would overlap us
-        // e.g. existing at 10:00 with 90min → blocks 10:00, 10:30, 11:00
-        // New at 11:00 is already caught above. New at 10:30 too.
+        existingBookings.push({ startMin, dur });
       });
     }
   } catch(e){ console.warn('Availability check failed:', e.message); }
+
+  // For each possible slot, check if placing newDur-minute booking there
+  // would overlap any existing booking
+  BK_SLOTS.forEach(slot => {
+    const newStart = bkSlotToMin(slot);
+    const conflicts = existingBookings.some(ex =>
+      bkOverlaps(newStart, newDur, ex.startMin, ex.dur)
+    );
+    if (conflicts) busy.add(slot);
+  });
+
   return busy;
 }
 
