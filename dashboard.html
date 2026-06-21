@@ -524,13 +524,13 @@ function renderKPIs(kpis, prev) {
       delta = '';
     }
 
-    html += '<div class="kpi-card" style="--kpi-color:' + c.color + '">' +
+    html += '<div class="kpi-card" style="--kpi-color:' + c.color + ';cursor:pointer" onclick="openKpiDrill(\'' + c.key + '\')" title="Click to see details">' +
       '<div class="kpi-top">' +
         '<div class="kpi-icon" style="background:' + c.color + '18"><i class="fa-solid ' + c.icon + '" style="color:' + c.color + '"></i></div>' +
         delta +
       '</div>' +
       '<div class="kpi-value" id="kpi-' + c.key + '">' + c.val + '</div>' +
-      '<div class="kpi-label">' + c.label + '</div>' +
+      '<div class="kpi-label">' + c.label + ' <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:.5rem;opacity:.4;margin-left:2px"></i></div>' +
     '</div>';
   });
   document.getElementById('kpi-grid').innerHTML = html;
@@ -903,7 +903,351 @@ function exportSummaryTable(type) {
     return [Utils.fDateTime(r.date), r.client, r.service, r.staff, Utils.fCurrency(r.amount), r.method, Utils.fCurrency(r.commission), r.status];
   }), ['Date','Client','Service','Staff','Amount','Method','Commission','Status']), 'dashboard-' + STATE.period);
 }
+
+// ═══════════════════════════════════════════════
+// KPI DRILL-DOWN  
+// ═══════════════════════════════════════════════
+var KDM_ROWS=[]; var KDM_KEY='';
+
+function openKpiDrill(key){
+  KDM_KEY=key;
+  document.getElementById('kpi-drill-modal').style.display='block';
+  document.getElementById('kdm-search').value='';
+  var cfg={
+    revenue:{title:'Total Revenue',icon:'fa-money-bill-trend-up',color:'#E91E8C'},
+    bookings:{title:'Total Bookings',icon:'fa-calendar-check',color:'#7C3AED'},
+    avgTicket:{title:'Average Ticket',icon:'fa-ticket',color:'#0891B2'},
+    clients:{title:'Active Clients',icon:'fa-users',color:'#059669'},
+    returnRate:{title:'Returning Clients',icon:'fa-rotate-left',color:'#D97706'},
+    noshowRate:{title:'No-show List',icon:'fa-user-slash',color:'#EF4444'},
+    commission:{title:'Commission Breakdown',icon:'fa-hand-holding-dollar',color:'#F59E0B'},
+    netRevenue:{title:'Net Revenue Detail',icon:'fa-coins',color:'#10B981'},
+    bestStaff:{title:'Staff Performance',icon:'fa-star',color:'#8B5CF6'},
+    topSvc:{title:'Service Revenue',icon:'fa-scissors',color:'#06B6D4'},
+  }[key]||{title:key,icon:'fa-chart-bar',color:'#E91E8C'};
+  document.getElementById('kdm-icon').style.background=cfg.color+'18';
+  document.getElementById('kdm-icon').innerHTML='<i class="fa-solid '+cfg.icon+'" style="color:'+cfg.color+'"></i>';
+  document.getElementById('kdm-title').textContent=cfg.title;
+  renderKDM(key);
+}
+
+function thC(t){return '<th style="padding:.5rem .85rem;text-align:left;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);white-space:nowrap;background:var(--s1)">'+t+'</th>';}
+function tdC(v,s){return '<td style="padding:.48rem .85rem;font-size:.77rem;'+(s||'')+'">'+v+'</td>';}
+function tdB(v){return '<td style="padding:.48rem .85rem;font-size:.78rem;font-weight:500">'+v+'</td>';}
+function rowWrap(cells){return '<tr class="kdm-row">'+cells+'</tr>';}
+
+function renderKDM(key){
+  var body=document.getElementById('kdm-body');
+  var sub=document.getElementById('kdm-sub');
+  KDM_ROWS=[];
+
+  if(key==='revenue'||key==='netRevenue'||key==='commission'){
+    var comp=FILTERED_BOOKINGS.filter(function(b){return b.status==='completed';})
+      .sort(function(a,b){return parseFloat(b.service_price||0)-parseFloat(a.service_price||0);});
+    KDM_ROWS=comp;
+    var tot=comp.reduce(function(s,b){return s+parseFloat(b.service_price||0);},0);
+    sub.textContent=comp.length+' completed transactions · '+Utils.fCurrency(tot)+' total';
+    document.getElementById('kdm-count').textContent=comp.length+' records';
+
+    var html='<table style="width:100%;border-collapse:collapse"><thead><tr>'
+      +thC('Date')+thC('Client')+thC('Service')+thC('Staff')+thC('Amount')+thC('Commission 25%')+thC('Net Revenue')+thC('Payment')
+      +'</tr></thead><tbody>';
+    comp.forEach(function(b){
+      var price=parseFloat(b.service_price||0);
+      html+=rowWrap(
+        tdC(Utils.fDateTime(b.booked_at),'color:var(--text2);white-space:nowrap')
+        +tdB(b.client_name||'—')
+        +tdC(b.service_name||'—','color:var(--text2)')
+        +tdC(b.staff_name||'—','color:var(--text2)')
+        +tdC(Utils.fCurrency(price),'color:var(--pink);font-weight:700;text-align:right')
+        +tdC(Utils.fCurrency(price*.25),'color:var(--amber);text-align:right')
+        +tdC(Utils.fCurrency(price*.75),'color:var(--green);font-weight:600;text-align:right')
+        +tdC((b.payment_method||'—').replace('_',' '),'color:var(--text2)')
+      );
+    });
+    var totCom=tot*.25,totNet=tot*.75;
+    html+='<tr style="background:var(--pink-bg);border-top:2px solid var(--pink-bd);font-weight:700">'
+      +'<td colspan="4" style="padding:.6rem .85rem;font-size:.78rem">TOTAL ('+comp.length+')</td>'
+      +tdC(Utils.fCurrency(tot),'color:var(--pink);font-weight:800;text-align:right;font-size:.85rem')
+      +tdC(Utils.fCurrency(totCom),'color:var(--amber);font-weight:700;text-align:right')
+      +tdC(Utils.fCurrency(totNet),'color:var(--green);font-weight:700;text-align:right')
+      +'<td></td></tr>';
+    html+='</tbody></table>';
+    body.innerHTML=html;
+
+  }else if(key==='bookings'){
+    var bks=FILTERED_BOOKINGS.slice().sort(function(a,b){return new Date(b.booked_at)-new Date(a.booked_at);});
+    KDM_ROWS=bks;
+    sub.textContent=bks.length+' bookings in period';
+    document.getElementById('kdm-count').textContent=bks.length+' records';
+    var SC={confirmed:'#2563EB',pending:'#D97706',completed:'#059669',arrived:'#16A34A',in_progress:'#7C3AED',cancelled:'#9CA3AF','no-show':'#DC2626'};
+    var html='<table style="width:100%;border-collapse:collapse"><thead><tr>'
+      +thC('Date')+thC('Client')+thC('Service')+thC('Staff')+thC('Price')+thC('Duration')+thC('Status')+thC('Payment')
+      +'</tr></thead><tbody>';
+    bks.forEach(function(b){
+      var sc=SC[b.status]||'#9CA3AF';
+      html+=rowWrap(
+        tdC(Utils.fDateTime(b.booked_at),'color:var(--text2);white-space:nowrap')
+        +tdB(b.client_name||'—')
+        +tdC(b.service_name||'—','color:var(--text2)')
+        +tdC(b.staff_name||'—','color:var(--text2)')
+        +tdC(Utils.fCurrency(b.service_price||0),'color:var(--pink);font-weight:700;text-align:right')
+        +tdC((b.duration_minutes||60)+'min','color:var(--text2);text-align:center')
+        +'<td style="padding:.48rem .85rem"><span style="background:'+sc+'18;color:'+sc+';border:1px solid '+sc+'40;border-radius:50px;padding:.1rem .45rem;font-size:.64rem;font-weight:600">'+(b.status||'—').replace(/_/g,' ')+'</span></td>'
+        +tdC(b.payment_status==='paid'?'<span style="color:var(--green)">✓ Paid</span>':'Unpaid','')
+      );
+    });
+    html+='</tbody></table>';
+    body.innerHTML=html;
+
+  }else if(key==='clients'){
+    var cmap={};
+    FILTERED_BOOKINGS.forEach(function(b){
+      if(!b.client_name)return;
+      if(!cmap[b.client_name])cmap[b.client_name]={name:b.client_name,visits:0,revenue:0,lastVisit:null,svcs:{},staff:{}};
+      var c=cmap[b.client_name]; c.visits++;
+      if(b.status==='completed'){
+        c.revenue+=parseFloat(b.service_price||0);
+        if(b.service_name)c.svcs[b.service_name]=(c.svcs[b.service_name]||0)+1;
+        if(b.staff_name)c.staff[b.staff_name]=(c.staff[b.staff_name]||0)+1;
+      }
+      if(!c.lastVisit||new Date(b.booked_at)>new Date(c.lastVisit))c.lastVisit=b.booked_at;
+    });
+    KDM_ROWS=Object.values(cmap).sort(function(a,b){return b.revenue-a.revenue;});
+    sub.textContent=KDM_ROWS.length+' unique clients';
+    document.getElementById('kdm-count').textContent=KDM_ROWS.length+' clients';
+    var html='<table style="width:100%;border-collapse:collapse"><thead><tr>'
+      +thC('Client')+thC('Visits')+thC('Revenue')+thC('Avg Ticket')+thC('Last Visit')+thC('Fav Service')+thC('Fav Staff')
+      +'</tr></thead><tbody>';
+    KDM_ROWS.forEach(function(c){
+      var topS=Object.keys(c.svcs).sort(function(a,b){return c.svcs[b]-c.svcs[a];})[0]||'—';
+      var topT=Object.keys(c.staff).sort(function(a,b){return c.staff[b]-c.staff[a];})[0]||'—';
+      var ini=c.name.split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase();
+      html+=rowWrap(
+        '<td style="padding:.48rem .85rem"><div style="display:flex;align-items:center;gap:.5rem">'
+        +'<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#E91E8C,#7C3AED);display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:700;color:#fff;flex-shrink:0">'+ini+'</div>'
+        +'<span style="font-weight:500;font-size:.8rem">'+c.name+'</span></div></td>'
+        +tdC(c.visits,'text-align:center;font-weight:600')
+        +tdC(Utils.fCurrency(c.revenue),'color:var(--pink);font-weight:700;text-align:right')
+        +tdC(c.visits?Utils.fCurrency(c.revenue/c.visits):'—','color:var(--text2);text-align:right')
+        +tdC(c.lastVisit?Utils.fDate(c.lastVisit,{month:'short',day:'numeric',year:'numeric'}):'—','color:var(--text2);white-space:nowrap')
+        +tdC(topS,'color:var(--text2)')
+        +tdC(topT,'color:var(--text2)')
+      );
+    });
+    html+='</tbody></table>';
+    body.innerHTML=html;
+
+  }else if(key==='noshowRate'){
+    var ns=FILTERED_BOOKINGS.filter(function(b){return b.status==='no-show'||b.status==='no_show';})
+      .sort(function(a,b){return new Date(b.booked_at)-new Date(a.booked_at);});
+    KDM_ROWS=ns;
+    sub.textContent=ns.length+' no-shows in period';
+    document.getElementById('kdm-count').textContent=ns.length+' records';
+    var html='<table style="width:100%;border-collapse:collapse"><thead><tr>'
+      +thC('Date')+thC('Client')+thC('Service')+thC('Staff')+thC('Price')+thC('Notes')
+      +'</tr></thead><tbody>';
+    ns.forEach(function(b){
+      html+=rowWrap(
+        tdC(Utils.fDateTime(b.booked_at),'color:var(--text2);white-space:nowrap')
+        +tdB(b.client_name||'—')
+        +tdC(b.service_name||'—','color:var(--text2)')
+        +tdC(b.staff_name||'—','color:var(--text2)')
+        +tdC(Utils.fCurrency(b.service_price||0),'color:var(--red);font-weight:700;text-align:right')
+        +tdC(b.notes||'—','color:var(--text3);font-size:.72rem')
+      );
+    });
+    if(!ns.length)html+='<tr><td colspan="6" style="padding:2rem;text-align:center;color:var(--text3)">No no-shows in this period 🎉</td></tr>';
+    html+='</tbody></table>';
+    body.innerHTML=html;
+
+  }else if(key==='returnRate'){
+    var cc2={};
+    FILTERED_BOOKINGS.forEach(function(b){if(b.client_name)cc2[b.client_name]=(cc2[b.client_name]||0)+1;});
+    var ret=FILTERED_BOOKINGS.filter(function(b){return b.client_name&&cc2[b.client_name]>1;})
+      .sort(function(a,b){return new Date(b.booked_at)-new Date(a.booked_at);});
+    KDM_ROWS=ret;
+    sub.textContent=ret.length+' visits from returning clients';
+    document.getElementById('kdm-count').textContent=ret.length+' records';
+    var html='<table style="width:100%;border-collapse:collapse"><thead><tr>'
+      +thC('Date')+thC('Client')+thC('Visits This Period')+thC('Service')+thC('Staff')+thC('Price')
+      +'</tr></thead><tbody>';
+    ret.forEach(function(b){
+      html+=rowWrap(
+        tdC(Utils.fDateTime(b.booked_at),'color:var(--text2);white-space:nowrap')
+        +tdB(b.client_name||'—')
+        +tdC(cc2[b.client_name]||1,'text-align:center;font-weight:700;color:var(--green)')
+        +tdC(b.service_name||'—','color:var(--text2)')
+        +tdC(b.staff_name||'—','color:var(--text2)')
+        +tdC(Utils.fCurrency(b.service_price||0),'color:var(--pink);font-weight:700;text-align:right')
+      );
+    });
+    html+='</tbody></table>';
+    body.innerHTML=html;
+
+  }else if(key==='bestStaff'){
+    var SCOL={Happy:'#E91E8C',Flower:'#7C3AED',Daisy:'#0891B2',Hannah:'#D97706'};
+    KDM_ROWS=['Happy','Flower','Daisy','Hannah'].map(function(name){
+      var bks=FILTERED_BOOKINGS.filter(function(b){return b.staff_name===name;});
+      var comp=bks.filter(function(b){return b.status==='completed';});
+      var rev=comp.reduce(function(s,b){return s+parseFloat(b.service_price||0);},0);
+      var ns=bks.filter(function(b){return b.status==='no-show'||b.status==='no_show';}).length;
+      var topS=(function(){var sc={};comp.forEach(function(b){if(b.service_name)sc[b.service_name]=(sc[b.service_name]||0)+1;});return Object.keys(sc).sort(function(a,b){return sc[b]-sc[a];})[0]||'—';})();
+      return {name:name,bookings:bks.length,completed:comp.length,revenue:rev,commission:rev*.25,net:rev*.75,noshow:ns,avgTicket:comp.length?rev/comp.length:0,topService:topS};
+    }).sort(function(a,b){return b.revenue-a.revenue;});
+    sub.textContent='Staff performance · '+Utils.fCurrency(KDM_ROWS.reduce(function(s,r){return s+r.revenue;},0))+' total';
+    document.getElementById('kdm-count').textContent='4 staff members';
+    var html='<table style="width:100%;border-collapse:collapse"><thead><tr>'
+      +thC('Staff')+thC('Bookings')+thC('Completed')+thC('No-shows')+thC('Revenue')+thC('Commission')+thC('Net Revenue')+thC('Avg Ticket')+thC('Top Service')
+      +'</tr></thead><tbody>';
+    KDM_ROWS.forEach(function(s){
+      var clr=SCOL[s.name]||'#E91E8C';
+      html+=rowWrap(
+        '<td style="padding:.48rem .85rem"><div style="display:flex;align-items:center;gap:.5rem">'
+        +'<div style="width:28px;height:28px;border-radius:50%;background:'+clr+';display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:#fff">'+s.name[0]+'</div>'
+        +'<span style="font-weight:600">'+s.name+'</span></div></td>'
+        +tdC(s.bookings,'text-align:center;font-weight:600')
+        +tdC(s.completed,'text-align:center;color:var(--green);font-weight:600')
+        +tdC(s.noshow,'text-align:center;color:var(--red)')
+        +tdC(Utils.fCurrency(s.revenue),'color:var(--pink);font-weight:700;text-align:right')
+        +tdC(Utils.fCurrency(s.commission),'color:var(--amber);text-align:right')
+        +tdC(Utils.fCurrency(s.net),'color:var(--green);font-weight:600;text-align:right')
+        +tdC(Utils.fCurrency(s.avgTicket),'color:var(--text2);text-align:right')
+        +tdC(s.topService,'color:var(--text2)')
+      );
+    });
+    var tR=KDM_ROWS.reduce(function(s,r){return s+r.revenue;},0);
+    html+='<tr style="background:var(--violet-bg);border-top:2px solid var(--violet-bd);font-weight:700">'
+      +'<td style="padding:.6rem .85rem">TOTAL</td>'
+      +tdC(KDM_ROWS.reduce(function(s,r){return s+r.bookings;},0),'text-align:center;font-weight:700')
+      +tdC(KDM_ROWS.reduce(function(s,r){return s+r.completed;},0),'text-align:center;color:var(--green);font-weight:700')
+      +tdC(KDM_ROWS.reduce(function(s,r){return s+r.noshow;},0),'text-align:center;color:var(--red)')
+      +tdC(Utils.fCurrency(tR),'color:var(--pink);font-weight:800;text-align:right')
+      +tdC(Utils.fCurrency(tR*.25),'color:var(--amber);font-weight:700;text-align:right')
+      +tdC(Utils.fCurrency(tR*.75),'color:var(--green);font-weight:700;text-align:right')
+      +'<td colspan="2"></td></tr>';
+    html+='</tbody></table>';
+    body.innerHTML=html;
+
+  }else if(key==='topSvc'||key==='avgTicket'){
+    var comp3=FILTERED_BOOKINGS.filter(function(b){return b.status==='completed';});
+    if(key==='topSvc'){
+      var sg=Utils.groupBy(comp3,'service_name');
+      KDM_ROWS=Object.keys(sg).map(function(svc){
+        var bks=sg[svc],rev=bks.reduce(function(s,b){return s+parseFloat(b.service_price||0);},0);
+        return {service:svc,count:bks.length,revenue:rev,avgTicket:bks.length?rev/bks.length:0,commission:rev*.25,net:rev*.75};
+      }).sort(function(a,b){return b.revenue-a.revenue;});
+      var totR=KDM_ROWS.reduce(function(s,r){return s+r.revenue;},0);
+      sub.textContent=KDM_ROWS.length+' services · '+Utils.fCurrency(totR)+' total';
+      document.getElementById('kdm-count').textContent=KDM_ROWS.length+' services';
+      var maxR=KDM_ROWS.length?KDM_ROWS[0].revenue:1;
+      var html='<table style="width:100%;border-collapse:collapse"><thead><tr>'
+        +thC('#')+thC('Service')+thC('Bookings')+thC('Revenue')+thC('Avg Ticket')+thC('Commission')+thC('Net')+thC('Share')
+        +'</tr></thead><tbody>';
+      KDM_ROWS.forEach(function(s,i){
+        var pct=totR>0?((s.revenue/totR)*100).toFixed(1):0;
+        var bp=maxR>0?(s.revenue/maxR*100):0;
+        html+=rowWrap(
+          '<td style="padding:.48rem .85rem;font-size:.7rem;font-weight:700;color:var(--text3);text-align:center">'+(i+1)+'</td>'
+          +'<td style="padding:.48rem .85rem"><div style="font-weight:500;font-size:.8rem">'+s.service+'</div>'
+          +'<div style="height:4px;background:var(--s1);border-radius:2px;margin-top:3px;overflow:hidden"><div style="width:'+bp+'%;height:100%;background:linear-gradient(90deg,#E91E8C,#7C3AED);border-radius:2px"></div></div></td>'
+          +tdC(s.count,'text-align:center;font-weight:600')
+          +tdC(Utils.fCurrency(s.revenue),'color:var(--pink);font-weight:700;text-align:right')
+          +tdC(Utils.fCurrency(s.avgTicket),'color:var(--text2);text-align:right')
+          +tdC(Utils.fCurrency(s.commission),'color:var(--amber);text-align:right')
+          +tdC(Utils.fCurrency(s.net),'color:var(--green);font-weight:600;text-align:right')
+          +tdC(pct+'%','color:var(--text2);text-align:center;font-weight:600')
+        );
+      });
+      html+='</tbody></table>';
+      body.innerHTML=html;
+    } else {
+      // avgTicket
+      KDM_ROWS=comp3.sort(function(a,b){return parseFloat(b.service_price||0)-parseFloat(a.service_price||0);});
+      var avg=comp3.length?comp3.reduce(function(s,b){return s+parseFloat(b.service_price||0);},0)/comp3.length:0;
+      sub.textContent=comp3.length+' transactions · Avg: '+Utils.fCurrency(avg);
+      document.getElementById('kdm-count').textContent=comp3.length+' records';
+      var html2='<table style="width:100%;border-collapse:collapse"><thead><tr>'
+        +thC('Date')+thC('Client')+thC('Service')+thC('Staff')+thC('Price')+thC('vs Avg')
+        +'</tr></thead><tbody>';
+      comp3.forEach(function(b){
+        var price=parseFloat(b.service_price||0),diff=price-avg;
+        html2+=rowWrap(
+          tdC(Utils.fDateTime(b.booked_at),'color:var(--text2);white-space:nowrap')
+          +tdB(b.client_name||'—')
+          +tdC(b.service_name||'—','color:var(--text2)')
+          +tdC(b.staff_name||'—','color:var(--text2)')
+          +tdC(Utils.fCurrency(price),'color:var(--pink);font-weight:700;text-align:right')
+          +tdC((diff>=0?'+':'')+Utils.fCurrency(Math.abs(diff)),'color:'+(diff>=0?'var(--green)':'var(--red)')+';font-weight:600;text-align:right')
+        );
+      });
+      html2+='</tbody></table>';
+      body.innerHTML=html2;
+    }
+  }
+}
+
+function kdrillSearch(q){
+  q=q.toLowerCase();
+  var rows=document.querySelectorAll('#kdm-body tbody tr');
+  var vis=0;
+  rows.forEach(function(r){var show=!q||r.textContent.toLowerCase().indexOf(q)!==-1;r.style.display=show?'':'none';if(show)vis++;});
+  document.getElementById('kdm-count').textContent=(q?vis+' / ':'')+KDM_ROWS.length+' records';
+}
+
+function kdrillExport(){
+  if(!KDM_ROWS.length)return;
+  var hdrs,rows;
+  if(KDM_KEY==='revenue'||KDM_KEY==='netRevenue'||KDM_KEY==='commission'){
+    hdrs=['Date','Client','Service','Staff','Amount','Commission','Net Revenue'];
+    rows=KDM_ROWS.map(function(b){var p=parseFloat(b.service_price||0);return [Utils.fDateTime(b.booked_at),b.client_name,b.service_name,b.staff_name,p,p*.25,p*.75];});
+  }else if(KDM_KEY==='bookings'){
+    hdrs=['Date','Client','Service','Staff','Price','Duration','Status','Payment'];
+    rows=KDM_ROWS.map(function(b){return [Utils.fDateTime(b.booked_at),b.client_name,b.service_name,b.staff_name,b.service_price,b.duration_minutes,b.status,b.payment_status];});
+  }else if(KDM_KEY==='clients'){
+    hdrs=['Client','Visits','Revenue'];
+    rows=KDM_ROWS.map(function(c){return [c.name,c.visits,c.revenue];});
+  }else if(KDM_KEY==='bestStaff'){
+    hdrs=['Staff','Bookings','Completed','No-shows','Revenue','Commission','Net','Top Service'];
+    rows=KDM_ROWS.map(function(s){return [s.name,s.bookings,s.completed,s.noshow,s.revenue,s.commission,s.net,s.topService];});
+  }else{
+    hdrs=['Service','Bookings','Revenue','Avg Ticket'];
+    rows=KDM_ROWS.map(function(s){return [s.service||s.name,s.count||s.visits,s.revenue,s.avgTicket||0];});
+  }
+  Export.downloadCSV(Export.toCSV(rows,hdrs),'kpi-'+KDM_KEY+'-'+STATE.period);
+}
+
+function closeKpiDrill(){document.getElementById('kpi-drill-modal').style.display='none';}
+
 </script>
+
+
+<!-- KPI DRILL MODAL -->
+<style>.kdm-row{border-bottom:1px solid var(--s1)}.kdm-row:hover{background:var(--s1)}</style>
+<div id="kpi-drill-modal" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(26,29,46,.5);backdrop-filter:blur(4px);padding:1rem;overflow-y:auto" onclick="if(event.target===this)closeKpiDrill()">
+  <div style="background:var(--white);border-radius:var(--r-2xl);max-width:860px;margin:2rem auto;box-shadow:var(--sh-xl);overflow:hidden">
+    <!-- Header -->
+    <div id="kdm-header" style="padding:1.1rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.75rem">
+      <div id="kdm-icon" style="width:40px;height:40px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0"></div>
+      <div style="flex:1">
+        <div id="kdm-title" style="font-family:var(--fontd);font-size:1rem;font-weight:700"></div>
+        <div id="kdm-sub" style="font-size:.72rem;color:var(--text2);margin-top:1px"></div>
+      </div>
+      <button onclick="closeKpiDrill()" style="width:30px;height:30px;border-radius:50%;border:none;background:var(--s1);color:var(--text2);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center" onmouseover="this.style.background='var(--red-bg)';this.style.color='var(--red)'" onmouseout="this.style.background='var(--s1)';this.style.color='var(--text2)'">×</button>
+    </div>
+    <!-- Search + export -->
+    <div style="padding:.65rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.5rem;background:var(--bg)">
+      <div class="search-box" style="flex:1;max-width:260px">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="kdm-search" placeholder="Search…" oninput="kdrillSearch(this.value)" style="width:100%;background:transparent;border:none;outline:none;font-size:.78rem;color:var(--text);font-family:var(--font)">
+      </div>
+      <div id="kdm-count" style="font-size:.72rem;color:var(--text2);margin-left:auto"></div>
+      <button onclick="kdrillExport()" class="btn btn-ghost btn-sm"><i class="fa-solid fa-download"></i>Export</button>
+    </div>
+    <!-- Body -->
+    <div id="kdm-body" style="max-height:65vh;overflow-y:auto"></div>
+  </div>
+</div>
 
 </body>
 </html>
