@@ -1294,18 +1294,30 @@ function closeKpiDrill(){document.getElementById('kpi-drill-modal').style.displa
 // ═══════════════════════════════════════════════
 var SERVICES = (function(){
   var DEFAULT = [
-    {id:'s1', name:'Acrylic Full Set',   category:'Nails',  price:75,  duration:90,  active:true,  description:'Full acrylic set with shape & design'},
-    {id:'s2', name:'Acrylic Refill',     category:'Nails',  price:60,  duration:60,  active:true,  description:'2–3 week fill'},
-    {id:'s3', name:'Gel-X Extensions',  category:'Nails',  price:80,  duration:90,  active:true,  description:'Soft gel extension system'},
-    {id:'s4', name:'Pedicure Shellac',   category:'Nails',  price:55,  duration:60,  active:true,  description:'Gel pedicure with foot care'},
-    {id:'s5', name:'Manicure Shellac',  category:'Nails',  price:35,  duration:45,  active:true,  description:'Shellac gel manicure'},
-    {id:'s6', name:'Lash Extensions',   category:'Lashes', price:89,  duration:120, active:true,  description:'Classic or volume lash set'},
-    {id:'s7', name:'Nail Art',          category:'Nails',  price:45,  duration:60,  active:true,  description:'Custom designs'},
-    {id:'s8', name:'Acrylic Removal',   category:'Nails',  price:25,  duration:30,  active:true,  description:'Safe removal'},
-    {id:'s9', name:'Gel Overlay',       category:'Nails',  price:65,  duration:75,  active:true,  description:'Hard gel overlay'},
-    {id:'s10',name:'Lash Fill',         category:'Lashes', price:55,  duration:75,  active:true,  description:'2–3 week refill'},
-    {id:'s11',name:'Nail Repair',       category:'Nails',  price:10,  duration:15,  active:true,  description:'Per nail'},
-    {id:'s12',name:'French Tip',        category:'Nails',  price:15,  duration:15,  active:true,  description:'Add-on'},
+    // ACRYLIC
+    {id:'s1',  name:'Acrylic Full Set (shellac included)',  category:'Acrylic', price:62,  duration:60,  active:true, description:'Full acrylic set with shellac color included'},
+    {id:'s2',  name:'Acrylic Refill (shellac included)',    category:'Acrylic', price:60,  duration:60,  active:true, description:'2-3 week acrylic fill with shellac'},
+    {id:'s3',  name:'Classic Refill',                       category:'Acrylic', price:80,  duration:60,  active:true, description:'Classic acrylic refill'},
+    // DIP
+    {id:'s4',  name:'Dip New Set',                          category:'Dip',     price:62,  duration:60,  active:true, description:'Brand new dip powder set'},
+    {id:'s5',  name:'Dip Nails (take off & re-apply)',      category:'Dip',     price:60,  duration:60,  active:true, description:'Remove old dip and apply new'},
+    {id:'s6',  name:'Dip on Real Nails',                    category:'Dip',     price:57,  duration:45,  active:true, description:'Dip powder on natural nails'},
+    {id:'s7',  name:'Ombre Refill (gel powder)',            category:'Dip',     price:65,  duration:60,  active:true, description:'Ombre gel powder refill'},
+    // MANICURE
+    {id:'s8',  name:'Manicure',                             category:'Manicure',price:25,  duration:20,  active:true, description:'Classic manicure'},
+    {id:'s9',  name:'Manicure Shellac',                     category:'Manicure',price:35,  duration:30,  active:true, description:'Shellac gel manicure'},
+    {id:'s10', name:'Take off shellac + Manicure shellac',  category:'Manicure',price:37,  duration:30,  active:true, description:'Shellac removal + fresh shellac manicure'},
+    {id:'s11', name:'Add: French on dip or acrylic',        category:'Manicure',price:10,  duration:10,  active:true, description:'French tip add-on'},
+    // PEDICURE
+    {id:'s12', name:'Pedicure',                             category:'Pedicure',price:43,  duration:30,  active:true, description:'Classic pedicure'},
+    {id:'s13', name:'Pedicure Shellac',                     category:'Pedicure',price:55,  duration:40,  active:true, description:'Pedicure with shellac gel color'},
+    {id:'s14', name:'Pedicure Deluxe (VIP Treatment)',      category:'Pedicure',price:80,  duration:60,  active:true, description:'Premium pedicure with extra care'},
+    {id:'s15', name:'Add: 10 minutes massage',              category:'Pedicure',price:20,  duration:10,  active:true, description:'Add-on massage to pedicure'},
+    // REMOVAL
+    {id:'s16', name:'Removal of Shellac',                   category:'Removal', price:15,  duration:10,  active:true, description:'Shellac gel removal'},
+    {id:'s17', name:'Removal of Dip or Nail Extensions',    category:'Removal', price:25,  duration:20,  active:true, description:'Dip powder or acrylic extension removal'},
+    {id:'s18', name:'Change Polish Hands',                  category:'Other',   price:15,  duration:15,  active:true, description:'Color change for hands'},
+    {id:'s19', name:'Underarm Waxing',                      category:'Waxing',  price:15,  duration:10,  active:true, description:'Underarm wax'},
   ];
   var stored = localStorage.getItem('mn_services');
   return stored ? JSON.parse(stored) : DEFAULT;
