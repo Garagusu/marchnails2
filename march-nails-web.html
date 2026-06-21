@@ -2723,48 +2723,104 @@ function bkShowSlots() {
 function bkShowForm()  { bkShowView('bkv-form'); }
 
 // ── Fetch availability ──
-async function bkFetchSlots(dateStr) {
-  const grid = document.getElementById('bk-slots-grid');
-  if (!grid) return;
-  grid.innerHTML = '<div class="bk-slots-loading">Checking availability...</div>';
+// Convert booked_at ISO to slot string "H:MM AM/PM"
+function bkToSlot(bookedAt) {
+  const dt = new Date(bookedAt);
+  let hh=dt.getHours(), mm=dt.getMinutes();
+  const ap = hh>=12?'PM':'AM';
+  if(hh>12)hh-=12; if(hh===0)hh=12;
+  return hh+':'+String(mm).padStart(2,'0')+' '+ap;
+}
+
+// Get busy slots for a specific staff on a date (from Supabase + local cache)
+async function bkGetBusyForStaff(dateStr, staffName) {
   const busy = new Set();
-  // Local bookings
-  bkGetBookings().filter(b=>b.date===dateStr&&b.status!=='cancelled').forEach(b=>busy.add(b.time));
-  // Supabase
+  const svcDur = bkState.service ? bkState.service.dur : 30;
+
+  // From local cache
+  bkGetBookings()
+    .filter(b => b.date===dateStr && b.status!=='cancelled' && (!staffName||b.staff===staffName||b.artist===staffName))
+    .forEach(b => busy.add(b.time));
+
+  // From Supabase
   try {
-    const artist = bkState.artist && bkState.artist !== 'Any Artist' ? bkState.artist : null;
-    let url = SUPABASE_URL+'/rest/v1/bookings?booked_at=gte.'+dateStr+'T00:00:00&booked_at=lte.'+dateStr+'T23:59:59&status=neq.cancelled&select=booked_at,duration_minutes,staff_name';
-    if (artist) url += '&staff_name=eq.'+encodeURIComponent(artist);
+    let url = SUPABASE_URL+'/rest/v1/bookings'
+      +'?booked_at=gte.'+dateStr+'T00:00:00'
+      +'&booked_at=lte.'+dateStr+'T23:59:59'
+      +'&status=neq.cancelled'
+      +'&select=booked_at,duration_minutes,staff_name';
+    if (staffName) url += '&staff_name=eq.'+encodeURIComponent(staffName);
     const res = await fetch(url, { headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY} });
     if (res.ok) {
       (await res.json()).forEach(b => {
         if (!b.booked_at) return;
-        const dt = new Date(b.booked_at);
-        let hh=dt.getHours(),mm=dt.getMinutes(); const ap=hh>=12?'PM':'AM';
-        if(hh>12)hh-=12; if(hh===0)hh=12;
-        const ts = hh+':'+String(mm).padStart(2,'0')+' '+ap;
+        const ts = bkToSlot(b.booked_at);
         busy.add(ts);
-        // Block duration
+        // Block all 30-min slots covered by this booking's duration
         const dur = parseInt(b.duration_minutes)||60;
         for (let offset=30; offset<dur; offset+=30) {
-          const nt = new Date(dt.getTime()+offset*60000);
-          let nh=nt.getHours(),nm=nt.getMinutes(); const nap=nh>=12?'PM':'AM';
-          if(nh>12)nh-=12; if(nh===0)nh=12;
-          busy.add(nh+':'+String(nm).padStart(2,'0')+' '+nap);
+          const nt = new Date(new Date(b.booked_at).getTime()+offset*60000);
+          busy.add(bkToSlot(nt.toISOString()));
         }
+        // Also block the slot BEFORE if existing booking's duration would overlap us
+        // e.g. existing at 10:00 with 90min → blocks 10:00, 10:30, 11:00
+        // New at 11:00 is already caught above. New at 10:30 too.
       });
     }
-  } catch(e){}
-  // Render
-  const avail = BK_SLOTS.filter(s=>!busy.has(s));
+  } catch(e){ console.warn('Availability check failed:', e.message); }
+  return busy;
+}
+
+async function bkFetchSlots(dateStr) {
+  const grid = document.getElementById('bk-slots-grid');
+  if (!grid) return;
+  grid.innerHTML = '<div class="bk-slots-loading">Checking availability...</div>';
+
+  const selectedArtist = bkState.artist && bkState.artist !== 'Any Artist' ? bkState.artist : null;
+  const STAFF_NAMES = BK_ARTISTS.filter(a=>a.name!=='Any Artist').map(a=>a.name);
+
+  let busySlots;   // slots that are BUSY (shown grey)
+  let slotToStaff = {}; // slot → which staff is free (for Any Artist auto-assign)
+
+  if (selectedArtist) {
+    // Specific artist selected — just check their availability
+    busySlots = await bkGetBusyForStaff(dateStr, selectedArtist);
+  } else {
+    // Any Artist — show slot as available only if AT LEAST ONE staff is free
+    // Build per-staff busy sets
+    const staffBusy = {};
+    await Promise.all(STAFF_NAMES.map(async name => {
+      staffBusy[name] = await bkGetBusyForStaff(dateStr, name);
+    }));
+    // A slot is busy only if ALL staff are busy at that time
+    busySlots = new Set();
+    BK_SLOTS.forEach(slot => {
+      const freeStaff = STAFF_NAMES.filter(n => !staffBusy[n].has(slot));
+      if (freeStaff.length === 0) {
+        busySlots.add(slot); // everyone busy
+      } else {
+        slotToStaff[slot] = freeStaff; // who's free at this slot
+      }
+    });
+    // Store for auto-assignment at submit
+    bkState._slotToStaff = slotToStaff;
+  }
+
+  const avail = BK_SLOTS.filter(s=>!busySlots.has(s));
   if (!avail.length) {
-    grid.innerHTML = '<div class="bk-slots-loading" style="grid-column:1/-1">No slots available on this date. Please try another day.</div>';
+    grid.innerHTML = '<div class="bk-slots-loading" style="grid-column:1/-1">No availability on this date — please try another day or choose a different artist.</div>';
     return;
   }
+
   grid.innerHTML = BK_SLOTS.map(s => {
-    const isBusy = busy.has(s);
+    const isBusy = busySlots.has(s);
     const isSel  = s === bkState.time;
-    return `<button class="bk-slot-btn${isBusy?' busy':isSel?' sel':''}" ${isBusy?'disabled title="Already booked"':'onclick="bkPickSlot(\''+s+'\')"'}>${s}</button>`;
+    const tip    = isBusy ? 'Fully booked' : '';
+    return `<button class="bk-slot-btn${isBusy?' busy':isSel?' sel':''}" ${
+      isBusy
+        ? `disabled title="${tip}"`
+        : `onclick="bkPickSlot('${s}')"`
+    }>${s}</button>`;
   }).join('');
 }
 
@@ -2842,7 +2898,26 @@ async function bkSubmit() {
   const svcName  = bkState.service ? bkState.service.name : '';
   const svcPrice = bkState.service ? parseFloat((bkState.service.price||'0').replace(/[^0-9.]/g,'')) : 0;
   const svcDur   = bkState.service ? bkState.service.dur : 60;
-  const artist   = bkState.artist || 'Any';
+
+  // ── Smart staff assignment ──
+  let artist = bkState.artist && bkState.artist !== 'Any Artist' ? bkState.artist : null;
+  if (!artist) {
+    // Pick the first free staff at this slot
+    const freeAtSlot = (bkState._slotToStaff && bkState._slotToStaff[bkState.time]) || [];
+    artist = freeAtSlot[0] || 'Any';
+  }
+
+  // ── Final conflict check before saving ──
+  btn.textContent = 'Verifying...';
+  const finalBusy = await bkGetBusyForStaff(bkState.date, artist !== 'Any' ? artist : null);
+  if (finalBusy.has(bkState.time)) {
+    btn.disabled = false;
+    btn.textContent = 'Confirm Appointment';
+    bkAlert(artist+' is no longer available at '+bkState.time+'. Please choose another time.');
+    bkShowSlots();
+    bkFetchSlots(bkState.date);
+    return;
+  }
 
   // 1. Upsert client
   let clientId = null;
