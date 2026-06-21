@@ -1062,37 +1062,56 @@ function saveNew(){
     booked_at:new Date(dt).toISOString(),notes:notes};
   SB.CACHE.bookings.unshift(bk);
 
-  // AUTO-ADD CLIENT: if new name typed (not from dropdown) add to clients
-  if(!cid && cname && cname !== 'Walk-in'){
+  // AUTO-ADD CLIENT: always runs when name typed manually
+  if(cname && cname !== 'Walk-in'){
     var existingClient = SB.CACHE.clients.find(function(c){
-      return (c.first_name+' '+c.last_name).toLowerCase().trim() === cname.toLowerCase().trim();
+      var fullN = ((c.first_name||'')+' '+(c.last_name||'')).toLowerCase().trim();
+      return fullN === cname.toLowerCase().trim();
     });
-    if(!existingClient){
+    if(!existingClient && !cid){
+      // New client — add to cache immediately (persists via saveCache)
       var nameParts = cname.trim().split(' ');
+      var newCid = 'c_'+Date.now();
       var newClient = {
-        id:             'c_'+Date.now(),
+        id:             newCid,
         first_name:     nameParts[0]||cname,
         last_name:      nameParts.slice(1).join(' ')||'',
         phone:          '',
         email:          '',
         birthday:       null,
-        notes:          '',
+        notes:          'Added via booking on '+new Date().toLocaleDateString('en-CA'),
         tier:           'standard',
         loyalty_points: 0,
         no_show_count:  0,
         created_at:     new Date().toISOString()
       };
       SB.CACHE.clients.unshift(newClient);
-      SB.insert('clients', newClient).then(function(data){
+      bk.client_id = newCid;
+      // Try Supabase — update ID if successful, keep local ID if not
+      SB.insert('clients', {
+        first_name:     newClient.first_name,
+        last_name:      newClient.last_name,
+        phone:          newClient.phone,
+        email:          newClient.email,
+        notes:          newClient.notes,
+        tier:           newClient.tier,
+        loyalty_points: newClient.loyalty_points,
+        no_show_count:  newClient.no_show_count,
+        created_at:     newClient.created_at
+      }).then(function(data){
         if(Array.isArray(data)&&data[0]&&data[0].id){
-          newClient.id=data[0].id;
-          bk.client_id=data[0].id;
-          SB.update('bookings',bk.id,{client_id:data[0].id}).catch(function(){});
+          newClient.id = data[0].id;
+          bk.client_id = data[0].id;
+          SB.update('bookings', bk.id, {client_id:data[0].id}).catch(function(){});
         }
         SB.saveCache();
-      }).catch(function(){});
-    } else {
-      // Link existing client to booking
+        Utils.toast(newClient.first_name+' added to Clients','success');
+      }).catch(function(){
+        // Supabase failed — client still saved in local cache
+        SB.saveCache();
+        Utils.toast(newClient.first_name+' saved locally','info');
+      });
+    } else if(existingClient){
       bk.client_id = existingClient.id;
     }
   }
