@@ -92,16 +92,18 @@ function renderOverview(){
   // Period filter
   html+='<div class="filter-bar" style="margin-bottom:1rem"><span class="filter-bar-label"><i class="fa-solid fa-filter" style="color:var(--pink)"></i></span>'
     +'<div class="filter-group">'
-    +['today','yesterday','7d','this_month','last_month','this_year'].map(function(p){
+    +['today','yesterday','7d','this_month','last_month','this_year','all'].map(function(p){
       return '<button class="period-pill'+(STATE.period===p?' active':'')+'" onclick="STATE.period=\''+p+'\';renderPage()">'+
-        ({today:'Today',yesterday:'Yesterday','7d':'7 Days',this_month:'This Month',last_month:'Last Month',this_year:'This Year'}[p])+'</button>';
+        ({today:'Today',yesterday:'Yesterday','7d':'7 Days',this_month:'This Month',last_month:'Last Month',this_year:'This Year',all:'All Time'}[p])+'</button>';
     }).join('')+'</div></div>';
 
   // Staff cards grid
   html+='<div class="grid grid-4 mb-1">';
+  var PERIOD_MAP2={'today':'today','yesterday':'yesterday','7d':'this_week','this_month':'this_month','last_month':'last_month','this_year':'this_year','all':'all'};
   STAFF_CFG.forEach(function(sc){
     var analytics=Utils.staffAnalytics(sc.name,SB.CACHE.bookings,SB.CACHE.payments);
-    var p=analytics[STATE.period]||analytics.this_month;
+    var pKey2=PERIOD_MAP2[STATE.period]||STATE.period;
+    var p=analytics[pKey2]||analytics.this_month;
     var all=analytics.all;
     html+='<div class="card" style="cursor:pointer;transition:transform .15s,box-shadow .15s" onclick="openStaff(\''+sc.name+'\')" onmouseover="this.style.transform=\'translateY(-3px)\';this.style.boxShadow=\'0 8px 24px rgba(0,0,0,.12)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'\'">'
       +'<div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.85rem">'
@@ -111,8 +113,8 @@ function renderOverview(){
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.75rem">'
       +kpiMini('Revenue',Utils.fCurrency(p.revenue),sc.color)
       +kpiMini('Bookings',p.bookings,sc.color)
-      +kpiMini('Completed',p.completed,sc.color)
-      +kpiMini('Avg Ticket',Utils.fCurrency(p.avgTicket),sc.color)+'</div>'
+      +kpiMini('Commission '+(sc.commission||25)+'%',Utils.fCurrency(p.revenue*(sc.commission||25)/100),sc.color)
+      +kpiMini('Net',Utils.fCurrency(p.revenue*(1-(sc.commission||25)/100)),sc.color)+'</div>'
       +'<div style="height:4px;background:var(--s1);border-radius:4px;overflow:hidden;margin-bottom:.5rem">'
       +'<div style="height:100%;border-radius:4px;background:'+sc.grad+';width:'+Math.min(100,Math.round((p.completed/(p.bookings||1))*100))+'%"></div></div>'
       +'<div style="display:flex;justify-content:space-between;align-items:center;font-size:.68rem;color:var(--text2)">'
@@ -130,17 +132,27 @@ function renderOverview(){
   html+='<div class="card"><div class="card-header"><div class="card-title">Staff Comparison</div></div>'
     +'<div class="table-wrap"><table class="data-table" id="staff-cmp-table">'
     +'<thead><tr><th>Staff</th><th>Bookings</th><th>Completed</th><th>No-shows</th><th>Cancelled</th><th>Revenue</th><th>Commission</th><th>Net</th><th>Avg Ticket</th><th>Completion%</th></tr></thead><tbody>';
+  // Map UI period labels to analytics keys
+  var PERIOD_MAP={'today':'today','yesterday':'yesterday','7d':'this_week','this_month':'this_month','last_month':'last_month','this_year':'this_year','all':'all'};
   STAFF_CFG.forEach(function(sc){
     var a=Utils.staffAnalytics(sc.name,SB.CACHE.bookings,SB.CACHE.payments);
-    var p=a[STATE.period]||a.this_month;
+    var pKey=PERIOD_MAP[STATE.period]||STATE.period;
+    var p=a[pKey]||a.this_month;
+    // Use staff's own commission % (default 25 if not set)
+    var commPct = (sc.commission||25) / 100;
+    var commAmt = p.revenue * commPct;
+    var netAmt  = p.revenue - commAmt;
     html+='<tr style="cursor:pointer" onclick="openStaff(\''+sc.name+'\')">'
-      +'<td><div style="display:flex;align-items:center;gap:6px"><div style="width:22px;height:22px;border-radius:50%;background:'+sc.grad+';display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;color:#fff">'+sc.name[0]+'</div>'+sc.name+'</div></td>'
+      +'<td><div style="display:flex;align-items:center;gap:6px">'
+      +'<div style="width:22px;height:22px;border-radius:50%;background:'+sc.grad+';display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;color:#fff">'+sc.name[0]+'</div>'
+      +sc.name+'<span style="font-size:.6rem;color:var(--text3);margin-left:.3rem">'+( sc.commission||25)+'%</span>'
+      +'</div></td>'
       +'<td>'+p.bookings+'</td><td class="td-pos">'+p.completed+'</td>'
       +'<td '+(p.noshow>0?'class="td-neg"':'')+'>'+p.noshow+'</td>'
       +'<td class="td-muted">'+p.cancelled+'</td>'
-      +'<td class="td-pos">'+Utils.fCurrency(p.revenue)+'</td>'
-      +'<td style="color:var(--pink);font-weight:600">'+Utils.fCurrency(p.commission)+'</td>'
-      +'<td class="td-pos">'+Utils.fCurrency(p.netRevenue)+'</td>'
+      +'<td class="td-pos" style="font-weight:700">'+Utils.fCurrency(p.revenue)+'</td>'
+      +'<td style="color:var(--amber);font-weight:600">'+Utils.fCurrency(commAmt)+' <span style="font-size:.62rem;opacity:.7">('+( sc.commission||25)+'%)</span></td>'
+      +'<td class="td-pos" style="font-weight:700">'+Utils.fCurrency(netAmt)+'</td>'
       +'<td>'+Utils.fCurrency(p.avgTicket)+'</td>'
       +'<td>'+Math.round((p.completed/(p.bookings||1))*100)+'%</td></tr>';
   });
@@ -220,8 +232,8 @@ function renderStaffDetail(name){
   [{l:'Revenue',v:Utils.fCurrency(p.revenue),c:'var(--pink)',ic:'fa-money-bill-trend-up'},
    {l:'Bookings',v:p.bookings,c:'var(--violet)',ic:'fa-calendar-check'},
    {l:'Completed',v:p.completed,c:'var(--green)',ic:'fa-check-circle'},
-   {l:'Commission',v:Utils.fCurrency(p.commission),c:'#E91E8C',ic:'fa-hand-holding-dollar'},
-   {l:'Net Revenue',v:Utils.fCurrency(p.netRevenue),c:'var(--green)',ic:'fa-chart-line'},
+   {l:'Commission ('+(sc.commission||25)+'%)',v:Utils.fCurrency(p.revenue*(sc.commission||25)/100),c:'#E91E8C',ic:'fa-hand-holding-dollar'},
+   {l:'Net Revenue',v:Utils.fCurrency(p.revenue*(1-(sc.commission||25)/100)),c:'var(--green)',ic:'fa-chart-line'},
    {l:'Avg Ticket',v:Utils.fCurrency(p.avgTicket),c:'var(--blue)',ic:'fa-ticket'},
    {l:'No-shows',v:p.noshow,c:'var(--red)',ic:'fa-user-slash'},
    {l:'Cancelled',v:p.cancelled,c:'var(--text2)',ic:'fa-ban'},
